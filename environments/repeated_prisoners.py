@@ -111,23 +111,24 @@ class RepeatedPrisonersDilemmaEnv(MultiAgentEnv):
         else:
             return (1, 1)  # Both players defect
 
-# Example usage:
-episode_length = 5
-env = RepeatedPrisonersDilemmaEnv(episode_length)
 
-# Reset the environment
-obs = env.reset()
-
-for _ in range(episode_length):
-    # Take random actions for both players
-    print(obs)
-    actions = env.action_space.sample()
-    # Step through the environment
-    obs, reward, done, _, _ = env.step({
-        0:1,
-        1:1
-    })
-    #print(f"Step: {env.current_step}, Actions: {actions}, Reward: {reward}, Done: {done}")
-
-# Close the environment
-env.close()
+# # Example usage:
+# episode_length = 5
+# env = RepeatedPrisonersDilemmaEnv(episode_length)
+#
+# # Reset the environment
+# obs = env.reset()
+#
+# for _ in range(episode_length):
+#     # Take random actions for both players
+#     print(obs)
+#     actions = env.action_space.sample()
+#     # Step through the environment
+#     obs, reward, done, _, _ = env.step({
+#         0:1,
+#         1:1
+#     })
+#     #print(f"Step: {env.current_step}, Actions: {actions}, Reward: {reward}, Done: {done}")
+#
+# # Close the environment
+# env.close()
