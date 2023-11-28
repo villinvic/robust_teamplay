@@ -1,39 +1,46 @@
 import gymnasium
 import numpy as np
-import itertools
+from itertools import product
 
-from environments.repeated_prisoners import RepeatedPrisonersDilemmaEnv
+import bg_population
 
 
-class DeterministicPoliciesPopulation:
+def build_deterministic_policies(n_actions, n_states):
+
+    sequences = np.array(list(product(range(n_actions), repeat=n_states)))
+
+    policies = np.zeros((len(sequences), n_states, n_actions), dtype=np.float16)
+
+    seq_indices, state_indices = np.indices(policies.shape[:2])
+
+    policies[seq_indices, state_indices, sequences] = 1
+
+    return policies
+
+
+class DeterministicPoliciesPopulation(bg_population.BackgroundPopulation):
 
     def __init__(self, environment: gymnasium.Env):
-
-        self.n_actions = environment.action_space[0].n
-        self.n_states = environment.observation_space[0].n
-        self.seq_len = environment.episode_length
+        super().__init__(environment)
         self.num_policies = self.n_actions**self.n_states
-        print(self.num_policies)
-        self.max_size = 2 #1_000_000
-
-        # A policy is an array pi of shape [STATES, ACTIONS] where pi[s, a] = pi(a|s)
+        self.max_size = 1_000_000
+        self.build_population()
 
     def build_population(self):
 
-        # should be a^s
-        policies = []
-        all_policies = [
-            format(i, f'0{int(self.num_policies / 2)}b') for i in np.random.choice(self.num_policies, self.max_size, replace=False)
-        ]
+        if self.num_policies > self.max_size:
+            samples = np.random.choice(self.num_policies, self.max_size, replace=False)
+        else:
+            samples = range(self.num_policies)
 
-        print(all_policies)
+        self.policies = build_deterministic_policies(self.n_actions, self.n_states)
 
-        self.population = ...
+
 
 
 if __name__ == "__main__":
 
-    env = RepeatedPrisonersDilemmaEnv(episode_length=3)
+    env = RepeatedPrisonersDilemmaEnv(episode_length=2)
     bg = DeterministicPoliciesPopulation(env)
 
     bg.build_population()

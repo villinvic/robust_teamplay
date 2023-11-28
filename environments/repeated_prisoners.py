@@ -56,10 +56,27 @@ class RepeatedPrisonersDilemmaEnv(MultiAgentEnv):
                 i: spaces.Discrete(sum([4**(t) for t in range(episode_length)])) for i in self._agent_ids
             }
         )
-        print(self.observation_space)
 
         # History of actions
         self.tree = build_tree_recursive(depth=episode_length)
+        self.transition_function = np.zeros(
+            (self.observation_space[0].n, self.action_space[0].n, self.action_space[0].n, self.observation_space[0].n), dtype=np.float16
+        )
+
+        def setup_transitions_rec(node=self.tree, depth=self.episode_length):
+            if depth == 1:
+                return
+
+            else:
+                for action1 in range(self.action_space[0].n):
+                    for action2 in range(self.action_space[0].n):
+                        idx = action1 + 2 * action2
+                        next_node = node.children[idx]
+                        self.transition_function[node.index, action1, action2, next_node.index] = 1
+                        setup_transitions_rec(next_node, depth-1)
+
+        setup_transitions_rec()
+
         self.curr_nodes = [None, None]
 
         super(RepeatedPrisonersDilemmaEnv, self).__init__()
@@ -112,23 +129,25 @@ class RepeatedPrisonersDilemmaEnv(MultiAgentEnv):
             return (1, 1)  # Both players defect
 
 
-# # Example usage:
-# episode_length = 5
-# env = RepeatedPrisonersDilemmaEnv(episode_length)
-#
-# # Reset the environment
-# obs = env.reset()
-#
-# for _ in range(episode_length):
-#     # Take random actions for both players
-#     print(obs)
-#     actions = env.action_space.sample()
-#     # Step through the environment
-#     obs, reward, done, _, _ = env.step({
-#         0:1,
-#         1:1
-#     })
-#     #print(f"Step: {env.current_step}, Actions: {actions}, Reward: {reward}, Done: {done}")
-#
-# # Close the environment
-# env.close()
+if __name__ == "__main__":
+
+    # Example usage:
+    episode_length = 2
+    env = RepeatedPrisonersDilemmaEnv(episode_length)
+
+    # Reset the environment
+    obs = env.reset()
+
+    for _ in range(episode_length):
+        # Take random actions for both players
+        print(obs)
+        actions = env.action_space.sample()
+        # Step through the environment
+        obs, reward, done, _, _ = env.step({
+            0:1,
+            1:1
+        })
+        #print(f"Step: {env.current_step}, Actions: {actions}, Reward: {reward}, Done: {done}")
+
+    # Close the environment
+    env.close()
