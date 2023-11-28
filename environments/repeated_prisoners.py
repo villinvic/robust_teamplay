@@ -62,8 +62,9 @@ class RepeatedPrisonersDilemmaEnv(MultiAgentEnv):
         self.transition_function = np.zeros(
             (self.observation_space[0].n, self.action_space[0].n, self.action_space[0].n, self.observation_space[0].n), dtype=np.float16
         )
+        self.reward_function = np.zeros((self.observation_space[0].n,), dtype=np.float16)
 
-        def setup_transitions_rec(node=self.tree, depth=self.episode_length):
+        def setup_rec(node=self.tree, depth=self.episode_length):
             if depth == 1:
                 return
 
@@ -72,10 +73,20 @@ class RepeatedPrisonersDilemmaEnv(MultiAgentEnv):
                     for action2 in range(self.action_space[0].n):
                         idx = action1 + 2 * action2
                         next_node = node.children[idx]
-                        self.transition_function[node.index, action1, action2, next_node.index] = 1
-                        setup_transitions_rec(next_node, depth-1)
 
-        setup_transitions_rec()
+                        if action1 == 0 and action2 == 0:
+                            r = self.max_reward - 1
+                        elif action1 == 0 and action2 == 1:
+                            r = 0
+                        elif action1 == 1 and action2 == 0:
+                            r = self.max_reward
+                        else:
+                            r = 1
+                        self.reward_function[next_node] = r
+                        self.transition_function[node.index, action1, action2, next_node.index] = 1
+                        setup_rec(next_node, depth-1)
+
+        setup_rec()
 
         self.curr_nodes = [None, None]
 

@@ -28,11 +28,6 @@ class DeterministicPoliciesPopulation(bg_population.BackgroundPopulation):
 
     def build_population(self):
 
-        if self.num_policies > self.max_size:
-            samples = np.random.choice(self.num_policies, self.max_size, replace=False)
-        else:
-            samples = range(self.num_policies)
-
         self.policies = build_deterministic_policies(self.n_actions, self.n_states)
 
 

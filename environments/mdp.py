@@ -7,6 +7,7 @@ def compute_multiagent_mdp(transition_function, policy):
     action_dim =  transition_function.shape[1]
     single_agent_transition_function = np.zeros((state_dim, action_dim, state_dim))
 
+
     for state in range(state_dim):
         for action1 in range(action_dim):
             for next_state in range(state_dim):
