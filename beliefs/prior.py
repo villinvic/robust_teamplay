@@ -5,27 +5,24 @@ class Prior:
 
     def __init__(self, dim, learning_rate=5e-2):
         self.dim = dim
-        self.beta: np.ndarray
+        self.beta_logits: np.ndarray
         self.learning_rate = learning_rate
 
     def initialize_uniformly(self):
 
-        self.beta = np.full((self.dim,), fill_value=1/self.dim, dtype=np.float32)
+        self.beta_logits = np.full((self.dim,), fill_value=0, dtype=np.float32)
 
     def initialize_certain(self, idx=0):
 
-        self.beta = np.zeros((self.dim,), dtype=np.float32)
-        self.beta[idx] = 1.
+        self.beta_logits = np.full((self.dim,), fill_value=-1e3, dtype=np.float32)
+        self.beta_logits[idx] = 1e3
 
-
+    def get_probs(self):
+        exp = np.exp(self.beta_logits - self.beta_logits.max())
+        return exp / exp.sum()
 
     def __call__(self):
-        return self.beta
-
-    def project(self):
-
-        self.beta[:] /= self.beta.sum()
-
+        return self.get_probs()
 
     def update_prior(self, gradient, regret=True):
 

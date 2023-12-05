@@ -38,7 +38,7 @@ class PolicyIteration:
             while e > self.epsilon:
                 old_value[:] = values[i]
                 values[i, :] = np.sum(reward_function * self.policy, axis=-1) + np.sum(np.sum(transition_function * self.policy[:, :, np.newaxis]
-                                * (self.environment.gamma * values[i])
+                                * (self.environment.gamma * values[np.newaxis, np.newaxis, i])
                                 , axis=-1), axis=-1)
 
                 e = np.max(np.abs(old_value-values[i]))
@@ -51,7 +51,7 @@ class PolicyIteration:
             old_value[:] = values[-1]
 
             values[-1, :] = np.sum(reward_function * self.policy, axis=-1) + np.sum(np.sum(transition_function * self.policy[:, :, np.newaxis]
-                                  * (self.environment.gamma * values[-1])
+                                  * (self.environment.gamma * values[np.newaxis, np.newaxis, -1])
                                   , axis=-1), axis=-1)
 
             e = np.max(np.abs(old_value - values[-1]))
@@ -233,16 +233,18 @@ if __name__ == '__main__':
     expected_vf, vf = alg.policy_evaluation_for_prior(bg_population, prior)
     expected_vf2, vf2 = alg.policy_evaluation_for_prior2(bg_population, prior)
 
+    print(vf, vf2)
+
     policy = np.empty_like(alg.policy)
     policy[:] = alg.policy
     alg.policy_improvement(bg_population, prior, expected_vf)
 
-    print(alg.policy)
+    #print(alg.policy)
     alg.policy[:] = policy
-    print(alg.policy)
+    #print(alg.policy)
 
     alg.policy_improvement2(bg_population, prior, expected_vf)
-    print(alg.policy)
+    #print(alg.policy)
 
     input()
 

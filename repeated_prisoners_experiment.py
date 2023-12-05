@@ -35,7 +35,7 @@ def main():
     scores = []
 
 
-    use_regret = False
+    use_regret = True
 
     if use_regret:
         # Compute best responses for regret
@@ -48,12 +48,15 @@ def main():
             p_algo = PolicyIteration(best_response.get_params(), environment, learning_rate=1)
             p_belief.initialize_certain(idx=p_id)
 
-            for i in range(10):
+            for i in range(20):
                 vf, tmp = p_algo.policy_evaluation_for_prior(bg_population, p_belief)
 
                 p_algo.policy_improvement(bg_population, p_belief, vf)
 
             vf, tmp = p_algo.policy_evaluation_for_prior(bg_population, p_belief)
+
+            print(best_response.get_params())
+            input()
 
             best_response_vfs[p_id] = vf[environment.s0]
 
