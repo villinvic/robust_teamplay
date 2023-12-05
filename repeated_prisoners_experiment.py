@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 from background_population.deterministic import DeterministicPoliciesPopulation
 from beliefs.prior import Prior
 from environments.repeated_prisoners import RepeatedPrisonersDilemmaEnv
+from policies.policy import Policy
 from policies.tabular_policy import TabularPolicy
 from policy_iteration.algorithm import PolicyIteration
 
@@ -12,7 +13,7 @@ def main():
 
     environment = RepeatedPrisonersDilemmaEnv(episode_length=3)
 
-    robust_policy = TabularPolicy(environment)
+    robust_policy = Policy(environment)
     robust_policy.initialize_uniformly()
     #robust_policy.initialize_randomly()
 
@@ -25,10 +26,10 @@ def main():
     np.random.seed(0)
     bg_population.policies = bg_population.policies[np.random.choice(len(bg_population.policies), num_policies)]
 
-    algo = PolicyIteration(robust_policy.get_params(), environment, epsilon=1e-4, learning_rate=1)
+    algo = PolicyIteration(robust_policy, environment, epsilon=1e-4, learning_rate=1e-2)
 
     # belief over worst teammate policy (all bg individuals and our self)
-    belief = Prior(len(bg_population.policies)+1, learning_rate=0)
+    belief = Prior(len(bg_population.policies)+1, learning_rate=1e-3)
     belief.initialize_uniformly()
 
     vfs = []
@@ -45,10 +46,10 @@ def main():
 
         for p_id in range(len(bg_population.policies) + 1):
             best_response.initialize_uniformly()
-            p_algo = PolicyIteration(best_response.get_params(), environment, learning_rate=1)
+            p_algo = PolicyIteration(best_response, environment, learning_rate=1)
             p_belief.initialize_certain(idx=p_id)
 
-            for i in range(20):
+            for i in range(10):
                 vf, tmp = p_algo.policy_evaluation_for_prior(bg_population, p_belief)
 
                 p_algo.policy_improvement(bg_population, p_belief, vf)
@@ -70,13 +71,12 @@ def main():
 
             regret = best_response_vfs - vf_s0
             belief.update_prior(regret, regret=use_regret)
-            belief.project()
 
             vfs.append(expected_vf[environment.s0])
             regrets.append(np.sum(regret * belief()))
             scores.append(np.mean(vf_s0))
 
-            print(robust_policy.get_params())
+            print(robust_policy.get_probs())
             print(belief())
             print(regret)
 
@@ -87,13 +87,12 @@ def main():
     else:
         for i in range(1000):
             print(i)
-            print(robust_policy.get_params())
+            print(robust_policy.get_probs())
 
             expected_vf, vf = algo.policy_evaluation_for_prior(bg_population, belief)
             vf_s0 = vf[:, environment.s0]
-            algo.policy_improvement(bg_population, belief, expected_vf)
+            algo.exact_pg(bg_population, belief, expected_vf)
             belief.update_prior(vf_s0, regret=use_regret)
-            belief.project()
 
             vfs.append(expected_vf[environment.s0])
             scores.append(np.mean(vf_s0))
@@ -109,7 +108,7 @@ def main():
     plt.plot(scores)
     plt.show()
 
-    print(robust_policy.get_params())
+    print(robust_policy.get_probs())
     print(final_belief)
 
     d = {

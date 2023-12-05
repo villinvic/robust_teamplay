@@ -9,16 +9,21 @@ class TabularPolicy(Policy):
     def __init__(self, environment: gymnasium.Env):
         super().__init__(environment)
 
-        self.action_probs = np.full((self.n_states, self.n_actions), fill_value=np.nan, dtype=np.float32)
-
     def initialize_uniformly(self):
 
-        self.action_probs[:] = 1. / self.n_actions
+        self.action_logits[:] = 1. / self.n_actions
 
     def initialize_randomly(self):
 
-        self.action_probs[:] = np.random.random(self.action_probs.shape)
-        self.action_probs /= self.action_probs.sum(axis=-1, keepdims=True)
+        self.action_logits[:] = np.random.random(self.action_logits.shape)
+        self.action_logits /= self.action_logits.sum(axis=-1, keepdims=True)
+
+
+    def get_probs(self):
+        return self.action_logits
+
+    def get_params(self):
+        return self.action_logits
 
 
 class SingleStatePolicy(Policy):
