@@ -29,7 +29,7 @@ def main():
     algo = PolicyIteration(robust_policy, environment, epsilon=1e-4, learning_rate=1e-2)
 
     # belief over worst teammate policy (all bg individuals and our self)
-    belief = Prior(len(bg_population.policies)+1, learning_rate=1e-3)
+    belief = Prior(len(bg_population.policies)+1, learning_rate=1e-1)
     belief.initialize_uniformly()
 
     vfs = []
@@ -62,7 +62,7 @@ def main():
             best_response_vfs[p_id] = vf[environment.s0]
 
         regrets = []
-        for i in range(5000):
+        for i in range(15000):
             print(i)
 
             expected_vf, vf = algo.policy_evaluation_for_prior(bg_population, belief)
