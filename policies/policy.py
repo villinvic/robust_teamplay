@@ -6,8 +6,8 @@ class Policy:
 
     def __init__(self,environment: gymnasium.Env):
 
-        self.n_actions = environment.action_space.n
-        self.n_states = environment.observation_space.n
+        self.n_actions = environment.action_space[0].n
+        self.n_states = environment.observation_space[0].n
 
         self.action_probs: np.ndarray = None
 
@@ -18,4 +18,7 @@ class Policy:
 
     def sample_deterministic_action(self, state):
         return np.argmax(self.action_probs[state])
+
+    def get_params(self):
+        return self.action_probs
 

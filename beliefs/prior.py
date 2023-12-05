@@ -3,32 +3,39 @@ import numpy as np
 
 class Prior:
 
-    def __init__(self, dim, learning_rate=1e-3):
+    def __init__(self, dim, learning_rate=5e-2):
         self.dim = dim
         self.beta: np.ndarray
         self.learning_rate = learning_rate
 
-    def init_uniformly(self):
+    def initialize_uniformly(self):
 
-        self.beta = np.full((self.dim,), fill_value=1/self.dim, dtype=np.float16)
+        self.beta = np.full((self.dim,), fill_value=1/self.dim, dtype=np.float32)
+
+    def initialize_certain(self, idx=0):
+
+        self.beta = np.zeros((self.dim,), dtype=np.float32)
+        self.beta[idx] = 1.
+
 
 
     def __call__(self):
         return self.beta
 
-    def project_prior(self):
+    def project(self):
 
-        min_beta = np.min(self.beta)
-        if min_beta < 0:
-            self.beta += -min_beta + 1e-8
-        self.beta /= np.sum(self.beta)
+        self.beta[:] /= self.beta.sum()
 
 
-    def update_prior(self, score, regret=True):
-        if regret:
-            score = - score
+    def update_prior(self, gradient, regret=True):
 
-        self.beta += self.learning_rate * score * self.beta
+        # Score is the value of the policy
+        # Thus, we want to minimize it, ie maximize regret
+
+        if not regret:
+            gradient = - gradient
+
+        self.beta[:] = self.beta * np.exp(self.learning_rate * gradient)
 
 
 

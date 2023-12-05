@@ -2,14 +2,14 @@ import gymnasium
 import numpy as np
 from itertools import product
 
-import bg_population
+from background_population import bg_population
 
 
 def build_deterministic_policies(n_actions, n_states):
 
     sequences = np.array(list(product(range(n_actions), repeat=n_states)))
 
-    policies = np.zeros((len(sequences), n_states, n_actions), dtype=np.float16)
+    policies = np.zeros((len(sequences), n_states, n_actions), dtype=np.float32)
 
     seq_indices, state_indices = np.indices(policies.shape[:2])
 

@@ -60,31 +60,41 @@ class RepeatedPrisonersDilemmaEnv(MultiAgentEnv):
         # History of actions
         self.tree = build_tree_recursive(depth=episode_length)
         self.transition_function = np.zeros(
-            (self.observation_space[0].n, self.action_space[0].n, self.action_space[0].n, self.observation_space[0].n), dtype=np.float16
+            (self.observation_space[0].n, self.action_space[0].n, self.action_space[0].n, self.observation_space[0].n), dtype=np.float32
         )
-        self.reward_function = np.zeros((self.observation_space[0].n,), dtype=np.float16)
+        self.reward_function = np.zeros((self.observation_space[0].n, self.action_space[0].n, self.action_space[0].n), dtype=np.float32)
+        self.gamma = 1.
+        self.s0 = 0
 
-        def setup_rec(node=self.tree, depth=self.episode_length):
-            if depth == 1:
-                return
+        self.tit_for_tat = np.zeros((self.observation_space[0].n, self.action_space[0].n), dtype=np.float32)
+        self.tit_for_tat[0, 0] = 1
+        self.cooperate_then_defect = np.zeros((self.observation_space[0].n, self.action_space[0].n), dtype=np.float32)
+        self.cooperate_then_defect[0, 0] = 1
 
-            else:
-                for action1 in range(self.action_space[0].n):
-                    for action2 in range(self.action_space[0].n):
-                        idx = action1 + 2 * action2
-                        next_node = node.children[idx]
 
-                        if action1 == 0 and action2 == 0:
-                            r = self.max_reward - 1
-                        elif action1 == 0 and action2 == 1:
-                            r = 0
-                        elif action1 == 1 and action2 == 0:
-                            r = self.max_reward
-                        else:
-                            r = 1
-                        self.reward_function[next_node] = r
+        def setup_rec(node=self.tree, depth=self.episode_length, opp_already_dected=False):
+            for action1 in range(self.action_space[0].n):
+                for action2 in range(self.action_space[0].n):
+                    idx = action1 + 2 * action2
+                    next_node = node.children[idx]
+
+                    if action1 == 0 and action2 == 0:
+                        r = self.max_reward - 1
+                    elif action1 == 0 and action2 == 1:
+                        r = 0
+                    elif action1 == 1 and action2 == 0:
+                        r = self.max_reward
+                    else:
+                        r = 1
+                    self.reward_function[node.index, action1, action2] = r
+
+                    if depth > 1:
+                        self.tit_for_tat[next_node.index, action2] = 1
+                        opp_already_dected = opp_already_dected or action2 == 1
+                        self.cooperate_then_defect[next_node.index, int(opp_already_dected)] = 1
+
                         self.transition_function[node.index, action1, action2, next_node.index] = 1
-                        setup_rec(next_node, depth-1)
+                        setup_rec(next_node, depth-1, opp_already_dected)
 
         setup_rec()
 
