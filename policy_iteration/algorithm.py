@@ -33,7 +33,6 @@ class PolicyIteration:
         # samples [batch_size, state, next_state, reward]
 
         values = np.zeros((len(prior.beta_logits), self.n_states))
-        old_values = np.empty_like(values)
 
         action_probs = self.policy.get_probs()
 
@@ -89,80 +88,46 @@ class PolicyIteration:
         return np.sum(values * prior()[:, np.newaxis], axis=0), values
 
 
-    def policy_evaluation_for_prior2(
+    def policy_evaluation_for_scenario(
             self,
-            bg_population: BackgroundPopulation,
-            prior: Prior,
+            scenario
     ):
+        teammate, rewards = scenario
+
         # samples [batch_size, state, next_state, reward]
 
-        values = np.zeros((len(prior.beta_logits), self.n_states))
+        value = np.zeros((self.n_states))
 
         action_probs = self.policy.get_probs()
 
-        old_value = np.empty_like(values[0])
-        for i in range(len(bg_population.policies)):
+        transition_function, reward_function = compute_multiagent_mdp(self.environment.transition_function,
+                                                                      self.environment.reward_function,
+                                                                      teammate, rewards)
 
-            transition_function, reward_function = compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, bg_population.policies[i])
-            e = np.inf
+        action_probs_p3 = action_probs[:, :, np.newaxis]
 
-            while e > self.epsilon:
-                old_value[:] = values[i]
-                values[i, :] = 0.
+        for t in range(self.epsilon):
+            # old_values[:] = values
+            value[:] = np.sum(reward_function * action_probs, axis=-1) + np.sum(
+                np.sum(transition_function * action_probs_p3
+                       * (self.environment.gamma * value[np.newaxis, np.newaxis])
+                       , axis=-1), axis=-1)
 
-                for state in range(self.n_states):
-                    for action in range(self.n_actions):
-                        values[i, state] += action_probs[state, action] * reward_function[state, action]
-                        for next_state in range(self.n_states):
 
-                            values[i, state] += (transition_function[state, action, next_state]
-                                                * action_probs[state, action]
-                                                * (self.environment.gamma * old_value[next_state])
-                                                )
-                e = np.max(np.abs(old_value-values[i]))
+        return value
 
-        # Selfplay (we want to maximize the avg joint rewards)
-        # therefore, value function is the average function of the copies
-        transition_function, reward_function = compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, action_probs, joint_rewards=(0.5,0.5))
-        e = np.inf
-        while e > self.epsilon:
-            old_value[:] = values[-1]
-            values[-1, :] = 0.
-            for state in range(self.n_states):
-                for action in range(self.n_actions):
-                    values[-1, state] += action_probs[state, action] * reward_function[state, action]
-                    for next_state in range(self.n_states):
-                        values[-1, state] += (transition_function[state, action, next_state]
-                                            * action_probs[state, action]
-                                            * (self.environment.gamma * old_value[next_state])
-                                            )
-            e = np.max(np.abs(old_value - values[-1]))
+    def policy_improvement_for_scenario(self, scenario, vf):
 
-        return np.sum(values * prior()[:, np.newaxis], axis=0), values
-
-    def policy_improvement(self, bg_population: BackgroundPopulation, prior: Prior, vf):
-        params = prior()
+        teammate, rewards = scenario
         action_probs = self.policy.get_probs()
 
-        mdps = [
-            compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, bg_population.policies[i])
-            for i in range(len(bg_population.policies))
-        ] + [compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, action_probs, joint_rewards=(0.5,0.5))]
-        transition_functions = [
-            params[i] * mdp[0]
-            for i, mdp  in enumerate(mdps)
-        ]
-        reward_functions = [
-            params[i] * mdp[1]
-            for i, mdp in enumerate(mdps)
-        ]
-
-        expected_transition_function = sum(transition_functions) / len(transition_functions)
-        expected_reward_function = sum(reward_functions) / len(reward_functions)
+        transition_function, reward_function = compute_multiagent_mdp(self.environment.transition_function,
+                                                                      self.environment.reward_function,
+                                                                      teammate, rewards)
 
         new_policy = np.zeros_like(action_probs)
 
-        action_values = expected_reward_function + np.sum(expected_transition_function * (
+        action_values = reward_function + np.sum(transition_function * (
             self.environment.gamma * vf
         ), axis=-1)
 
@@ -185,13 +150,48 @@ class PolicyIteration:
         # )
 
         total_gradients = 0.
-        for teammate, reward_weights, V, scenario_prob in zip(all_policies, all_rewards, vf, prior()):
+        for teammate, reward_weights, V, scenario_prob \
+                in zip(all_policies, all_rewards, vf, prior()):
 
             induced_transition_function, induced_reward_function = compute_multiagent_mdp(
                 self.environment.transition_function, self.environment.reward_function,
                 teammate, joint_rewards=reward_weights
             )
             Q = induced_reward_function + self.environment.gamma * np.sum(induced_transition_function * V[np.newaxis, np.newaxis], axis=-1)
+            total_gradients += scenario_prob * self.policy.compute_pg(
+                Q, V, transition_function=induced_transition_function, lambda_=self.lambda_
+            )
+        self.policy.apply_gradient(total_gradients, lr=self.lr)
+
+
+    def exact_regret_pg(self, bg_population, prior: Prior, vf, best_responses, best_responses_vfs):
+
+        action_probs = self.policy.get_probs()
+
+        all_policies = np.concatenate([bg_population.policies, action_probs[np.newaxis]], axis=0)
+        all_rewards = np.concatenate([np.tile([1., 0.], (len(bg_population.policies), 1)), [[0.5, 0.5]]], axis=0)
+        #
+        # expected_teammate = (all_policies * prior()[:, np.newaxis, np.newaxis]).sum(axis=0)
+        # expected_rewards = (all_rewards * prior()[:, np.newaxis]).sum(axis=0)
+        # expected_transition_function, expected_reward_function = compute_multiagent_mdp(
+        #     self.environment.transition_function, self.environment.reward_function,
+        #     expected_teammate, joint_rewards=expected_rewards
+        # )
+
+        total_gradients = 0.
+        for teammate, reward_weights, V, scenario_prob, best_response, best_response_vf \
+                in zip(all_policies, all_rewards, vf, prior(), best_responses, best_responses_vfs):
+
+            induced_transition_function, induced_reward_function = compute_multiagent_mdp(
+                self.environment.transition_function, self.environment.reward_function,
+                teammate, joint_rewards=reward_weights
+            )
+
+            Q_star = induced_reward_function + self.environment.gamma * np.sum(induced_transition_function * best_response_vf[np.newaxis, np.newaxis], axis=-1)
+
+            Q = induced_reward_function + self.environment.gamma * np.sum(induced_transition_function * V[np.newaxis, np.newaxis], axis=-1)
+
+            Q_regret = Q_star - Q
             total_gradients += scenario_prob * self.policy.compute_pg(
                 Q, V, transition_function=induced_transition_function, lambda_=self.lambda_
             )

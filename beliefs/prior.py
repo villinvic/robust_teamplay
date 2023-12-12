@@ -39,26 +39,17 @@ class Prior:
         # Thus, we want to minimize it, ie maximize regret
 
         if not regret:
-            loss = - loss
+            loss = - loss #np.max(loss) - loss + np.min(loss)
 
-        min_loss = np.min(loss)
-        max_loss = np.max(loss)
-
-        #normalized_loss = (loss - min_loss) / (max_loss - min_loss)
-
-        #s = self.get_probs()
-        #gradients = (s * (np.eye(len(loss)) - s[:, np.newaxis]) * normalized_loss[:, np.newaxis] ).sum(axis=0)
-
-        # gradients = v * (1 - v) * loss
-        #
-
-        ideal_distribution = loss / np.sum(loss)
+        #ideal_distribution = loss / np.sum(loss)
 
         #self.beta_logits[:] = self.learning_rate * gradients / self.beta_logits + self.beta_logits
 
         #self.beta_logits[:] /= self.beta_logits.sum(axis=0, keepdims=True)
 
-        self.beta_logits[:] = self.beta_logits * (1-self.learning_rate) + ideal_distribution * self.learning_rate
+        #self.beta_logits[:] = self.beta_logits * (1-self.learning_rate) + ideal_distribution * self.learning_rate
+
+        self.beta_logits[:] = self.beta_logits + loss * self.learning_rate
 
         self.beta_logits[:] /= self.beta_logits.sum()
 

@@ -5,9 +5,12 @@ from itertools import product
 from background_population import bg_population
 
 
-def build_deterministic_policies(n_actions, n_states):
+def build_deterministic_policies(n_actions, n_states, size=None, seed=None):
 
     sequences = np.array(list(product(range(n_actions), repeat=n_states)))
+    if size is not None:
+        np.random.seed(seed)
+        sequences = sequences[np.random.choice(len(sequences), size)]
 
     policies = np.zeros((len(sequences), n_states, n_actions), dtype=np.float32)
 
@@ -26,9 +29,9 @@ class DeterministicPoliciesPopulation(bg_population.BackgroundPopulation):
         self.max_size = 1_000_000
         self.build_population()
 
-    def build_population(self):
+    def build_population(self, size=None, seed=None):
 
-        self.policies = build_deterministic_policies(self.n_actions, self.n_states)
+        self.policies = build_deterministic_policies(self.n_actions, self.n_states, size, seed)
 
 
 

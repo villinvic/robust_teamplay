@@ -40,24 +40,21 @@ class RepeatedPrisonersDilemmaEnv(MultiAgentEnv):
 
         self.episode_length = episode_length
         self.current_step = 0
-        self.max_reward = 5  # Maximum reward for each player
+        self.max_reward = 5
         self._agent_ids = {0, 1}
 
-        # Action space: both players can either cooperate (0) or defect (1)
         self.action_space = spaces.Dict(
             {
                 i: spaces.Discrete(2) for i in self._agent_ids
             }
         )
 
-        # Observation space: one-hot encoding of the state index
         self.observation_space = spaces.Dict(
             {
                 i: spaces.Discrete(sum([4**(t) for t in range(episode_length)])) for i in self._agent_ids
             }
         )
 
-        # History of actions
         self.tree = build_tree_recursive(depth=episode_length)
         self.transition_function = np.zeros(
             (self.observation_space[0].n, self.action_space[0].n, self.action_space[0].n, self.observation_space[0].n), dtype=np.float32

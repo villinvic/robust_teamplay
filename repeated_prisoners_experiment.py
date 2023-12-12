@@ -13,7 +13,7 @@ from policy_iteration.algorithm import PolicyIteration
 import argparse
 
 
-def main(policy_lr, prior_lr, use_regret, lambda_):
+def main(policy_lr, prior_lr, use_regret, self_play, lambda_):
 
     environment = RepeatedPrisonersDilemmaEnv(episode_length=3)
 
@@ -23,64 +23,69 @@ def main(policy_lr, prior_lr, use_regret, lambda_):
     #robust_policy.initialize_randomly()
 
     # do with policy types ?
-    num_policies = 64
-
+    num_policies = 8
+    seed = 0
     bg_population = DeterministicPoliciesPopulation(environment)
-    bg_population.build_population()
+    bg_population.build_population(size=num_policies, seed=seed)
 
-    np.random.seed(1)
-    bg_population.policies = bg_population.policies[np.random.choice(len(bg_population.policies), num_policies)]
-
-    algo = PolicyIteration(robust_policy, environment, epsilon=10, learning_rate=policy_lr, lambda_=lambda_)
+    algo = PolicyIteration(robust_policy, environment, epsilon=4, learning_rate=policy_lr, lambda_=lambda_)
 
     # belief over worst teammate policy (all bg individuals and our self)
     belief = Prior(len(bg_population.policies)+1, learning_rate=prior_lr)
     #belief.initialize_randomly()
-    belief.initialize_uniformly()
-    #belief.initialize_certain(belief.dim - 1)
+    if self_play:
+        belief.initialize_certain(belief.dim - 1)
+    else:
+        belief.initialize_uniformly()
 
     vfs = []
     regret_scores = []
     vf_scores = []
 
     # Compute best responses for regret
-    best_response_vfs = np.empty((len(bg_population.policies) + 1,), dtype=np.float32)
+    best_response_vfs = np.empty((len(bg_population.policies) + 1, robust_policy.n_states), dtype=np.float32)
     best_response = TabularPolicy(environment)
     p_belief = Prior(len(bg_population.policies) + 1)
 
     priors = []
     priors.append(belief().copy())
-
+    best_responses = np.zeros_like(bg_population.policies)
     for p_id in range(len(bg_population.policies) + 1):
         best_response.initialize_uniformly()
-        p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=3)
-        p_belief.initialize_certain(idx=p_id)
+        p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=10)
+        if p_id < len(bg_population.policies):
+            scenario = bg_population.policies[p_id], (1, 0)
+        else:
+            scenario = best_response.get_probs(), (0.5, 0.5)
+        for i in range(10):
+            vf = p_algo.policy_evaluation_for_scenario(scenario)
 
-        for i in range(6):
-            vf, tmp = p_algo.policy_evaluation_for_prior(bg_population, p_belief)
+            p_algo.policy_improvement_for_scenario(scenario, vf)
 
-            p_algo.policy_improvement(bg_population, p_belief, vf)
+        vf = p_algo.policy_evaluation_for_scenario(scenario)
 
-        vf, tmp = p_algo.policy_evaluation_for_prior(bg_population, p_belief)
-
-        best_response_vfs[p_id] = vf[environment.s0]
-
-    print(best_response_vfs)
-    input()
+        best_response_vfs[p_id] = vf
+        best_responses[p_id] = best_response.get_probs()
 
     regrets = []
-    for i in range(5000):
+    for i in range(2000):
 
         expected_vf, vf = algo.policy_evaluation_for_prior(bg_population, belief)
         vf_s0 = vf[:, environment.s0]
-        algo.exact_pg(bg_population, belief, vf)
 
-        regret = best_response_vfs - vf_s0
+        all_regrets = best_response_vfs - vf
+
+        regret = all_regrets[:, environment.s0]
 
         if use_regret:
             belief.update_prior(regret, regret=True)
+            algo.exact_pg(bg_population, belief, all_regrets, regret=True, best_responses=best_responses)
         else:
             belief.update_prior(vf_s0, regret=False)
+            algo.exact_pg(bg_population, belief, vf, regret=False)
+
+
+
 
         vfs.append(expected_vf[environment.s0])
         regrets.append(np.sum(regret * belief()))
@@ -95,7 +100,16 @@ def main(policy_lr, prior_lr, use_regret, lambda_):
         print(belief(), entropy)
         print(regret)
         #print(robust_policy.get_probs())
+    return
 
+
+    data = {
+        "priors": priors,
+        "values": vfs,
+        "value_scores": vfs,
+        "regrets": regrets,
+        "regret_score": regret_scores,
+    }
 
     plt.plot(regrets, label="regret w.r.t prior")
     plt.plot(regret_scores, label="regret w.r.t uniform (test time) prior")
@@ -260,14 +274,16 @@ if __name__ == '__main__':
     parser.add_argument("experiment", type=str, choices=["main", "eval"], default="main")
     parser.add_argument("--policy_lr", type=float, default=1e-2)
     parser.add_argument("--prior_lr", type=float, default=1e-2)
-    parser.add_argument("--use_regret", type=bool, default=True)
+    parser.add_argument("--use_regret", type=bool, default=False)
     parser.add_argument("--lambda_", type=float, default=1e-3)
+    parser.add_argument("--sp", type=bool, default=False)
+
 
 
 
     args = parser.parse_args()
 
     if args.experiment == "main":
-        main(args.policy_lr, args.prior_lr, args.use_regret, args.lambda_)
+        main(args.policy_lr, args.prior_lr, args.use_regret, args.sp, args.lambda_)
     elif args.experiment == "eval":
         eval_policies()

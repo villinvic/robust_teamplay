@@ -7,6 +7,7 @@ def compute_multiagent_mdp(transition_function, reward_function, policy, joint_r
     action_dim =  transition_function.shape[1]
     single_agent_transition_function = np.zeros((state_dim, action_dim, state_dim))
     single_agent_reward_function = np.zeros((state_dim, action_dim))
+    self_rewards, coop_rewards = joint_rewards
 
     for state in range(state_dim):
         for action1 in range(action_dim):
@@ -16,11 +17,10 @@ def compute_multiagent_mdp(transition_function, reward_function, policy, joint_r
                             policy[state, action2] * transition_function[state, action1, action2, next_state]
                     )
 
-                self_rewards, coop_rewards = joint_rewards
-                single_agent_reward_function[state, action1] +=  self_rewards * (
+                single_agent_reward_function[state, action1] += self_rewards * (
                         policy[state, action2] * reward_function[state, action1, action2]
                 ) + coop_rewards * (
-                        policy[state, action1] * reward_function[state, action2, action1]
+                        policy[state, action2] * reward_function[state, action2, action1]
                 )
 
     return single_agent_transition_function, single_agent_reward_function
