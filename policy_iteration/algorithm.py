@@ -1,3 +1,5 @@
+from time import time
+
 import numpy as np
 from gymnasium.spaces import Discrete
 from gymnasium.spaces import Dict
@@ -11,7 +13,7 @@ from policies.policy import Policy
 
 class PolicyIteration:
 
-    def __init__(self, initial_policy : Policy, environment, epsilon=1e-3, learning_rate=1e-3):
+    def __init__(self, initial_policy : Policy, environment, epsilon=1e-3, learning_rate=1e-3, lambda_=1e-3):
 
         self.policy = initial_policy
         self.n_states = self.policy.action_logits.shape[0]
@@ -20,6 +22,7 @@ class PolicyIteration:
         self.epsilon = epsilon
         self.n_iter = 100
         self.lr = learning_rate
+        self.lambda_ = lambda_
 
 
     def policy_evaluation_for_prior(
@@ -30,33 +33,58 @@ class PolicyIteration:
         # samples [batch_size, state, next_state, reward]
 
         values = np.zeros((len(prior.beta_logits), self.n_states))
-        old_value = np.empty_like(values[0])
+        old_values = np.empty_like(values)
 
         action_probs = self.policy.get_probs()
 
+        transition_functions = []
+        reward_functions = []
         for i in range(len(bg_population.policies)):
             transition_function, reward_function = compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, bg_population.policies[i])
-            e = np.inf
-            while e > self.epsilon:
-                old_value[:] = values[i]
-                values[i, :] = np.sum(reward_function * action_probs, axis=-1) + np.sum(np.sum(transition_function * action_probs[:, :, np.newaxis]
-                                * (self.environment.gamma * values[np.newaxis, np.newaxis, i])
-                                , axis=-1), axis=-1)
+            transition_functions.append(transition_function)
+            reward_functions.append(reward_function)
 
-                e = np.max(np.abs(old_value-values[i]))
+        sp_transition_function, sp_reward_function = compute_multiagent_mdp(self.environment.transition_function,
+                                                                      self.environment.reward_function,
+                                                                      action_probs, joint_rewards=(0.5,0.5))
+        transition_functions.append(sp_transition_function)
+        reward_functions.append(sp_reward_function)
 
-        # Selfplay (we want to maximize the avg joint rewards)
-        # therefore, value function is the average function of the copies
-        transition_function, reward_function = compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, action_probs, joint_rewards=True)
-        e = np.inf
-        while e > self.epsilon:
-            old_value[:] = values[-1]
+        transition_functions = np.stack(transition_functions, axis=0)
+        reward_functions = np.stack(reward_functions, axis=0)
 
-            values[-1, :] = np.sum(reward_function * action_probs, axis=-1) + np.sum(np.sum(transition_function * action_probs[:, :, np.newaxis]
-                                  * (self.environment.gamma * values[np.newaxis, np.newaxis, -1])
-                                  , axis=-1), axis=-1)
+        action_probs_p1 = action_probs[np.newaxis]
+        action_probs_p1_p4 = action_probs_p1[:, :, :, np.newaxis]
 
-            e = np.max(np.abs(old_value - values[-1]))
+        for t in range(self.epsilon):
+            #old_values[:] = values
+            values[:, :] = np.sum(reward_functions * action_probs_p1, axis=-1) + np.sum(np.sum(transition_functions * action_probs_p1_p4
+                            * (self.environment.gamma * values[:, np.newaxis, np.newaxis])
+                            , axis=-1), axis=-1)
+
+        # for i in range(len(bg_population.policies)):
+        #     transition_function, reward_function = compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, bg_population.policies[i])
+        #     e = np.inf
+        #     while e > self.epsilon:
+        #         old_value[:] = values[i]
+        #         values[i, :] = np.sum(reward_function * action_probs, axis=-1) + np.sum(np.sum(transition_function * action_probs[:, :, np.newaxis]
+        #                         * (self.environment.gamma * values[np.newaxis, np.newaxis, i])
+        #                         , axis=-1), axis=-1)
+        #
+        #         e = np.max(np.abs(old_value-values[i]))
+        #
+        # # Selfplay (we want to maximize the avg joint rewards)
+        # # therefore, value function is the average function of the copies
+        # transition_function, reward_function = compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, action_probs, joint_rewards=True)
+        # e = np.inf
+        # while e > self.epsilon:
+        #     old_value[:] = values[-1]
+        #
+        #     values[-1, :] = np.sum(reward_function * action_probs, axis=-1) + np.sum(np.sum(transition_function * action_probs[:, :, np.newaxis]
+        #                           * (self.environment.gamma * values[np.newaxis, np.newaxis, -1])
+        #                           , axis=-1), axis=-1)
+        #
+        #     e = np.max(np.abs(old_value - values[-1]))
 
         return np.sum(values * prior()[:, np.newaxis], axis=0), values
 
@@ -95,7 +123,7 @@ class PolicyIteration:
 
         # Selfplay (we want to maximize the avg joint rewards)
         # therefore, value function is the average function of the copies
-        transition_function, reward_function = compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, action_probs, joint_rewards=True)
+        transition_function, reward_function = compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, action_probs, joint_rewards=(0.5,0.5))
         e = np.inf
         while e > self.epsilon:
             old_value[:] = values[-1]
@@ -112,14 +140,14 @@ class PolicyIteration:
 
         return np.sum(values * prior()[:, np.newaxis], axis=0), values
 
-    def policy_improvement(self, bg_population, prior: Prior, vf):
+    def policy_improvement(self, bg_population: BackgroundPopulation, prior: Prior, vf):
         params = prior()
         action_probs = self.policy.get_probs()
 
         mdps = [
             compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, bg_population.policies[i])
             for i in range(len(bg_population.policies))
-        ] + [compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, action_probs, joint_rewards=True)]
+        ] + [compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, action_probs, joint_rewards=(0.5,0.5))]
         transition_functions = [
             params[i] * mdp[0]
             for i, mdp  in enumerate(mdps)
@@ -145,46 +173,55 @@ class PolicyIteration:
     def exact_pg(self, bg_population, prior: Prior, vf):
 
         action_probs = self.policy.get_probs()
-        params = prior()
 
-        mdps = [
-            compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, bg_population.policies[i])
-            for i in range(len(bg_population.policies))
-        ] + [compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, action_probs, joint_rewards=True)]
-        transition_functions = [
-            params[i] * mdp[0]
-            for i, mdp  in enumerate(mdps)
-        ]
-        reward_functions = [
-            params[i] * mdp[1]
-            for i, mdp in enumerate(mdps)
-        ]
+        all_policies = np.concatenate([bg_population.policies, action_probs[np.newaxis]], axis=0)
+        all_rewards = np.concatenate([np.tile([1., 0.], (len(bg_population.policies), 1)), [[0.5, 0.5]]], axis=0)
+        #
+        # expected_teammate = (all_policies * prior()[:, np.newaxis, np.newaxis]).sum(axis=0)
+        # expected_rewards = (all_rewards * prior()[:, np.newaxis]).sum(axis=0)
+        # expected_transition_function, expected_reward_function = compute_multiagent_mdp(
+        #     self.environment.transition_function, self.environment.reward_function,
+        #     expected_teammate, joint_rewards=expected_rewards
+        # )
 
-        expected_transition_function = sum(transition_functions) / len(transition_functions)
-        expected_reward_function = sum(reward_functions) / len(reward_functions)
+        total_gradients = 0.
+        for teammate, reward_weights, V, scenario_prob in zip(all_policies, all_rewards, vf, prior()):
 
-        q = expected_reward_function + self.environment.gamma * np.sum(expected_transition_function * vf[np.newaxis, np.newaxis], axis=-1)
-
-        self.policy.apply_loss(q, lr=self.lr)
+            induced_transition_function, induced_reward_function = compute_multiagent_mdp(
+                self.environment.transition_function, self.environment.reward_function,
+                teammate, joint_rewards=reward_weights
+            )
+            Q = induced_reward_function + self.environment.gamma * np.sum(induced_transition_function * V[np.newaxis, np.newaxis], axis=-1)
+            total_gradients += scenario_prob * self.policy.compute_pg(
+                Q, V, transition_function=induced_transition_function, lambda_=self.lambda_
+            )
+        self.policy.apply_gradient(total_gradients, lr=self.lr)
 
     def policy_improvement2(self, bg_population, prior: Prior, vf):
-        params = prior()
-        mdps = [
-            compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, bg_population.policies[i])
-            for i in range(len(bg_population.policies))
-        ] + [compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, self.policy, joint_rewards=True)]
-        transition_functions = [
-            params[i] * mdp[0]
-            for i, mdp  in enumerate(mdps)
-        ]
-        reward_functions = [
-            params[i] * mdp[1]
-            for i, mdp in enumerate(mdps)
-        ]
+        action_probs = self.policy.get_probs()
 
-        expected_transition_function = sum(transition_functions) / len(transition_functions)
-        expected_reward_function = sum(reward_functions) / len(reward_functions)
+        # mdps = [
+        #     compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, bg_population.policies[i])
+        #     for i in range(len(bg_population.policies))
+        # ] + [compute_multiagent_mdp(self.environment.transition_function, self.environment.reward_function, self.policy, joint_rewards=(0.5,0.5))]
+        # transition_functions = [
+        #     params[i] * mdp[0]
+        #     for i, mdp  in enumerate(mdps)
+        # ]
+        # reward_functions = [
+        #     params[i] * mdp[1]
+        #     for i, mdp in enumerate(mdps)
+        # ]
 
+        all_policies = np.concatenate([bg_population.policies, action_probs[np.newaxis]], axis=0)
+        all_rewards = np.concatenate([np.stack([1., 0.], len(bg_population.policies), axis=0), [[0.5, 0.5]]], axis=0)
+
+        expected_teammate =  (all_policies * prior()).sum(axis=0)
+        expected_rewards = (all_rewards * prior()).sum(axis=0)
+        expected_transition_function, expected_reward_function = compute_multiagent_mdp(
+            self.environment.transition_function, self.environment.reward_function,
+            expected_teammate, joint_rewards=expected_rewards
+        )
 
         new_policy = np.zeros_like(self.policy)
         for state in range(self.n_states):
@@ -211,7 +248,7 @@ if __name__ == '__main__':
     np.random.seed(0)
 
     class RandomDiscountedMDP:
-        def __init__(self, players=2, states=3, actions=2):
+        def __init__(self, players=2, states=8, actions=2):
             transition_function = np.random.random((states,) + (actions,) * players + (states,))
 
             self.transition_function = transition_function / transition_function.sum(axis=-1, keepdims=True)
@@ -225,21 +262,27 @@ if __name__ == '__main__':
 
     env = RandomDiscountedMDP()
 
-    policy = np.random.random((env.transition_function.shape[0], env.transition_function.shape[1]))
-    policy /= np.sum(policy, axis=1, keepdims=True)
+
+    policy = Policy(env)
+    policy.action_logits[:] = np.random.random((env.transition_function.shape[0], env.transition_function.shape[1]))
 
     bg_population = DeterministicPoliciesPopulation(env)
     bg_population.build_population()
 
-    alg = PolicyIteration(initial_policy=policy, environment=env)
+    alg = PolicyIteration(initial_policy=policy, environment=env, epsilon=10000)
 
     prior = Prior(len(bg_population.policies)+1)
     prior.initialize_uniformly()
 
+    t = time()
     expected_vf, vf = alg.policy_evaluation_for_prior(bg_population, prior)
+    t2 = time()
+    alg.epsilon = 1e-3
     expected_vf2, vf2 = alg.policy_evaluation_for_prior2(bg_population, prior)
 
-    print(vf, vf2)
+    print(vf, vf2, t2 - t, time() - t2)
+
+    input()
 
     policy = np.empty_like(alg.policy)
     policy[:] = alg.policy

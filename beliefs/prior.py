@@ -10,20 +10,25 @@ class Prior:
 
     def initialize_uniformly(self):
 
-        self.beta_logits = np.full((self.dim,), fill_value=0, dtype=np.float32)
+        self.beta_logits = np.full((self.dim,), fill_value=1/self.dim, dtype=np.float32)
 
     def initialize_randomly(self):
 
-        self.beta_logits = np.random.random((self.dim,))
+        self.beta_logits = np.random.random((self.dim,)) * 4
+        self.beta_logits /= self.beta_logits.sum(keepdims=True)
 
     def initialize_certain(self, idx=0):
 
-        self.beta_logits = np.full((self.dim,), fill_value=-1e3, dtype=np.float32)
-        self.beta_logits[idx] = 1e3
+        #self.beta_logits = np.full((self.dim,), fill_value=-10, dtype=np.float32)
+        #self.beta_logits[idx] = 10
+
+        self.beta_logits = np.zeros((self.dim,), dtype=np.float32)
+        self.beta_logits[idx] = 1
 
     def get_probs(self):
-        exp = np.exp(self.beta_logits - self.beta_logits.max())
-        return exp / exp.sum()
+        return self.beta_logits
+        #exp = np.exp((self.beta_logits - self.beta_logits.max())*0.5)
+        #return exp / exp.sum()
 
     def __call__(self):
         return self.get_probs()
@@ -36,26 +41,41 @@ class Prior:
         if not regret:
             loss = - loss
 
-        v = self.get_probs()
+        min_loss = np.min(loss)
+        max_loss = np.max(loss)
 
-        gradients = v * (1 - v) * loss
+        #normalized_loss = (loss - min_loss) / (max_loss - min_loss)
 
-        self.beta_logits[:] = self.learning_rate * gradients + self.beta_logits
+        #s = self.get_probs()
+        #gradients = (s * (np.eye(len(loss)) - s[:, np.newaxis]) * normalized_loss[:, np.newaxis] ).sum(axis=0)
 
+        # gradients = v * (1 - v) * loss
+        #
+
+        ideal_distribution = loss / np.sum(loss)
+
+        #self.beta_logits[:] = self.learning_rate * gradients / self.beta_logits + self.beta_logits
+
+        #self.beta_logits[:] /= self.beta_logits.sum(axis=0, keepdims=True)
+
+        self.beta_logits[:] = self.beta_logits * (1-self.learning_rate) + ideal_distribution * self.learning_rate
+
+        self.beta_logits[:] /= self.beta_logits.sum()
 
 
 if __name__ == "__main__":
 
-    prior = Prior(5, learning_rate=1e-1)
+    prior = Prior(5, learning_rate=1e-3)
     prior.initialize_randomly()
 
-    loss = 1 + np.arange(5)
+    prior.beta_logits[:] = 10, -1, -1, -1, -1
 
-    print(loss)
+    loss = np.array([
+        4,5,1,5,1
+    ])
 
     for j in range(100):
 
         prior.update_prior(loss)
 
         print(prior.get_probs(), prior.beta_logits)
-

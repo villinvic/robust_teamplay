@@ -6,8 +6,10 @@ from policies.policy import Policy
 
 class TabularPolicy(Policy):
 
-    def __init__(self, environment: gymnasium.Env):
+    def __init__(self, environment: gymnasium.Env, logits = None):
         super().__init__(environment)
+        if logits is not None:
+            self.action_logits[:] = logits
 
     def initialize_uniformly(self):
 

@@ -13,6 +13,6 @@ class BackgroundPopulation:
 
         policy = np.empty_like(self.policies[0])
 
-        policy[:] = np.sum(prior()[:-1] * self.policies, axis=0) + prior[-1] * trained_policy
+        policy[:] = np.sum(prior()[:-1] * self.policies, axis=0) + prior[-1] * trained_policy.get_params()
 
 
