@@ -45,19 +45,17 @@ def main(policy_lr, prior_lr, use_regret, self_play, lambda_):
     # Compute best responses for regret
     best_response_vfs = np.empty((len(bg_population.policies) + 1, robust_policy.n_states), dtype=np.float32)
     best_response = TabularPolicy(environment)
-    p_belief = Prior(len(bg_population.policies) + 1)
-
     priors = []
     priors.append(belief().copy())
-    best_responses = np.zeros_like(bg_population.policies)
+    best_responses = np.zeros((bg_population.policies.shape[0] + 1,) + bg_population.policies.shape[1:], dtype=np.float32)
     for p_id in range(len(bg_population.policies) + 1):
         best_response.initialize_uniformly()
-        p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=10)
+        p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=3)
         if p_id < len(bg_population.policies):
             scenario = bg_population.policies[p_id], (1, 0)
         else:
             scenario = best_response.get_probs(), (0.5, 0.5)
-        for i in range(10):
+        for i in range(3):
             vf = p_algo.policy_evaluation_for_scenario(scenario)
 
             p_algo.policy_improvement_for_scenario(scenario, vf)
@@ -78,11 +76,12 @@ def main(policy_lr, prior_lr, use_regret, self_play, lambda_):
         regret = all_regrets[:, environment.s0]
 
         if use_regret:
+
             belief.update_prior(regret, regret=True)
-            algo.exact_pg(bg_population, belief, all_regrets, regret=True, best_responses=best_responses)
+            algo.exact_regret_pg(bg_population, belief, all_regrets)
         else:
             belief.update_prior(vf_s0, regret=False)
-            algo.exact_pg(bg_population, belief, vf, regret=False)
+            algo.exact_pg(bg_population, belief, vf)
 
 
 

@@ -164,7 +164,7 @@ class PolicyIteration:
         self.policy.apply_gradient(total_gradients, lr=self.lr)
 
 
-    def exact_regret_pg(self, bg_population, prior: Prior, vf, best_responses, best_responses_vfs):
+    def exact_regret_pg(self, bg_population, prior: Prior, regrets):
 
         action_probs = self.policy.get_probs()
 
@@ -179,21 +179,21 @@ class PolicyIteration:
         # )
 
         total_gradients = 0.
-        for teammate, reward_weights, V, scenario_prob, best_response, best_response_vf \
-                in zip(all_policies, all_rewards, vf, prior(), best_responses, best_responses_vfs):
+        for teammate, reward_weights, R, scenario_prob, best_response,  \
+                in zip(all_policies, all_rewards, regrets, prior()):
 
             induced_transition_function, induced_reward_function = compute_multiagent_mdp(
                 self.environment.transition_function, self.environment.reward_function,
                 teammate, joint_rewards=reward_weights
             )
 
-            Q_star = induced_reward_function + self.environment.gamma * np.sum(induced_transition_function * best_response_vf[np.newaxis, np.newaxis], axis=-1)
+            #Q_star = induced_reward_function + self.environment.gamma * np.sum(induced_transition_function * best_response_vf[np.newaxis, np.newaxis], axis=-1)
 
-            Q = induced_reward_function + self.environment.gamma * np.sum(induced_transition_function * V[np.newaxis, np.newaxis], axis=-1)
+            #Q = induced_reward_function + self.environment.gamma * np.sum(induced_transition_function * V[np.newaxis, np.newaxis], axis=-1)
 
-            Q_regret = Q_star - Q
+            #Q_regret = Q_star - Q
             total_gradients += scenario_prob * self.policy.compute_pg(
-                Q, V, transition_function=induced_transition_function, lambda_=self.lambda_
+                np.zeros((1, 1)), R, transition_function=induced_transition_function, lambda_=self.lambda_
             )
         self.policy.apply_gradient(total_gradients, lr=self.lr)
 

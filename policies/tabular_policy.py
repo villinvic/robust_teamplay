@@ -22,7 +22,7 @@ class TabularPolicy(Policy):
 
 
     def get_probs(self):
-        return self.action_logits
+        return self.action_logits.copy()
 
     def get_params(self):
         return self.action_logits
