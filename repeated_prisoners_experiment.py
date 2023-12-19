@@ -1,3 +1,4 @@
+import pandas
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,20 +13,35 @@ from policies.policy import Policy
 from policies.tabular_policy import TabularPolicy
 from policy_iteration.algorithm import PolicyIteration
 import argparse
+import subprocess
 
 
-def main(policy_lr, prior_lr, use_regret, self_play, lambda_):
+def main(policy_lr, prior_lr, n_seeds=50, episode_length=2, pop_size=2):
 
-    environment = RepeatedPrisonersDilemmaEnv(episode_length=1)
+    data = pandas.DataFrame({
+        "seed": [],
+        "approach": [],
+        "utility": [],
+        "regret": [],
+    })
 
-    np.random.seed(0)
+
+    approaches = {
+        "name": ""
+    }
+
+
+def repeated_prisoners_experiment(policy_lr, prior_lr, use_regret, self_play, lambda_, seed, episode_length, pop_size=None):
+
+    environment = RepeatedPrisonersDilemmaEnv(episode_length=episode_length)
+
     robust_policy = Policy(environment)
     robust_policy.initialize_uniformly()
     #robust_policy.initialize_randomly()
 
     # do with policy types ?
-    num_policies = None
-    seed = 1
+    num_policies = pop_size
+    seed = seed
     bg_population = DeterministicPoliciesPopulation(environment)
     bg_population.build_population(size=num_policies, seed=seed)
 
@@ -37,6 +53,7 @@ def main(policy_lr, prior_lr, use_regret, self_play, lambda_):
     if self_play:
         belief.initialize_certain(belief.dim - 1)
     else:
+        #belief.initialize_randomly()
         belief.initialize_uniformly()
 
 
@@ -68,9 +85,9 @@ def main(policy_lr, prior_lr, use_regret, self_play, lambda_):
 
         best_response_vfs[p_id] = vf
         best_responses[p_id] = best_response
-
-    print(best_response_vfs[:, environment.s0])
-    input()
+    #
+    # print(best_response_vfs[:, environment.s0])
+    # input()
 
     # d = {
     #     0: "collaborate",
@@ -92,7 +109,7 @@ def main(policy_lr, prior_lr, use_regret, self_play, lambda_):
 
 
     regrets = []
-    for i in range(6000):
+    for i in range(2000):
 
         expected_vf, vf = algo.policy_evaluation_for_prior(bg_population, belief)
 
@@ -125,6 +142,7 @@ def main(policy_lr, prior_lr, use_regret, self_play, lambda_):
         vf_scores.append(np.mean(vf_s0))
         regret_scores.append(np.mean(regret_s0))
 
+        subprocess.call("clear")
         print()
         print(f"--- Iteration {i} ---")
         print()
@@ -139,8 +157,26 @@ def main(policy_lr, prior_lr, use_regret, self_play, lambda_):
         a_probs = robust_policy.get_probs()
         entropy = np.mean(np.sum(-a_probs * np.log(a_probs+1e-8), axis=-1))
         print("Current distribution over scenarios :", belief())
-        #print(regret)
-    #print(robust_policy.get_probs())
+
+        print("Policy:", robust_policy.get_probs())
+
+    argmax_actions = np.zeros_like(robust_policy.action_logits)
+    argmax_actions[np.arange(len(argmax_actions)), np.argmax(robust_policy.action_logits, axis=-1)] = 1.
+    argmax_policy = TabularPolicy(
+        environment,
+        argmax_actions
+    )
+    algo_p = PolicyIteration(argmax_policy, environment, epsilon=5)
+    expected_vf, vf = algo_p.policy_evaluation_for_prior(bg_population, belief)
+    vf_s0 = vf[:, environment.s0]
+    all_regrets = best_response_vfs - vf
+    regret_s0 = all_regrets[:, environment.s0]
+    print()
+    print("Results:")
+    print("Test time score (utility, regret):", np.mean(vf_s0), np.mean(regret_s0))
+
+
+    #print(regret)
     return
 
 
@@ -339,7 +375,7 @@ if __name__ == '__main__':
     parser.add_argument("--policy_lr", type=float, default=1e-2)
     parser.add_argument("--prior_lr", type=float, default=1e-2)
     parser.add_argument("--use_regret", type=bool, default=False)
-    parser.add_argument("--lambda_", type=float, default=1e-3)
+    parser.add_argument("--lambda_", type=float, default=0.)
     parser.add_argument("--sp", type=bool, default=False)
 
     parser.add_argument("--seed", type=int, default=1)
@@ -352,7 +388,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.experiment == "main":
-        main(args.policy_lr, args.prior_lr, args.use_regret, args.sp, args.lambda_)
+        repeated_prisoners_experiment(
+            args.policy_lr,
+            args.prior_lr,
+            args.use_regret,
+            args.sp,
+            args.lambda_,
+            args.seed,
+            args.episode_length,
+            args.pop_size
+        )
     elif args.experiment == "eval":
         eval_policies()
     elif args.experiment == "find_best":
