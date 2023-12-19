@@ -8,6 +8,7 @@ class BackgroundPopulation:
         self.n_actions = environment.action_space[0].n
         self.n_states = environment.observation_space[0].n
         self.policies: np.ndarray = None
+        self.environment = environment
 
     def get_expected_policy(self, trained_policy, prior):
 

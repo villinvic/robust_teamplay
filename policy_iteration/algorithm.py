@@ -57,8 +57,11 @@ class PolicyIteration:
 
         for t in range(self.epsilon):
             #old_values[:] = values
-            values[:, :] = np.sum(reward_functions * action_probs_p1, axis=-1) + np.sum(np.sum(transition_functions * action_probs_p1_p4
-                            * (self.environment.gamma * values[:, np.newaxis, np.newaxis])
+            values[:, :] = np.sum(np.sum(
+
+                transition_functions * action_probs_p1_p4 * (reward_functions[:, :, :, np.newaxis]
+                            + self.environment.gamma * values[:, np.newaxis, np.newaxis])
+
                             , axis=-1), axis=-1)
 
         # for i in range(len(bg_population.policies)):
@@ -108,11 +111,16 @@ class PolicyIteration:
 
         for t in range(self.epsilon):
             # old_values[:] = values
-            value[:] = np.sum(reward_function * action_probs, axis=-1) + np.sum(
-                np.sum(transition_function * action_probs_p3
-                       * (self.environment.gamma * value[np.newaxis, np.newaxis])
-                       , axis=-1), axis=-1)
+            value[:] = np.sum(
+                np.sum(
 
+                    transition_function * action_probs_p3 * (reward_function[:, :, np.newaxis]
+                       + self.environment.gamma * value[np.newaxis, np.newaxis]
+                                                             )
+
+                       , axis=-1), axis=-1
+            )
+            #print(value)
 
         return value
 
@@ -127,8 +135,8 @@ class PolicyIteration:
 
         new_policy = np.zeros_like(action_probs)
 
-        action_values = reward_function + np.sum(transition_function * (
-            self.environment.gamma * vf
+        action_values = np.sum(transition_function * (
+            self.environment.gamma * vf[np.newaxis, np.newaxis] + reward_function[:, :, np.newaxis]
         ), axis=-1)
 
         new_policy[np.arange(len(new_policy)), np.argmax(action_values, axis=-1)] = 1.
@@ -158,13 +166,15 @@ class PolicyIteration:
                 teammate, joint_rewards=reward_weights
             )
             Q = induced_reward_function + self.environment.gamma * np.sum(induced_transition_function * V[np.newaxis, np.newaxis], axis=-1)
+
             total_gradients += scenario_prob * self.policy.compute_pg(
                 Q, V, transition_function=induced_transition_function, lambda_=self.lambda_
             )
+
         self.policy.apply_gradient(total_gradients, lr=self.lr)
 
 
-    def exact_regret_pg(self, bg_population, prior: Prior, regrets):
+    def exact_regret_pg(self, bg_population, prior: Prior, vfs, best_response_vfs):
 
         action_probs = self.policy.get_probs()
 
@@ -179,21 +189,22 @@ class PolicyIteration:
         # )
 
         total_gradients = 0.
-        for teammate, reward_weights, R, scenario_prob, best_response,  \
-                in zip(all_policies, all_rewards, regrets, prior()):
+        for teammate, reward_weights, V, scenario_prob, V_star  \
+                in zip(all_policies, all_rewards, vfs, prior(), best_response_vfs):
 
             induced_transition_function, induced_reward_function = compute_multiagent_mdp(
                 self.environment.transition_function, self.environment.reward_function,
                 teammate, joint_rewards=reward_weights
             )
 
-            #Q_star = induced_reward_function + self.environment.gamma * np.sum(induced_transition_function * best_response_vf[np.newaxis, np.newaxis], axis=-1)
+            Q_star = induced_reward_function + self.environment.gamma * np.sum(induced_transition_function * V_star[np.newaxis, np.newaxis], axis=-1)
 
-            #Q = induced_reward_function + self.environment.gamma * np.sum(induced_transition_function * V[np.newaxis, np.newaxis], axis=-1)
+            Q = induced_reward_function + self.environment.gamma * np.sum(induced_transition_function * V[np.newaxis, np.newaxis], axis=-1)
+
 
             #Q_regret = Q_star - Q
-            total_gradients += scenario_prob * self.policy.compute_pg(
-                np.zeros((1, 1)), R, transition_function=induced_transition_function, lambda_=self.lambda_
+            total_gradients += - scenario_prob * self.policy.compute_pg(
+                Q_star-Q, V_star - V, transition_function=induced_transition_function, lambda_=self.lambda_
             )
         self.policy.apply_gradient(total_gradients, lr=self.lr)
 

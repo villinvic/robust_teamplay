@@ -66,11 +66,11 @@ class Policy:
         #gradients =  (log_pi_grad * Q[:, :, np.newaxis, np.newaxis] * state_visitation[:, np.newaxis, np.newaxis, np.newaxis]).sum(axis=-1).sum(axis=-1)
         #gradients = state_visitation[:, np.newaxis] * advantages *
 
-        gradients = state_visitation[:, np.newaxis] * action_probs * A
+        gradients = state_visitation[:, np.newaxis] * action_probs * (A - lambda_ * np.log(action_probs+1e-8))
 
         return gradients
 
-    def apply_gradient(self, gradient, lr, normalize=False):
+    def apply_gradient(self, gradient, lr, normalize=True):
         if normalize:
             mean_grad = np.mean(gradient)
             std = np.maximum(np.std(gradient), 1e-2)

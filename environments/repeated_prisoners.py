@@ -51,7 +51,7 @@ class RepeatedPrisonersDilemmaEnv(MultiAgentEnv):
 
         self.observation_space = spaces.Dict(
             {
-                i: spaces.Discrete(sum([4**(t) for t in range(episode_length)])) for i in self._agent_ids
+                i: spaces.Discrete(1 + sum([4**(t) for t in range(episode_length)])) for i in self._agent_ids
             }
         )
 
@@ -62,12 +62,12 @@ class RepeatedPrisonersDilemmaEnv(MultiAgentEnv):
         self.reward_function = np.zeros((self.observation_space[0].n, self.action_space[0].n, self.action_space[0].n), dtype=np.float32)
         self.gamma = 1.
         self.s0 = 0
+        self.s_terminal = self.observation_space[0].n - 1
 
         self.tit_for_tat = np.zeros((self.observation_space[0].n, self.action_space[0].n), dtype=np.float32)
         self.tit_for_tat[0, 0] = 1
         self.cooperate_then_defect = np.zeros((self.observation_space[0].n, self.action_space[0].n), dtype=np.float32)
         self.cooperate_then_defect[0, 0] = 1
-
 
         def setup_rec(node=self.tree, depth=self.episode_length, opp_already_dected=False):
             for action1 in range(self.action_space[0].n):
@@ -83,6 +83,7 @@ class RepeatedPrisonersDilemmaEnv(MultiAgentEnv):
                         r = self.max_reward
                     else:
                         r = 1
+
                     self.reward_function[node.index, action1, action2] = r
 
                     if depth > 1:
@@ -92,6 +93,8 @@ class RepeatedPrisonersDilemmaEnv(MultiAgentEnv):
 
                         self.transition_function[node.index, action1, action2, next_node.index] = 1
                         setup_rec(next_node, depth-1, opp_already_dected)
+                    else:
+                        self.transition_function[node.index, action1, action2, self.s_terminal] = 1
 
         setup_rec()
 

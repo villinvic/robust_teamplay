@@ -39,9 +39,15 @@ class Prior:
         # Thus, we want to minimize it, ie maximize regret
 
         if not regret:
-            loss = - loss #np.max(loss) - loss + np.min(loss)
+            loss =  - loss #np.max(loss) - loss + np.min(loss)
+
+        self.beta_logits[:] = self.beta_logits + loss * self.learning_rate
+
+        print("prior loss:", loss * self.learning_rate)
+        print("prior:", self.beta_logits)
 
         #ideal_distribution = loss / np.sum(loss)
+        #self.beta_logits[:] = self.beta_logits * (1 - self.learning_rate) + ideal_distribution * self.learning_rate
 
         #self.beta_logits[:] = self.learning_rate * gradients / self.beta_logits + self.beta_logits
 
@@ -49,9 +55,14 @@ class Prior:
 
         #self.beta_logits[:] = self.beta_logits * (1-self.learning_rate) + ideal_distribution * self.learning_rate
 
-        self.beta_logits[:] = self.beta_logits + loss * self.learning_rate
+        #self.beta_logits[:] = self.beta_logits + loss * self.learning_rate
+
+        self.beta_logits[ self.beta_logits < 0] = 1e-3
 
         self.beta_logits[:] /= self.beta_logits.sum()
+
+        print("prior post projection:", self.beta_logits)
+        # input()
 
 
 if __name__ == "__main__":
