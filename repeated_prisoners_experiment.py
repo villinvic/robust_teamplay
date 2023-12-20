@@ -213,7 +213,7 @@ def repeated_prisoners_experiment(
 
 
     regrets = []
-    for i in range(3000):
+    for i in range(5000):
 
         expected_vf, vf = algo.policy_evaluation_for_prior(bg_population, belief)
 
