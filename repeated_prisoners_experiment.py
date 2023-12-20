@@ -1,9 +1,15 @@
+import itertools
+import os
+import string
+from typing import Union
+
 import pandas
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import joypy
 from matplotlib import cm
+from tqdm import tqdm
 
 from background_population.deterministic import DeterministicPoliciesPopulation
 from beliefs.prior import Prior
@@ -14,24 +20,122 @@ from policies.tabular_policy import TabularPolicy
 from policy_iteration.algorithm import PolicyIteration
 import argparse
 import subprocess
-
+import multiprocessing as mp
 
 def main(policy_lr, prior_lr, n_seeds=50, episode_length=2, pop_size=2):
 
-    data = pandas.DataFrame({
-        "seed": [],
-        "approach": [],
-        "utility": [],
-        "regret": [],
+    approaches = [dict(
+            scenario_distribution_optimization="Regret maximizing",
+            use_regret=True,
+            policy_lr=policy_lr,
+            prior_lr=prior_lr,
+            true_solution=False
+        ),
+        dict(
+            scenario_distribution_optimization="Utility minimizing",
+            use_regret=False,
+            policy_lr=policy_lr,
+            prior_lr=prior_lr,
+            true_solution=False
+
+        ),
+        dict(
+            scenario_distribution_optimization="Fixed uniform",
+            use_regret=False,
+            policy_lr=policy_lr,
+            prior_lr=0.,
+            true_solution=False
+        ),
+        dict(
+            true_solution=True
+        ),
+    ]
+    all_jobs = []
+    for seed in range(n_seeds):
+        seeded_configs = [{
+            "seed": seed,
+            "episode_length": episode_length,
+            "pop_size": pop_size,
+            "job": repeated_prisoners_experiment_with_config if idx < len(approaches)-1
+            else repeated_prisoners_best_solution_with_config
+        } for idx in range(len(approaches))]
+
+        for config, approach in zip(seeded_configs, approaches):
+            config.update(**approach)
+        all_jobs.extend(seeded_configs)
+
+    results = []
+
+    with mp.Pool(os.cpu_count(), maxtasksperchild=1) as p:
+        for ret, config in tqdm(
+                zip(p.imap(run_job, all_jobs), all_jobs), total=len(all_jobs)
+        ):
+            ret.update(**config)
+            results.append(ret)
+
+    data = pandas.DataFrame(results)
+    approach_results = data # #data[data['true_solution'] == False]
+    true_solution = data[data['true_solution']]
+
+    utility_error = []
+    regret_error = []
+    for seed in range(n_seeds):
+        utility_error.append(approach_results[approach_results["seed"]==seed]["utility"].values
+                             - true_solution[true_solution["seed"]==seed]["utility"].values)
+        regret_error.append(approach_results[approach_results["seed"]==seed]["regret"].values
+                             - true_solution[true_solution["seed"]==seed]["regret"].values)
+
+    # Remove rows with "Regret Maximizing" from the dataframe
+
+    # Calculate utility error by subtracting utility of "Regret Maximizing" from other approaches
+    approach_results['utility_error']  = [item for sublist in utility_error for item in sublist]
+    approach_results['regret_error'] = [item for sublist in regret_error for item in sublist]
+
+    grouped_data = approach_results.groupby('scenario_distribution_optimization').agg({
+        'utility': 'mean',
+        'utility_error': 'std',
+        'regret': 'mean',
+        'regret_error': 'std',
     })
+    #grouped_data = approach_results.groupby('scenario_distribution_optimization').agg(['mean'])[['utility', 'regret']]
+    # grouped_data.apply(lambda row: f"{row['utility']:.3f} $\\pm$ {row['utility_error']:.3f}", axis=1)
+    grouped_data['utility'] = grouped_data.apply(lambda row:
+                    f"${row['utility']:.3f} \\pm {row['utility_error']:.3f}$",
+                                               axis=1)
+
+    grouped_data['regret'] = grouped_data.apply(lambda row:
+                    f"${row['regret']:.3f} \\pm {row['regret_error']:.3f}$",
+                                               axis=1)
 
 
-    approaches = {
-        "name": ""
-    }
+    # Output LaTeX table with mean utility plus/minus utility error std and std regret
+    latex_table = string.capwords(
+        grouped_data[['utility', 'regret']].to_latex(escape=False, float_format="%.3f").replace("_", " ").replace("nan", "0"))
 
+    print(latex_table)
 
-def repeated_prisoners_experiment(policy_lr, prior_lr, use_regret, self_play, lambda_, seed, episode_length, pop_size=None):
+    #print(data)
+
+def run_job(config):
+    job = config.pop("job")
+    return job(config)
+
+def repeated_prisoners_experiment_with_config(config):
+    return repeated_prisoners_experiment(**config)
+
+def repeated_prisoners_best_solution_with_config(config):
+    return find_best(**config)
+
+def repeated_prisoners_experiment(
+        policy_lr=1e-3,
+        prior_lr=1e-3,
+        use_regret=False,
+        self_play=False,
+        lambda_=0.,
+        seed=0,
+        episode_length=1,
+        pop_size=None,
+        **kwargs):
 
     environment = RepeatedPrisonersDilemmaEnv(episode_length=episode_length)
 
@@ -74,7 +178,7 @@ def repeated_prisoners_experiment(policy_lr, prior_lr, use_regret, self_play, la
             scenario = bg_population.policies[p_id], (1, 0)
         else:
             scenario = best_response.get_probs(), (0.5, 0.5)
-        for i in range(2):
+        for i in range(episode_length * 5):
             if p_id == len(bg_population.policies):
                 scenario = best_response.get_probs(), (0.5, 0.5)
             vf = p_algo.policy_evaluation_for_scenario(scenario)
@@ -109,7 +213,7 @@ def repeated_prisoners_experiment(policy_lr, prior_lr, use_regret, self_play, la
 
 
     regrets = []
-    for i in range(2000):
+    for i in range(3000):
 
         expected_vf, vf = algo.policy_evaluation_for_prior(bg_population, belief)
 
@@ -142,23 +246,23 @@ def repeated_prisoners_experiment(policy_lr, prior_lr, use_regret, self_play, la
         vf_scores.append(np.mean(vf_s0))
         regret_scores.append(np.mean(regret_s0))
 
-        subprocess.call("clear")
-        print()
-        print(f"--- Iteration {i} ---")
-        print()
-
-        print("Test time score (utility, regret):", vf_scores[-1], regret_scores[-1])
-        print("w.r.t current prior (utility, regret):", vfs[-1], regrets[-1])
-        print("Utility per scenario:", vf_s0)
-        print("Regret per scenario", regret_s0)
-
-
-        priors.append(belief().copy())
-        a_probs = robust_policy.get_probs()
-        entropy = np.mean(np.sum(-a_probs * np.log(a_probs+1e-8), axis=-1))
-        print("Current distribution over scenarios :", belief())
-
-        print("Policy:", robust_policy.get_probs())
+        # subprocess.call("clear")
+        # print()
+        # print(f"--- Iteration {i} ---")
+        # print()
+        #
+        # print("Test time score (utility, regret):", vf_scores[-1], regret_scores[-1])
+        # print("w.r.t current prior (utility, regret):", vfs[-1], regrets[-1])
+        # print("Utility per scenario:", vf_s0)
+        # print("Regret per scenario", regret_s0)
+        #
+        #
+        # priors.append(belief().copy())
+        # a_probs = robust_policy.get_probs()
+        # entropy = np.mean(np.sum(-a_probs * np.log(a_probs+1e-8), axis=-1))
+        # print("Current distribution over scenarios :", belief())
+        #
+        # print("Policy:", robust_policy.get_probs())
 
     argmax_actions = np.zeros_like(robust_policy.action_logits)
     argmax_actions[np.arange(len(argmax_actions)), np.argmax(robust_policy.action_logits, axis=-1)] = 1.
@@ -171,13 +275,13 @@ def repeated_prisoners_experiment(policy_lr, prior_lr, use_regret, self_play, la
     vf_s0 = vf[:, environment.s0]
     all_regrets = best_response_vfs - vf
     regret_s0 = all_regrets[:, environment.s0]
-    print()
-    print("Results:")
-    print("Test time score (utility, regret):", np.mean(vf_s0), np.mean(regret_s0))
+    # print()
+    # print("Results:")
+    #print("Test time score (utility, regret):", np.mean(vf_s0), np.mean(regret_s0))
 
 
     #print(regret)
-    return
+    return {"utility": np.mean(vf_s0), "regret": np.mean(regret_s0)}
 
 
     data = {
@@ -332,7 +436,7 @@ def eval_policies():
 
 
 
-def find_best(seed, episode_length, pop_size, max_check=2048):
+def find_best(seed, episode_length, pop_size, max_check=2048, **kwargs):
 
     environment = RepeatedPrisonersDilemmaEnv(episode_length=episode_length)
 
@@ -354,6 +458,28 @@ def find_best(seed, episode_length, pop_size, max_check=2048):
     p = Prior(dim=len(bg_population.policies)+1)
     p.initialize_uniformly()
 
+    best_response_vfs = np.empty((len(bg_population.policies) + 1, policy.n_states), dtype=np.float32)
+    best_responses = {}
+    for p_id in range(len(bg_population.policies) + 1):
+        best_response = TabularPolicy(environment)
+        best_response.initialize_uniformly()
+        p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=4)
+        if p_id < len(bg_population.policies):
+            scenario = bg_population.policies[p_id], (1, 0)
+        else:
+            scenario = best_response.get_probs(), (0.5, 0.5)
+        for i in range(episode_length * 5):
+            if p_id == len(bg_population.policies):
+                scenario = best_response.get_probs(), (0.5, 0.5)
+            vf = p_algo.policy_evaluation_for_scenario(scenario)
+
+            p_algo.policy_improvement_for_scenario(scenario, vf)
+
+        vf = p_algo.policy_evaluation_for_scenario(scenario)
+
+        best_response_vfs[p_id] = vf
+        best_responses[p_id] = best_response
+
     values = np.zeros((len(deterministic_set.policies), len(bg_population.policies)+1))
     for i, deterministic_policy in enumerate(deterministic_set.policies):
         policy.action_logits[:] = deterministic_policy
@@ -361,9 +487,12 @@ def find_best(seed, episode_length, pop_size, max_check=2048):
         _, pi_values = algo.policy_evaluation_for_prior(bg_population, p)
         values[i] = pi_values[:, environment.s0]
 
-    test_time_values = np.mean(values, axis=-1)
-    print(test_time_values,
-          np.argmax(test_time_values), np.max(test_time_values))
+    best_policy = np.argmax(np.mean(values, axis=-1))
+
+    return {
+        "utility": np.mean(values[best_policy]),
+        "regret": np.mean(best_response_vfs[:, environment.s0] - values[best_policy])
+    }
 
 
 if __name__ == '__main__':
@@ -371,7 +500,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
                     prog='repeated_prisoners_experiment',
     )
-    parser.add_argument("experiment", type=str, choices=["main", "eval", "find_best"], default="main")
+    parser.add_argument("experiment", type=str, choices=["main", "unit_run", "eval", "find_best"], default="main")
     parser.add_argument("--policy_lr", type=float, default=1e-2)
     parser.add_argument("--prior_lr", type=float, default=1e-2)
     parser.add_argument("--use_regret", type=bool, default=False)
@@ -382,12 +511,14 @@ if __name__ == '__main__':
     parser.add_argument("--episode_length", type=int, default=2)
     parser.add_argument("--pop_size", type=int, default=4)
 
+    parser.add_argument("--n_seeds", type=int, default=50)
+
 
 
 
     args = parser.parse_args()
 
-    if args.experiment == "main":
+    if args.experiment == "unit_run":
         repeated_prisoners_experiment(
             args.policy_lr,
             args.prior_lr,
@@ -395,6 +526,14 @@ if __name__ == '__main__':
             args.sp,
             args.lambda_,
             args.seed,
+            args.episode_length,
+            args.pop_size
+        )
+    elif args.experiment == "main":
+        main(
+            args.policy_lr,
+            args.prior_lr,
+            args.n_seeds,
             args.episode_length,
             args.pop_size
         )

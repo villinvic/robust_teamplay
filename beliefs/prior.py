@@ -43,28 +43,16 @@ class Prior:
 
         self.beta_logits[:] = self.beta_logits + loss * self.learning_rate
 
-        print("prior loss:", loss * self.learning_rate)
-        print("prior:", self.beta_logits)
-        #ideal_distribution = loss / np.sum(loss)
-        #self.beta_logits[:] = self.beta_logits * (1 - self.learning_rate) + ideal_distribution * self.learning_rate
+        #print("prior loss:", loss * self.learning_rate)
+        #print("prior:", self.beta_logits)
 
-        #self.beta_logits[:] = self.learning_rate * gradients / self.beta_logits + self.beta_logits
-
-        #self.beta_logits[:] /= self.beta_logits.sum(axis=0, keepdims=True)
-
-        #self.beta_logits[:] = self.beta_logits * (1-self.learning_rate) + ideal_distribution * self.learning_rate
-
-        #self.beta_logits[:] = self.beta_logits + loss * self.learning_rate
 
         self.beta_logits[:] += np.maximum(0, -self.beta_logits.min())
 
         self.beta_logits[:] /= self.beta_logits.sum()
 
-        print("prior post projection:", self.beta_logits)
+        #print("prior post projection:", self.beta_logits)
 
-        #input()
-
-        # input()
 
 
 if __name__ == "__main__":
