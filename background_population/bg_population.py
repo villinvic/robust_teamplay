@@ -2,7 +2,7 @@ import gymnasium
 import numpy as np
 
 
-class BackgroundPopulation:
+class TabularBackgroundPopulation:
 
     def __init__(self, environment: gymnasium.Env):
         self.n_actions = environment.action_space[0].n

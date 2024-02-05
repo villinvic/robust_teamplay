@@ -56,6 +56,8 @@ class RepeatedPrisonersDilemmaEnv(MultiAgentEnv):
         )
 
         self.tree = build_tree_recursive(depth=episode_length)
+        self.opp_tree = build_tree_recursive(depth=episode_length)
+
         self.transition_function = np.zeros(
             (self.observation_space[0].n, self.action_space[0].n, self.action_space[0].n, self.observation_space[0].n), dtype=np.float32
         )
@@ -69,11 +71,17 @@ class RepeatedPrisonersDilemmaEnv(MultiAgentEnv):
         self.cooperate_then_defect = np.zeros((self.observation_space[0].n, self.action_space[0].n), dtype=np.float32)
         self.cooperate_then_defect[0, 0] = 1
 
-        def setup_rec(node=self.tree, depth=self.episode_length, opp_already_dected=False):
+        # TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        self.curr_state_to_opp_state = {0:0}
+
+        def setup_rec(node=self.tree, opp_node=self.opp_tree,  depth=self.episode_length, opp_already_defected=False):
             for action1 in range(self.action_space[0].n):
                 for action2 in range(self.action_space[0].n):
                     idx = action1 + 2 * action2
+                    opp_idx = action2 + 2 * action1
                     next_node = node.children[idx]
+                    next_opp_node = node.children[opp_idx]
+                    self.curr_state_to_opp_state[next_node.index] = next_opp_node.index
 
                     if action1 == 0 and action2 == 0:
                         r = self.max_reward - 1
@@ -88,11 +96,11 @@ class RepeatedPrisonersDilemmaEnv(MultiAgentEnv):
 
                     if depth > 1:
                         self.tit_for_tat[next_node.index, action2] = 1
-                        opp_already_dected = opp_already_dected or action2 == 1
-                        self.cooperate_then_defect[next_node.index, int(opp_already_dected)] = 1
+                        opp_already_defected = opp_already_defected or action2 == 1
+                        self.cooperate_then_defect[next_node.index, int(opp_already_defected)] = 1
 
                         self.transition_function[node.index, action1, action2, next_node.index] = 1
-                        setup_rec(next_node, depth-1, opp_already_dected)
+                        setup_rec(next_node, next_opp_node, depth-1, opp_already_defected)
                     else:
                         self.transition_function[node.index, action1, action2, self.s_terminal] = 1
 

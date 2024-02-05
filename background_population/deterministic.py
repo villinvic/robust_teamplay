@@ -5,11 +5,10 @@ from itertools import product
 from background_population import bg_population
 
 
-def build_deterministic_policies(n_actions, n_states, size=None, seed=None):
+def build_deterministic_policies(n_actions, n_states, size=None):
 
     sequences = np.array(list(product(range(n_actions), repeat=n_states)))
     if size is not None:
-        np.random.seed(seed)
         if size < len(sequences):
             sequences = sequences[np.random.choice(len(sequences), size, replace=False)]
 
@@ -22,7 +21,7 @@ def build_deterministic_policies(n_actions, n_states, size=None, seed=None):
     return policies
 
 
-class DeterministicPoliciesPopulation(bg_population.BackgroundPopulation):
+class DeterministicPoliciesPopulation(bg_population.TabularBackgroundPopulation):
 
     def __init__(self, environment: gymnasium.Env):
         super().__init__(environment)
@@ -30,16 +29,16 @@ class DeterministicPoliciesPopulation(bg_population.BackgroundPopulation):
         self.max_size = 1_000_000
         #self.build_population()
 
-    def build_population(self, size=None, seed=None):
+    def build_population(self, size=None):
         if hasattr(self.environment, "s_terminal"):
 
-            policies = build_deterministic_policies(self.n_actions, self.n_states - 1, size, seed)
+            policies = build_deterministic_policies(self.n_actions, self.n_states - 1, size)
 
             self.policies = np.zeros((len(policies), self.n_states, self.n_actions))
             self.policies[:, :-1] = policies
 
         else:
-            self.policies = build_deterministic_policies(self.n_actions, self.n_states, size, seed)
+            self.policies = build_deterministic_policies(self.n_actions, self.n_states, size)
 
 
 

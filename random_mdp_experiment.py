@@ -16,7 +16,7 @@ from background_population.bg_population import TabularBackgroundPopulation
 from background_population.deterministic import DeterministicPoliciesPopulation
 from beliefs.prior import Prior
 from environments.mdp import compute_multiagent_mdp
-from environments.repeated_prisoners import RepeatedPrisonersDilemmaEnv
+from environments.random_mdp import RandomMDP2P
 from policies.policy import Policy
 from policies.tabular_policy import TabularPolicy
 from policy_iteration.algorithm import PolicyIteration
@@ -27,7 +27,11 @@ import multiprocessing as mp
 from pyplot_utils import make_grouped_boxplot
 
 
-def main(policy_lr, prior_lr, n_seeds=1, episode_length=2, pop_size=2, n_steps=1000, plot_regret=True):
+def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=1000,
+         n_states=2,
+         n_actions=2,
+         history_window=2,
+         plot_regret=True):
 
     approaches = [dict(
             scenario_distribution_optimization="Regret maximizing",
@@ -35,6 +39,9 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=2, pop_size=2, n_steps=1
             policy_lr=policy_lr,
             prior_lr=prior_lr,
             n_steps=n_steps,
+            n_states=n_states,
+            n_actions=n_actions,
+            history_window=history_window,
             true_solution=False
         ),
         dict(
@@ -43,6 +50,9 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=2, pop_size=2, n_steps=1
             policy_lr=policy_lr,
             prior_lr=prior_lr,
             n_steps=n_steps,
+            n_states=n_states,
+            n_actions=n_actions,
+            history_window=history_window,
             true_solution=False
 
         ),
@@ -52,6 +62,20 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=2, pop_size=2, n_steps=1
             policy_lr=policy_lr,
             prior_lr=0.,
             n_steps=n_steps,
+            n_states=n_states,
+            n_actions=n_actions,
+            history_window=history_window,
+            true_solution=False
+        ),
+        dict(
+            scenario_distribution_optimization="Random policy",
+            use_regret=False,
+            policy_lr=0.,
+            prior_lr=0.,
+            n_steps=2,
+            n_states=n_states,
+            n_actions=n_actions,
+            history_window=history_window,
             true_solution=False
         ),
         # dict(
@@ -64,7 +88,7 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=2, pop_size=2, n_steps=1
             "seed": seed,
             "episode_length": episode_length,
             "pop_size": pop_size,
-            "job": repeated_prisoners_experiment_with_config #if idx < len(approaches)-1
+            "job": random_mdp_experiment_with_config #if idx < len(approaches)-1
             #else repeated_prisoners_best_solution_with_config
         } for idx in range(len(approaches))]
 
@@ -114,70 +138,16 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=2, pop_size=2, n_steps=1
 
     print(grouped_data)
 
-    make_grouped_boxplot(grouped_data, name=f"boxplot_prisoners_dilemma_{plot_type}_n_steps={n_steps}", whiskers=whiskers)
-
-
-
-
-
-    #approach_results = data # #data[data['true_solution'] == False]
-    #true_solution = data[data['true_solution']]
-
-    #utility_error = []
-    # regret_error = []
-    # for seed in range(n_seeds):
-    #     utility_error.append(approach_results[approach_results["seed"]==seed]["utility"].values
-    #                          - true_solution[true_solution["seed"]==seed]["utility"].values)
-        # regret_error.append(approach_results[approach_results["seed"]==seed]["regret"].values
-        #                      - true_solution[true_solution["seed"]==seed]["regret"].values)
-
-    # Remove rows with "Regret Maximizing" from the dataframe
-    # Calculate utility error by subtracting utility of "Regret Maximizing" from other approaches
-
-
-    # TABLES
-    # approach_results['utility_error']  = approach_results["utility"]
-    # approach_results['regret_error'] = approach_results["regret"]
-    #
-    # def ste(x):
-    #     return np.std(x) / np.sqrt(len(x))
-    #
-    # grouped_data = approach_results.groupby('scenario_distribution_optimization').agg({
-    #     'utility': 'mean',
-    #     'utility_error': ste,
-    #     'regret': 'mean',
-    #     'regret_error': ste,
-    # })
-    # #grouped_data = approach_results.groupby('scenario_distribution_optimization').agg(['mean'])[['utility', 'regret']]
-    # # grouped_data.apply(lambda row: f"{row['utility']:.3f} $\\pm$ {row['utility_error']:.3f}", axis=1)
-    # grouped_data['utility'] = grouped_data.apply(lambda row:
-    #                 f"${row['utility']:.3f} \\pm {row['utility_error']:.3f}$",
-    #                                            axis=1)
-    #
-    # grouped_data['regret'] = grouped_data.apply(lambda row:
-    #                 f"${row['regret']:.3f} \\pm {row['regret_error']:.3f}$",
-    #                                            axis=1)
-    #
-    #
-    # # Output LaTeX table with mean utility plus/minus utility error std and std regret
-    # latex_table = string.capwords(
-    #     grouped_data[['utility', 'regret']].to_latex(escape=False, float_format="%.3f").replace("_", " ").replace("nan", "0"))
-    #
-    # print(latex_table)
-
-    #print(data)
+    make_grouped_boxplot(grouped_data, name=f"boxplot_random_mdp_{plot_type}_n_steps={n_steps}", whiskers=whiskers)
 
 def run_job(config):
     job = config.pop("job")
     return job(config)
 
-def repeated_prisoners_experiment_with_config(config):
-    return repeated_prisoners_experiment(**config)
+def random_mdp_experiment_with_config(config):
+    return random_mdp_experiment(**config)
 
-def repeated_prisoners_best_solution_with_config(config):
-    return find_best(**config)
-
-def repeated_prisoners_experiment(
+def random_mdp_experiment(
         policy_lr=1e-3,
         prior_lr=1e-3,
         use_regret=False,
@@ -187,11 +157,15 @@ def repeated_prisoners_experiment(
         episode_length=1,
         pop_size=None,
         n_steps=1000,
+        n_states=2,
+        n_actions=2,
+        history_window=2,
         **kwargs):
 
     np.random.seed(seed)
 
-    environment = RepeatedPrisonersDilemmaEnv(episode_length=episode_length)
+    environment = RandomMDP2P(episode_length=episode_length, n_states=n_states, n_actions=n_actions, history_window=history_window,
+                              seed=seed)
 
     robust_policy = Policy(environment)
     robust_policy.initialize_uniformly()
@@ -203,7 +177,7 @@ def repeated_prisoners_experiment(
     bg_population = DeterministicPoliciesPopulation(environment)
     bg_population.build_population(size=num_policies)
 
-    algo = PolicyIteration(robust_policy, environment, epsilon=4, learning_rate=policy_lr, lambda_=lambda_)
+    algo = PolicyIteration(robust_policy, environment, epsilon=episode_length, learning_rate=policy_lr, lambda_=lambda_)
 
     # belief over worst teammate policy (all bg individuals and our self)
     belief = Prior(len(bg_population.policies)+1, learning_rate=prior_lr)
@@ -228,7 +202,7 @@ def repeated_prisoners_experiment(
         print(p_id)
         best_response = TabularPolicy(environment)
         best_response.initialize_uniformly()
-        p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=4)
+        p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=episode_length)
         if p_id < len(bg_population.policies):
             scenario = bg_population.policies[p_id], (1, 0)
         else:
@@ -338,7 +312,7 @@ def repeated_prisoners_experiment(
     #robust_policy = argmax_policy
 
     #algo_p = PolicyIteration(argmax_policy, environment, epsilon=5)
-    algo_p = PolicyIteration(robust_policy, environment, epsilon=5)
+    algo_p = PolicyIteration(robust_policy, environment, epsilon=episode_length)
     expected_vf, vf = algo_p.policy_evaluation_for_prior(bg_population, belief)
     vf_s0 = vf[:, environment.s0]
     all_regrets = best_response_vfs - vf
@@ -357,52 +331,23 @@ def repeated_prisoners_experiment(
     print("Running evaluation...")
 
     results = {
-        "uniform" : {"utility": vf_s0, "regret": regret_s0}
+        "uniform over\ntraining population" : {"utility": vf_s0, "regret": regret_s0}
     }
 
 
     # We sample 3 random test sets with 7 environments
     if episode_length > 1:
-        np.random.seed(4)
-        for random_set_idx in range(6):
-            scenario_idxs = np.random.choice(belief.dim, size=8, replace=False)
-
-            results[f"random_test_set_{random_set_idx}"] = {
-                "utility" : vf_s0[scenario_idxs],
-                "regret": regret_s0[scenario_idxs]
-            }
 
 
-        # we also test against the minimax distribution (TODO)
-        # [0.0077142394, 0.0077142394, 0.0077142394, 0.0077142394, 0.05723766, 0.05723766, 0.05723766, 0.05723766, 0.03551671, 0.03551671, 0.03551671, 0.03551671, 0.007714238, 0.007714238, 0.007714238, 0.007714238, 0.007933536, 0.057456955, 0.035736006, 0.007933533, 0.007933536, 0.057456955, 0.035736006, 0.007933533, 0.007933536, 0.057456955, 0.035736006, 0.007933533, 0.007933536, 0.057456955, 0.035736006, 0.007933533, 0.1310286]
-        minimax = np.array([0.010269574, 0.010269574, 0.057680134, 0.057680134, 0.010269574, 0.010269574, 0.057680134, 0.057680134, 0.032404095, 0.032404095, 0.010269573, 0.010269573, 0.032404095, 0.032404095, 0.010269573, 0.010269573, 0.010760346, 0.058170907, 0.010760346, 0.058170907, 0.03289487, 0.010760346, 0.03289487, 0.010760346, 0.010760346, 0.058170907, 0.010760346, 0.058170907, 0.03289487, 0.010760346, 0.03289487, 0.010760346, 0.10716058])
-        minimax /= minimax.sum()
-        samples = np.random.choice(len(minimax), 1024, p=minimax)
-        results["minimax"] = {
-            "utility": vf_s0[samples],
-            "regret" : regret_s0[samples]
-        }
-
-        # lastly, We handpick a set, with:
-        # a fully cooperating, defective policy, selfplay
-        cooperative = np.zeros_like(robust_policy.action_logits)
-        cooperative[:, 0] = 1
-        defective = np.zeros_like(robust_policy.action_logits)
-        defective[:, 1] = 1
-
-        # And well known interesting policies
-
-
-        test_background_population = TabularBackgroundPopulation(environment)
-
-        test_background_population.policies = np.stack([environment.cooperate_then_defect, environment.tit_for_tat, cooperative, defective])
+        test_background_population = DeterministicPoliciesPopulation(environment)
+        test_background_population.build_population(pop_size*4)
 
         _, main_policy_vf = algo_p.policy_evaluation_for_prior(test_background_population, Prior(len(test_background_population.policies)+1, learning_rate=0))
         best_response_vfs = np.empty((len(test_background_population.policies) + 1, robust_policy.n_states), dtype=np.float32)
         for p_id in range(len(test_background_population.policies) + 1):
             best_response = TabularPolicy(environment)
             best_response.initialize_uniformly()
-            p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=4)
+            p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=episode_length)
             if p_id < len(test_background_population.policies):
                 scenario = test_background_population.policies[p_id], (1, 0)
             else:
@@ -421,10 +366,66 @@ def repeated_prisoners_experiment(
         vf_s0 = main_policy_vf[:, environment.s0]
         regret_s0 = best_response_vfs[:, environment.s0] - vf_s0
 
-        results["handpicked"] = {
-            "utility": vf_s0,
-            "regret": regret_s0
-        }
+        np.random.seed(4)
+        for random_set_idx in range(5):
+            scenario_idxs = np.random.choice(len(test_background_population.policies) + 1, size=7, replace=False)
+
+            results[f"random_test_set_{random_set_idx}"] = {
+                "utility": vf_s0[scenario_idxs],
+                "regret" : regret_s0[scenario_idxs]
+            }
+
+
+        # we also test against the minimax distribution (TODO)
+        # samples = np.random.choice(len(minimax), 512, p=minimax)
+        # results["minimax"] = {
+        #     "utility": vf_s0[samples],
+        #     "regret" : regret_s0[samples]
+        # }
+
+
+        # lastly, We handpick a set, with:
+        # a fully cooperating, defective policy, selfplay
+        # cooperative = np.zeros_like(robust_policy.action_logits)
+        # cooperative[:, 0] = 1
+        # defective = np.zeros_like(robust_policy.action_logits)
+        # defective[:, 1] = 1
+        #
+        # # And well known interesting policies
+        #
+        #
+        # test_background_population = TabularBackgroundPopulation(environment)
+        #
+        # test_background_population.policies = np.stack([environment.cooperate_then_defect, environment.tit_for_tat, cooperative, defective])
+        #
+        # _, main_policy_vf = algo_p.policy_evaluation_for_prior(test_background_population, Prior(len(test_background_population.policies)+1, learning_rate=0))
+        # best_response_vfs = np.empty((len(test_background_population.policies) + 1, robust_policy.n_states), dtype=np.float32)
+        # for p_id in range(len(test_background_population.policies) + 1):
+        #     best_response = TabularPolicy(environment)
+        #     best_response.initialize_uniformly()
+        #     p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=episode_length)
+        #     if p_id < len(test_background_population.policies):
+        #         scenario = test_background_population.policies[p_id], (1, 0)
+        #     else:
+        #         scenario = best_response.get_probs(), (0.5, 0.5)
+        #     for i in range(episode_length * 5):
+        #         if p_id == len(test_background_population.policies):
+        #             scenario = best_response.get_probs(), (0.5, 0.5)
+        #         vf = p_algo.policy_evaluation_for_scenario(scenario)
+        #
+        #         p_algo.policy_improvement_for_scenario(scenario, vf)
+        #
+        #     vf = p_algo.policy_evaluation_for_scenario(scenario)
+        #
+        #     best_response_vfs[p_id] = vf
+        #
+        # vf_s0 = main_policy_vf[:, environment.s0]
+        # regret_s0 = best_response_vfs[:, environment.s0] - vf_s0
+        #
+        # results["handpicked"] = {
+        #     "utility": vf_s0,
+        #     "regret": regret_s0
+        # }
 
     return results
 
@@ -491,155 +492,6 @@ def repeated_prisoners_experiment(
     #print(priors[-1])
 
 
-
-def eval_policies():
-
-    best_vfs = [ 7.,  14.,  10. , 11.,   7.,  15.,   6.,  13., 19.5]
-
-    environment = RepeatedPrisonersDilemmaEnv(episode_length=3)
-    tit_for_tat = TabularPolicy(environment, environment.tit_for_tat)
-    coop_then_defect = TabularPolicy(environment, environment.cooperate_then_defect)
-
-    found = TabularPolicy(environment, np.array([[0,1],
- [0, 1],
- [0., 1],
- [1., 0],
- [1 , 0],
- [0., 1],
- [1., 0],
- [1., 0],
- [0., 1],
- [1., 0],
- [0., 1],
- [1., 0],
- [0., 1],
- [1., 0],
- [0., 1],
- [0., 1],
- [1., 0],
- [1., 0],
- [1., 0],
- [1., 0],
- [1, 0]], dtype=np.float32)
-                          )
-    found2 = TabularPolicy(environment, np.zeros_like(found.action_logits))
-    found2.action_logits[:, 1] = 1.
-
-
-    d = {
-        0: "collaborate",
-        1: "defect"
-    }
-    for p in [tit_for_tat.action_logits, coop_then_defect.action_logits]:
-        string = f'\n'
-        for state in range(p.shape[0]):
-            string += f"state {state} -> {d[np.argmax(p[state])]}\n"
-        print(string)
-        print()
-
-    # do with policy types ?
-    num_policies = 8
-
-    bg_population = DeterministicPoliciesPopulation(environment)
-    bg_population.build_population()
-
-    np.random.seed(0)
-    bg_population.policies = bg_population.policies[np.random.choice(len(bg_population.policies), num_policies)]
-
-    test_scenario_distrib = Prior(num_policies + 1)
-    test_scenario_distrib.initialize_uniformly()
-
-    algo = PolicyIteration(tit_for_tat, environment, epsilon=5)
-    tit_for_tat_vf , tit_for_tat_vfs = algo.policy_evaluation_for_prior(bg_population, test_scenario_distrib)
-    tit_for_tat_regrets = [
-        bv-v[environment.s0] for v, bv in zip(tit_for_tat_vfs, best_vfs)
-    ]
-    algo = PolicyIteration(coop_then_defect, environment, epsilon=5)
-    coop_then_defect_vf , coop_then_defect_vfs = algo.policy_evaluation_for_prior(bg_population, test_scenario_distrib)
-    coop_then_defect_regrets = [
-        bv-v[environment.s0] for v, bv in zip(coop_then_defect_vfs, best_vfs)
-    ]
-
-    algo = PolicyIteration(found, environment, epsilon=5)
-    found_vf , found_vfs = algo.policy_evaluation_for_prior(bg_population, test_scenario_distrib)
-    found_regrets = [
-        bv-v[environment.s0] for v, bv in zip(found_vfs, best_vfs)
-    ]
-
-    algo = PolicyIteration(found2, environment, epsilon=5)
-    found2_vf , found2_vfs = algo.policy_evaluation_for_prior(bg_population, test_scenario_distrib)
-
-    found2_regrets = [
-        bv-v[environment.s0] for v, bv in zip(found2_vfs, best_vfs)
-    ]
-
-    print(tit_for_tat_vf[environment.s0], coop_then_defect_vf[environment.s0], found_vf[environment.s0], found2_vf[environment.s0])
-
-    print(tit_for_tat_regrets, coop_then_defect_regrets, found_regrets, found2_regrets)
-
-    print(np.mean(tit_for_tat_regrets), np.mean(coop_then_defect_regrets), np.mean(found_regrets), np.mean(found2_regrets))
-
-
-
-def find_best(seed, episode_length, pop_size, max_check=2048, **kwargs):
-
-    environment = RepeatedPrisonersDilemmaEnv(episode_length=episode_length)
-
-
-    # robust_policy.initialize_randomly()
-
-    # do with policy types ?
-    num_policies = pop_size
-    bg_population = DeterministicPoliciesPopulation(environment)
-    bg_population.build_population(size=num_policies, seed=seed)
-
-    policy = TabularPolicy(environment)
-    policy.initialize_uniformly()
-    algo = PolicyIteration(policy, environment, epsilon=3, learning_rate=1., lambda_=0.)
-
-
-    deterministic_set = DeterministicPoliciesPopulation(environment)
-    deterministic_set.build_population(size=max_check)
-    p = Prior(dim=len(bg_population.policies)+1)
-    p.initialize_uniformly()
-
-    best_response_vfs = np.empty((len(bg_population.policies) + 1, policy.n_states), dtype=np.float32)
-    best_responses = {}
-    for p_id in range(len(bg_population.policies) + 1):
-        best_response = TabularPolicy(environment)
-        best_response.initialize_uniformly()
-        p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=4)
-        if p_id < len(bg_population.policies):
-            scenario = bg_population.policies[p_id], (1, 0)
-        else:
-            scenario = best_response.get_probs(), (0.5, 0.5)
-        for i in range(episode_length * 5):
-            if p_id == len(bg_population.policies):
-                scenario = best_response.get_probs(), (0.5, 0.5)
-            vf = p_algo.policy_evaluation_for_scenario(scenario)
-
-            p_algo.policy_improvement_for_scenario(scenario, vf)
-
-        vf = p_algo.policy_evaluation_for_scenario(scenario)
-
-        best_response_vfs[p_id] = vf
-        best_responses[p_id] = best_response
-
-    values = np.zeros((len(deterministic_set.policies), len(bg_population.policies)+1))
-    for i, deterministic_policy in enumerate(deterministic_set.policies):
-        policy.action_logits[:] = deterministic_policy
-
-        _, pi_values = algo.policy_evaluation_for_prior(bg_population, p)
-        values[i] = pi_values[:, environment.s0]
-
-    best_policy = np.argmax(np.mean(values, axis=-1))
-
-    return {
-        "utility": np.mean(values[best_policy]),
-        "regret": np.mean(best_response_vfs[:, environment.s0] - values[best_policy])
-    }
-
-
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
@@ -652,6 +504,10 @@ if __name__ == '__main__':
     parser.add_argument("--lambda_", type=float, default=0.)
     parser.add_argument("--n_steps", type=int, default=1000)
     parser.add_argument("--sp", type=bool, default=False)
+    parser.add_argument("--history_window", type=int, default=2)
+    parser.add_argument("--n_states", type=int, default=2)
+    parser.add_argument("--n_actions", type=int, default=2)
+
 
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--episode_length", type=int, default=2)
@@ -665,7 +521,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.experiment == "unit_run":
-        repeated_prisoners_experiment(
+        random_mdp_experiment(
             args.policy_lr,
             args.prior_lr,
             args.use_regret,
@@ -674,7 +530,10 @@ if __name__ == '__main__':
             args.seed,
             args.episode_length,
             args.pop_size,
-            args.n_steps
+            args.n_steps,
+            args.n_states,
+            args.n_actions,
+            args.history_window,
         )
     elif args.experiment == "main":
         main(
@@ -683,9 +542,8 @@ if __name__ == '__main__':
             args.n_seeds,
             args.episode_length,
             args.pop_size,
-            args.n_steps
+            args.n_steps,
+            args.n_states,
+            args.n_actions,
+            args.history_window,
         )
-    elif args.experiment == "eval":
-        eval_policies()
-    elif args.experiment == "find_best":
-        find_best(args.seed, args.episode_length, args.pop_size)

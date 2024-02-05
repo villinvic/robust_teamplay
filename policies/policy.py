@@ -45,8 +45,8 @@ class Policy:
 
         state_visitation = self.get_state_visitation(transition_function)
 
-        #log_pi_grad = np.zeros((self.n_states, self.n_actions, self.n_states, self.n_actions), dtype=np.float32)
-
+        # log_pi_grad = np.zeros((self.n_states, self.n_actions, self.n_states, self.n_actions), dtype=np.float32)
+        #
         # for state1 in range(self.n_states):
         #     for action1 in range(self.n_actions):
         #         for state2 in range(self.n_states):
@@ -58,7 +58,7 @@ class Policy:
         #                     if action1 == action2:
         #                         grad = 1- action_probs[state1, action1]
         #                     else:
-        #                         grad = 0.#-action_probs[state1, action1]
+        #                         grad = -action_probs[state1, action1]
         #
         #                 log_pi_grad[state1, action1, state2, action2] = grad
 
@@ -70,7 +70,7 @@ class Policy:
 
         return gradients
 
-    def apply_gradient(self, gradient, lr, normalize=True):
+    def apply_gradient(self, gradient, lr, normalize=False):
         if normalize:
             mean_grad = np.mean(gradient)
             std = np.maximum(np.std(gradient), 1e-2)
@@ -97,6 +97,8 @@ class Policy:
             #         for a in range(self.n_actions):
             #             state_frequencies[s_prime] += state_frequencies[s] * action_probs[s, a] * transition_function[s, a, s_prime]
 
+        if hasattr(self.environment, "s_terminal"):
+            state_frequencies[self.environment.s_terminal] = 0.
         state_frequencies /= np.sum(state_frequencies)
 
         return state_frequencies

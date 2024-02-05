@@ -8,6 +8,8 @@ class Prior:
         self.beta_logits : np.ndarray
         self.learning_rate = learning_rate
 
+        self.initialize_uniformly()
+
     def initialize_uniformly(self):
 
         self.beta_logits = np.full((self.dim,), fill_value=1/self.dim, dtype=np.float32)
@@ -16,6 +18,12 @@ class Prior:
 
         self.beta_logits = np.random.random((self.dim,)) * 4
         self.beta_logits /= self.beta_logits.sum(keepdims=True)
+
+    def sample_test_set(self, num_scenarios=3):
+
+        self.beta_logits[np.random.choice(self.dim, size=num_scenarios, replace=False)] = 1.
+        self.beta_logits /= num_scenarios
+
 
     def initialize_certain(self, idx=0):
 
