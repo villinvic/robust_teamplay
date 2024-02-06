@@ -66,8 +66,10 @@ def make_grouped_boxplot(data, name="grouped_boxplot", whiskers=(0, 100)):
 def make_grouped_plot(data, name):
     plt.figure()
 
-    colors = ['lightblue', 'lightgreen', 'lightcoral', 'lightskyblue', 'lightgreen', 'lightcoral']
-    markers = ['o', 's', '^', '*', 'v']
+    colors = ['lightblue', 'lightgreen', 'lightcoral', 'lightskyblue', 'lightgreen', 'lightcoral'] + [
+        tuple(np.random.randint(0, 256, 3)) for _ in range(100)
+    ]
+    markers = ['o', 's', '^', '*', 'v'] + [''] * 1000
 
     data_per_run = defaultdict(dict)
 
