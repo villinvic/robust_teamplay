@@ -24,7 +24,7 @@ import argparse
 import subprocess
 import multiprocessing as mp
 
-from pyplot_utils import make_grouped_boxplot
+from pyplot_utils import make_grouped_boxplot, make_grouped_plot
 
 
 def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=1000,
@@ -32,6 +32,8 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
          n_actions=2,
          history_window=2,
          plot_regret=True):
+
+
 
     approaches = [dict(
             scenario_distribution_optimization="Regret maximizing",
@@ -82,6 +84,23 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
         #     true_solution=True
         # ),
     ]
+
+    lr_samples = np.log(np.linspace(np.exp(1e-6), np.exp(1e-3), 10))
+
+    approaches = [
+        dict(
+            scenario_distribution_optimization=f"Regret maximizing beta_lr={lr:.0E}",
+            use_regret=True,
+            policy_lr=policy_lr,
+            prior_lr=prior_lr,
+            n_steps=n_steps,
+            n_states=n_states,
+            n_actions=n_actions,
+            history_window=history_window,
+            true_solution=False
+        )
+        for lr in lr_samples]
+
     all_jobs = []
     for seed in range(n_seeds):
         seeded_configs = [{
@@ -96,8 +115,8 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
             config.update(**approach)
         all_jobs.extend(seeded_configs)
 
-    results = defaultdict(lambda: defaultdict(list))
-    # results[approach][metric][data list]
+    results = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    # results[approach][train/test][metric][data list]
 
     with mp.Pool(os.cpu_count(), maxtasksperchild=1) as p:
         for ret, config in tqdm(
@@ -105,40 +124,52 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
         ):
             ret["config"] = config
             approach = config["scenario_distribution_optimization"]
-            for k, v in ret.items():
-                results[approach][k].append(v)
+            for train_or_test, data in ret.items():
+                for k, v in data.items():
+                    results[approach][train_or_test][k].append(v)
 
-    grouped_data = {}
+    train_grouped_data = {}
+    test_grouped_data = {}
 
     for approach, metrics in results.items():
         config = metrics.pop("config")
 
         run_data = {}
 
-        for metric, data in metrics.items():
+        for metric, data in metrics["train"].items():
+            stacked = np.stack(data)
+            meaned = np.mean(stacked, axis=0)
+            run_data[metric] = meaned
+
+        train_grouped_data[approach] = run_data
+
+        # Test
+        run_data = {}
+
+        for metric, data in metrics["test"].items():
 
             if plot_regret:
                 data = [d["regret"] for d in data]
             else:
-                data =  [d["utility"] for d in data]
+                data = [d["utility"] for d in data]
 
             stacked = np.stack(data)
             meaned = np.mean(stacked, axis=0)
             run_data[metric] = meaned
 
-        grouped_data[approach] = run_data
+        test_grouped_data[approach] = run_data
 
     if plot_regret:
         whiskers = (50, 100)
-        plot_type="regret"
+        plot_type = "regret"
     else:
         whiskers = (0, 50)
-        plot_type="utility"
+        plot_type = "utility"
 
+    name = f"random_mdp_{plot_type}_n_steps={n_steps}_lr={policy_lr:.0E}_beta_lr={prior_lr:.0E}"
 
-    print(grouped_data)
-
-    make_grouped_boxplot(grouped_data, name=f"boxplot_random_mdp_{plot_type}_n_steps={n_steps}_lr={policy_lr:.0E}_beta_lr={prior_lr:.0E}", whiskers=whiskers)
+    make_grouped_plot(train_grouped_data, name=f"train_{name}")
+    make_grouped_boxplot(test_grouped_data, name=f"boxplot_{name}", whiskers=whiskers)
 
 def run_job(config):
     job = config.pop("job")
