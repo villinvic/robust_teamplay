@@ -92,7 +92,7 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
             scenario_distribution_optimization=f"Regret maximizing beta_lr={lr:.0E}",
             use_regret=True,
             policy_lr=policy_lr,
-            prior_lr=prior_lr,
+            prior_lr=lr,
             n_steps=n_steps,
             n_states=n_states,
             n_actions=n_actions,
