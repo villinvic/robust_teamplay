@@ -88,6 +88,7 @@ def make_grouped_plot(data, name):
         plt.grid(axis="both", alpha=0.3)
         plt.tight_layout()
         plt.savefig(f'{name}_{metric}.png')
+        print("saved ", f'{name}_{metric}.png')
         plt.clf()
 
 
