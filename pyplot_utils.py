@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -59,6 +61,35 @@ def make_grouped_boxplot(data, name="grouped_boxplot", whiskers=(0, 100)):
     plt.savefig(f'{name}.png')
 
     plt.clf()
+
+
+def make_grouped_plot(data, name):
+    plt.figure()
+
+    colors = ['lightblue', 'lightgreen', 'lightcoral', 'lightskyblue', 'lightgreen', 'lightcoral']
+    markers = ['o', 's', '^', '*', 'v']
+
+    data_per_run = defaultdict(dict)
+
+    for approach, metrics in data.items():
+        for metric, values in metrics.items():
+            data_per_run[metric][approach] = values
+
+    for (metric, approaches) in data_per_run.items():
+
+        for (approach, values), color, marker in zip(approaches.items(),  colors, markers):
+
+            plt.plot(values, label=approach, color=color)
+
+
+        plt.legend()
+        plt.xlabel("Iterations")
+        plt.ylabel(metric)
+        plt.grid(axis="both", alpha=0.3)
+        plt.tight_layout()
+        plt.savefig(f'{name}_{metric}.png')
+        plt.clf()
+
 
 if __name__ == '__main__':
 

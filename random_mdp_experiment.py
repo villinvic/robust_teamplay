@@ -138,7 +138,7 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
 
     print(grouped_data)
 
-    make_grouped_boxplot(grouped_data, name=f"boxplot_random_mdp_{plot_type}_n_steps={n_steps}", whiskers=whiskers)
+    make_grouped_boxplot(grouped_data, name=f"boxplot_random_mdp_{plot_type}_n_steps={n_steps}_lr={policy_lr:.0E}_beta_lr={prior_lr:.0E}", whiskers=whiskers)
 
 def run_job(config):
     job = config.pop("job")

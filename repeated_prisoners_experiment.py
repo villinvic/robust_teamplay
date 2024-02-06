@@ -24,7 +24,7 @@ import argparse
 import subprocess
 import multiprocessing as mp
 
-from pyplot_utils import make_grouped_boxplot
+from pyplot_utils import make_grouped_boxplot, make_grouped_plot
 
 
 def main(policy_lr, prior_lr, n_seeds=1, episode_length=2, pop_size=2, n_steps=1000, plot_regret=True):
@@ -72,8 +72,8 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=2, pop_size=2, n_steps=1
             config.update(**approach)
         all_jobs.extend(seeded_configs)
 
-    results = defaultdict(lambda: defaultdict(list))
-    # results[approach][metric][data list]
+    results = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    # results[approach][train/test][metric][data list]
 
     with mp.Pool(os.cpu_count(), maxtasksperchild=1) as p:
         for ret, config in tqdm(
@@ -81,17 +81,31 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=2, pop_size=2, n_steps=1
         ):
             ret["config"] = config
             approach = config["scenario_distribution_optimization"]
-            for k, v in ret.items():
-                results[approach][k].append(v)
+            for train_or_test, data in ret.items():
+                for k, v in data.items():
+                    results[approach][train_or_test][k].append(v)
 
-    grouped_data = {}
+    train_grouped_data = {}
+    test_grouped_data = {}
 
     for approach, metrics in results.items():
         config = metrics.pop("config")
 
         run_data = {}
 
-        for metric, data in metrics.items():
+        for metric, data in metrics["train"].items():
+
+            stacked = np.stack(data)
+            meaned = np.mean(stacked, axis=0)
+            run_data[metric] = meaned
+
+        train_grouped_data[approach] = run_data
+
+
+        # Test
+        run_data = {}
+
+        for metric, data in metrics["test"].items():
 
             if plot_regret:
                 data = [d["regret"] for d in data]
@@ -102,7 +116,7 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=2, pop_size=2, n_steps=1
             meaned = np.mean(stacked, axis=0)
             run_data[metric] = meaned
 
-        grouped_data[approach] = run_data
+        test_grouped_data[approach] = run_data
 
     if plot_regret:
         whiskers = (50, 100)
@@ -111,10 +125,10 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=2, pop_size=2, n_steps=1
         whiskers = (0, 50)
         plot_type="utility"
 
+    name = f"prisoners_dilemma_{plot_type}_n_steps={n_steps}_lr={policy_lr:.0E}_beta_lr={prior_lr:.0E}"
 
-    print(grouped_data)
-
-    make_grouped_boxplot(grouped_data, name=f"boxplot_prisoners_dilemma_{plot_type}_n_steps={n_steps}", whiskers=whiskers)
+    make_grouped_plot(train_grouped_data, name=f"train_{name}")
+    make_grouped_boxplot(test_grouped_data, name=f"boxplot_{name}", whiskers=whiskers)
 
 
 
@@ -217,6 +231,7 @@ def repeated_prisoners_experiment(
 
     vfs = []
     regret_scores = []
+    worst_case_regrets = []
     vf_scores = []
 
     # Compute best responses for regret
@@ -311,6 +326,7 @@ def repeated_prisoners_experiment(
 
         vf_scores.append(np.mean(vf_s0))
         regret_scores.append(np.mean(regret_s0))
+        worst_case_regrets.append(np.max(regret_s0))
 
         # subprocess.call("clear")
         # print()
@@ -356,7 +372,7 @@ def repeated_prisoners_experiment(
     # EVALUATION
     print("Running evaluation...")
 
-    results = {
+    test_results = {
         "uniform" : {"utility": vf_s0, "regret": regret_s0}
     }
 
@@ -367,7 +383,7 @@ def repeated_prisoners_experiment(
         for random_set_idx in range(6):
             scenario_idxs = np.random.choice(belief.dim, size=8, replace=False)
 
-            results[f"random_test_set_{random_set_idx}"] = {
+            test_results[f"random_test_set_{random_set_idx}"] = {
                 "utility" : vf_s0[scenario_idxs],
                 "regret": regret_s0[scenario_idxs]
             }
@@ -378,7 +394,7 @@ def repeated_prisoners_experiment(
         minimax = np.array([0.010269574, 0.010269574, 0.057680134, 0.057680134, 0.010269574, 0.010269574, 0.057680134, 0.057680134, 0.032404095, 0.032404095, 0.010269573, 0.010269573, 0.032404095, 0.032404095, 0.010269573, 0.010269573, 0.010760346, 0.058170907, 0.010760346, 0.058170907, 0.03289487, 0.010760346, 0.03289487, 0.010760346, 0.010760346, 0.058170907, 0.010760346, 0.058170907, 0.03289487, 0.010760346, 0.03289487, 0.010760346, 0.10716058])
         minimax /= minimax.sum()
         samples = np.random.choice(len(minimax), 1024, p=minimax)
-        results["minimax"] = {
+        test_results["minimax"] = {
             "utility": vf_s0[samples],
             "regret" : regret_s0[samples]
         }
@@ -421,10 +437,20 @@ def repeated_prisoners_experiment(
         vf_s0 = main_policy_vf[:, environment.s0]
         regret_s0 = best_response_vfs[:, environment.s0] - vf_s0
 
-        results["handpicked"] = {
+        test_results["handpicked"] = {
             "utility": vf_s0,
             "regret": regret_s0
         }
+
+        results = {
+            "train": {
+                "regret": regret_scores,
+                "worst-case regret": worst_case_regrets,
+            },
+            "test": test_results
+        }
+
+
 
     return results
 
