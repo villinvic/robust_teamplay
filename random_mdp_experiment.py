@@ -273,6 +273,7 @@ def random_mdp_experiment(
 
 
     regrets = []
+    worst_case_regrets = []
     policy_history = [
         TabularPolicy(environment, robust_policy.get_probs()),
         TabularPolicy(environment, robust_policy.get_probs()),
@@ -316,6 +317,7 @@ def random_mdp_experiment(
 
         vf_scores.append(np.mean(vf_s0))
         regret_scores.append(np.mean(regret_s0))
+        worst_case_regrets.append(np.max(regret_s0))
 
         # subprocess.call("clear")
         # print()
@@ -361,7 +363,7 @@ def random_mdp_experiment(
     # EVALUATION
     print("Running evaluation...")
 
-    results = {
+    test_results = {
         "uniform over\ntraining population" : {"utility": vf_s0, "regret": regret_s0}
     }
 
@@ -401,7 +403,7 @@ def random_mdp_experiment(
         for random_set_idx in range(5):
             scenario_idxs = np.random.choice(len(test_background_population.policies) + 1, size=7, replace=False)
 
-            results[f"random_test_set_{random_set_idx}"] = {
+            test_results[f"random_test_set_{random_set_idx}"] = {
                 "utility": vf_s0[scenario_idxs],
                 "regret" : regret_s0[scenario_idxs]
             }
@@ -458,7 +460,13 @@ def random_mdp_experiment(
         #     "regret": regret_s0
         # }
 
-    return results
+    return {
+        "train": {
+            "regret":regret_scores,
+            "worst-case regret":worst_case_regrets,
+        },
+        "test": test_results
+    }
 
 
     data = {
