@@ -46,7 +46,7 @@ class Prior:
         # Score is the value of the policy
         # Thus, we want to minimize it, ie maximize regret
         if not regret:
-            loss = np.max(loss) - loss + np.min(loss)
+            loss = -loss #np.max(loss) - loss + np.min(loss)
 
         normalized_loss = np.max(loss) / loss
 
@@ -56,7 +56,7 @@ class Prior:
         #print("prior:", self.beta_logits)
 
 
-        self.beta_logits[:] += np.maximum(0, -self.beta_logits.min())
+        self.beta_logits[:] += np.maximum(1e-4, -self.beta_logits.min())
 
         self.beta_logits[:] /= self.beta_logits.sum()
 
