@@ -70,7 +70,7 @@ class Policy:
 
         return gradients
 
-    def apply_gradient(self, gradient, lr, normalize=True):
+    def apply_gradient(self, gradient, lr, normalize=False):
         if normalize:
             mean_grad = np.mean(gradient)
             std = np.maximum(np.std(gradient), 1e-2)

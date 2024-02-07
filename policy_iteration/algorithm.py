@@ -187,6 +187,7 @@ class PolicyIteration:
         #     expected_teammate, joint_rewards=expected_rewards
         # )
 
+
         gradients = []
         for teammate, reward_weights, V, scenario_prob \
                 in zip(all_policies, all_rewards, vf, prior()):
@@ -198,8 +199,10 @@ class PolicyIteration:
 
             Q = induced_reward_function + self.environment.gamma * np.sum(induced_transition_function * V[np.newaxis, np.newaxis], axis=-1)
 
+
+
             gradients.append(scenario_prob * self.policy.compute_pg(
-                Q, V, transition_function=induced_transition_function, lambda_=self.lambda_
+                Q / np.max(vf), V / np.max(vf), transition_function=induced_transition_function, lambda_=self.lambda_
             ))
 
         self.policy.apply_gradient(sum(gradients), lr=self.lr)
