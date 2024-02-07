@@ -69,7 +69,7 @@ def make_grouped_plot(data, name):
     # colors = ['lightblue', 'lightgreen', 'lightcoral', 'lightskyblue', 'lightgreen', 'lightcoral'] + [
     #     tuple(np.random.random(3)) for _ in range(100)
     # ]
-    colors = [(x, x, x) for x in np.linspace(0.1, 1, len(data))]
+    colors = [(x, x, x) for x in np.linspace(0, 0.9, len(data))]
     markers = ['o', 's', '^', '*', 'v'] + [''] * 1000
 
     data_per_run = defaultdict(dict)
