@@ -32,7 +32,6 @@ def make_grouped_boxplot(data, name="grouped_boxplot", whiskers=(0, 100)):
     for run, color, label, spacing in zip(data.values(), colors, data.keys(), spacings):
 
         data = np.array(list(run.values()), dtype=object)
-        print(label, data)
         datamin = min([v for sublist in data for v in sublist] + [datamin])
         datamax = max([v for sublist in data for v in sublist] + [datamax])
 

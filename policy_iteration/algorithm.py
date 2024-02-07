@@ -202,7 +202,7 @@ class PolicyIteration:
 
 
             gradients.append(scenario_prob * self.policy.compute_pg(
-                Q / np.max(vf), V / np.max(vf), transition_function=induced_transition_function, lambda_=self.lambda_
+                Q, V, transition_function=induced_transition_function, lambda_=self.lambda_
             ))
 
         self.policy.apply_gradient(sum(gradients), lr=self.lr)
