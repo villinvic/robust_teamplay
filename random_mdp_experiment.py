@@ -118,6 +118,7 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
             "env_seed": env_seed,
             "episode_length": episode_length,
             "pop_size": pop_size,
+            "run_name": name,
             "job": random_mdp_experiment_with_config #if idx < len(approaches)-1
             #else repeated_prisoners_best_solution_with_config
         } for idx in range(len(approaches))]
