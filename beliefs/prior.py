@@ -48,7 +48,7 @@ class Prior:
         if not regret:
             loss = -loss #np.max(loss) - loss + np.min(loss)
 
-        normalized_loss = np.max(loss) / loss
+        normalized_loss = loss / np.max(loss)
 
         self.beta_logits[:] = self.beta_logits + normalized_loss * self.learning_rate
 
