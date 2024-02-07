@@ -13,16 +13,16 @@ def compute_multiagent_mdp(transition_function, reward_function, policy, opp_ind
 
     for state in range(state_dim):
         for action1 in range(action_dim):
-            s = 0
             for action2 in range(action_dim):
                 for next_state in range(state_dim):
+
                     single_agent_transition_function[state, action1, next_state] += (
                             policy[opp_index_dict[state], action2] * transition_function[state, action1, action2, next_state]
                     )
 
                 single_agent_reward_function[state, action1] += (
                         self_rewards * reward_function[state, action1, action2] * policy[opp_index_dict[state], action2]
-                        + coop_rewards *  policy[opp_index_dict[state], action2] * reward_function[state, action2, action1]
+                        + coop_rewards *  policy[opp_index_dict[state], action2] * reward_function[opp_index_dict[state], action2, action1]
                 )
 
                 # TODO :ok, check for prisoners

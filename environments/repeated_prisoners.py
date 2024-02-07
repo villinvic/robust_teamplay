@@ -71,7 +71,6 @@ class RepeatedPrisonersDilemmaEnv(MultiAgentEnv):
         self.cooperate_then_defect = np.zeros((self.observation_space[0].n, self.action_space[0].n), dtype=np.float32)
         self.cooperate_then_defect[0, 0] = 1
 
-        # TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!
         self.curr_state_to_opp_state = {0:0}
 
         def setup_rec(node=self.tree, opp_node=self.opp_tree,  depth=self.episode_length, opp_already_defected=False):
