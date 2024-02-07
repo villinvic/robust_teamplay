@@ -46,7 +46,7 @@ def make_grouped_boxplot(data, name="grouped_boxplot", whiskers=(0, 100)):
         for patch in boxplot["boxes"]:
             patch.set_facecolor(color=color)
 
-        plt.plot([], c=color, label=label)
+        plt.fill_between([], c=color, label=label)
 
     plt.legend()
 
