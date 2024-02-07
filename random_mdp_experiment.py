@@ -31,6 +31,7 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
          n_states=2,
          n_actions=2,
          history_window=2,
+         env_seed=0,
          plot_regret=True):
 
 
@@ -41,9 +42,6 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
             policy_lr=policy_lr,
             prior_lr=prior_lr,
             n_steps=n_steps,
-            n_states=n_states,
-            n_actions=n_actions,
-            history_window=history_window,
             true_solution=False
         ),
         dict(
@@ -52,9 +50,6 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
             policy_lr=policy_lr,
             prior_lr=prior_lr,
             n_steps=n_steps,
-            n_states=n_states,
-            n_actions=n_actions,
-            history_window=history_window,
             true_solution=False
 
         ),
@@ -64,9 +59,6 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
             policy_lr=policy_lr,
             prior_lr=0.,
             n_steps=n_steps,
-            n_states=n_states,
-            n_actions=n_actions,
-            history_window=history_window,
             true_solution=False
         ),
         dict(
@@ -75,9 +67,6 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
             policy_lr=0.,
             prior_lr=0.,
             n_steps=2,
-            n_states=n_states,
-            n_actions=n_actions,
-            history_window=history_window,
             true_solution=False
         ),
         # dict(
@@ -104,7 +93,11 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
     all_jobs = []
     for seed in range(n_seeds):
         seeded_configs = [{
+            "n_states": n_states,
+            "n_actions": n_actions,
+            "history_window": history_window,
             "seed": seed,
+            "env_seed": env_seed,
             "episode_length": episode_length,
             "pop_size": pop_size,
             "job": random_mdp_experiment_with_config #if idx < len(approaches)-1
@@ -191,12 +184,13 @@ def random_mdp_experiment(
         n_states=2,
         n_actions=2,
         history_window=2,
+        env_seed=0,
         **kwargs):
 
     np.random.seed(seed)
 
     environment = RandomMDP2P(episode_length=episode_length, n_states=n_states, n_actions=n_actions, history_window=history_window,
-                              seed=seed)
+                              seed=env_seed)
 
     robust_policy = Policy(environment)
     robust_policy.initialize_uniformly()
@@ -546,13 +540,12 @@ if __name__ == '__main__':
     parser.add_argument("--history_window", type=int, default=2)
     parser.add_argument("--n_states", type=int, default=2)
     parser.add_argument("--n_actions", type=int, default=2)
-
-
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--episode_length", type=int, default=2)
     parser.add_argument("--pop_size", type=int, default=4)
-
     parser.add_argument("--n_seeds", type=int, default=50)
+
+    parser.add_argument("--env_seed", type=int, default=0)
 
 
 
@@ -573,6 +566,7 @@ if __name__ == '__main__':
             args.n_states,
             args.n_actions,
             args.history_window,
+            args.env_seed,
         )
     elif args.experiment == "main":
         main(
@@ -585,4 +579,6 @@ if __name__ == '__main__':
             args.n_states,
             args.n_actions,
             args.history_window,
+            args.env_seed,
+
         )
