@@ -204,12 +204,9 @@ class PolicyIteration:
                 Q, V, transition_function=induced_transition_function, lambda_=self.lambda_
             ))
 
-        print(gradients)
-        sleep(3)
-
-        np.random.shuffle(gradients)
-        for g in gradients:
-         self.policy.apply_gradient(g, lr=self.lr)
+        #np.random.shuffle(gradients)
+        #for g in gradients:
+        self.policy.apply_gradient(sum(gradients), lr=self.lr)
 
 
     def exact_pg_mixture(self, bg_population, prior: Prior, vf, previous_copy: TabularPolicy = None):
