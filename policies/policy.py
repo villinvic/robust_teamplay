@@ -75,6 +75,8 @@ class Policy:
             mean_grad = np.mean(gradient)
             std = np.maximum(np.std(gradient), 1e-2)
             gradient = (gradient - mean_grad) / std
+        else:
+            gradient -= np.mean(gradient)
         self.action_logits[:] = lr * gradient  + self.action_logits
 
 
