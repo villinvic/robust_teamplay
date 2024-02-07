@@ -5,8 +5,6 @@ import string
 import time
 from collections import defaultdict
 from typing import Union
-
-import lockfile
 import pandas
 import pandas as pd
 import matplotlib.pyplot as plt
