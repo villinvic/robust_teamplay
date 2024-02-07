@@ -203,6 +203,8 @@ class PolicyIteration:
             gradients.append(scenario_prob * self.policy.compute_pg(
                 Q, V, transition_function=induced_transition_function, lambda_=self.lambda_
             ))
+            print(V)
+            sleep(3)
 
         #np.random.shuffle(gradients)
         #for g in gradients:
