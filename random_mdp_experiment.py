@@ -186,7 +186,7 @@ def random_mdp_experiment(
         prior_lr=1e-3,
         use_regret=False,
         self_play=False,
-        lambda_=0.1,
+        lambda_=0.5,
         seed=0,
         episode_length=1,
         pop_size=None,
