@@ -386,7 +386,7 @@ def prisoners_experiment(
 
     test_results = {
         "uniform over\ntraining population" : {"utility": vf_s0, "regret": regret_s0},
-        "self play": {"utility": vf_s0[-1], "regret": regret_s0[-1]}
+        "self play": {"utility": vf_s0[-1:], "regret": regret_s0[-1:]}
     }
 
     samples = np.random.choice(len(minimax_worst_case_distribution), 2048, p=minimax_worst_case_distribution)
