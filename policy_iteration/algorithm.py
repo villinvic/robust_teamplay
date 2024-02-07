@@ -1,4 +1,4 @@
-from time import time
+from time import time, sleep
 
 import numpy as np
 from gymnasium.spaces import Discrete
@@ -205,7 +205,7 @@ class PolicyIteration:
             ))
 
         print(gradients)
-        exit()
+        sleep(3)
 
         np.random.shuffle(gradients)
         for g in gradients:
