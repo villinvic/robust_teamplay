@@ -317,7 +317,7 @@ def prisoners_experiment(
             algo.exact_pg(bg_population, belief, vf, previous_copy=previous_robust_policy)
             belief.update_prior(vf_s0, regret=False)
 
-        print(belief(), regrets)
+        print(belief(), regret_s0)
 
 
 
