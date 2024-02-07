@@ -199,14 +199,12 @@ class PolicyIteration:
 
             Q = induced_reward_function + self.environment.gamma * np.sum(induced_transition_function * V[np.newaxis, np.newaxis], axis=-1)
 
-            print(teammate)
-            print(Q-V[:, np.newaxis])
-            print(induced_reward_function)
 
             gradients.append(scenario_prob * self.policy.compute_pg(
                 Q, V, transition_function=induced_transition_function, lambda_=self.lambda_
             ))
 
+        print(gradients)
         exit()
 
         np.random.shuffle(gradients)
