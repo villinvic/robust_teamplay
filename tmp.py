@@ -35,31 +35,31 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
 
 
     approaches = [
-        # dict(
-        #     scenario_distribution_optimization="Regret maximizing",
-        #     use_regret=True,
-        #     policy_lr=policy_lr,
-        #     prior_lr=prior_lr,
-        #     n_steps=n_steps,
-        #     main_approach=True,
-        # ),
-        # dict(
-        #     scenario_distribution_optimization="Utility minimizing",
-        #     use_regret=False,
-        #     policy_lr=policy_lr,
-        #     prior_lr=prior_lr,
-        #     n_steps=n_steps,
-        #     main_approach=False
-        #
-        # ),
-        # dict(
-        #     scenario_distribution_optimization="Fixed uniform",
-        #     use_regret=False,
-        #     policy_lr=policy_lr,
-        #     prior_lr=0.,
-        #     n_steps=n_steps,
-        #     main_approach=False,
-        # ),
+        dict(
+            scenario_distribution_optimization="Regret maximizing",
+            use_regret=True,
+            policy_lr=policy_lr,
+            prior_lr=prior_lr,
+            n_steps=n_steps,
+            main_approach=True,
+        ),
+        dict(
+            scenario_distribution_optimization="Utility minimizing",
+            use_regret=False,
+            policy_lr=policy_lr,
+            prior_lr=prior_lr,
+            n_steps=n_steps,
+            main_approach=False
+
+        ),
+        dict(
+            scenario_distribution_optimization="Fixed uniform",
+            use_regret=False,
+            policy_lr=policy_lr,
+            prior_lr=0.,
+            n_steps=n_steps,
+            main_approach=False,
+        ),
         dict(
             scenario_distribution_optimization="Self play",
             use_regret=False,
@@ -69,17 +69,17 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
             self_play=True,
             main_approach=False,
         ),
-        # dict(
-        #     scenario_distribution_optimization="Random policy",
-        #     use_regret=False,
-        #     policy_lr=0.,
-        #     prior_lr=0.,
-        #     n_steps=2,
-        #     main_approach=False,
-        # ),
-        # dict(
-        #     true_solution=True
-        # ),
+        dict(
+            scenario_distribution_optimization="Random policy",
+            use_regret=False,
+            policy_lr=0.,
+            prior_lr=0.,
+            n_steps=2,
+            main_approach=False,
+        ),
+        dict(
+            true_solution=True
+        ),
     ]
 
     # lr_samples = np.logspace(-6, -3, 10)
@@ -316,11 +316,6 @@ def prisoners_experiment(
         else:
             algo.exact_pg(bg_population, belief, vf, previous_copy=previous_robust_policy)
             belief.update_prior(vf_s0, regret=False)
-
-        print(prior_lr, belief(), regret_s0)
-
-
-
 
         vfs.append(expected_vf[environment.s0])
         regrets.append(np.sum(regret_s0 * belief()))
