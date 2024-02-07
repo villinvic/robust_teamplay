@@ -101,7 +101,7 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
     #     for lr in lr_samples]
 
     if plot_regret:
-        whiskers = (50, 100)
+        whiskers = (0, 100)
         plot_type = "regret"
     else:
         whiskers = (0, 50)
