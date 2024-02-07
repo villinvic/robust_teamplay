@@ -77,7 +77,8 @@ class Policy:
             gradient = (gradient - mean_grad) / std
         else:
             gradient -= np.mean(gradient)
-        self.action_logits[:] = lr * gradient  + self.action_logits
+        self.action_logits[:] = np.clip(lr * gradient  + self.action_logits, -100., 100.)
+
 
 
     def get_state_visitation(self, transition_function):
