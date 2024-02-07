@@ -373,7 +373,7 @@ def repeated_prisoners_experiment(
     print("Running evaluation...")
 
     test_results = {
-        "uniform" : {"utility": vf_s0, "regret": regret_s0}
+        "uniform" : {"utility": vf_s0, "regret": regret_s0},
         "self play": {"utility": vf_s0[-1], "regret": regret_s0[-1]}
     }
 
