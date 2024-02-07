@@ -77,9 +77,6 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
             n_steps=2,
             main_approach=False,
         ),
-        dict(
-            true_solution=True
-        ),
     ]
 
     # lr_samples = np.logspace(-6, -3, 10)
