@@ -253,13 +253,16 @@ def random_mdp_experiment(
         else:
             scenario = best_response.get_probs(), (0.5, 0.5)
         for i in range(episode_length * 5):
+            policy_history.append(best_response.get_probs())
+            old_best_response = policy_history.pop(0)
+
             if p_id == len(bg_population.policies):
-                policy_history.append(best_response.get_probs())
-                old_best_response = policy_history.pop(0)
                 scenario = old_best_response, (0.5, 0.5)
             vf = p_algo.policy_evaluation_for_scenario(scenario)
-
             p_algo.policy_improvement_for_scenario(scenario, vf)
+
+            if np.allclose(old_best_response, best_response.get_probs()):
+                break
 
         vf = p_algo.policy_evaluation_for_scenario(scenario)
 
@@ -416,22 +419,25 @@ def random_mdp_experiment(
             best_response = TabularPolicy(environment)
             best_response.initialize_uniformly()
             p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=episode_length)
+            policy_history = [
+                best_response.get_probs(),
+                best_response.get_probs()
+            ]
             if p_id < len(test_background_population.policies):
                 scenario = test_background_population.policies[p_id], (1, 0)
             else:
-                policy_history = [
-                    best_response.get_probs(),
-                    best_response.get_probs()
-                ]
                 scenario = best_response.get_probs(), (0.5, 0.5)
             for i in range(episode_length * 5):
+                policy_history.append(best_response.get_probs())
+                old_best_response = policy_history.pop(0)
                 if p_id == len(test_background_population.policies):
-                    policy_history.append(best_response.get_probs())
-                    old_best_response = policy_history.pop(0)
                     scenario = old_best_response, (0.5, 0.5)
                 vf = p_algo.policy_evaluation_for_scenario(scenario)
 
                 p_algo.policy_improvement_for_scenario(scenario, vf)
+
+                if np.allclose(old_best_response, best_response.get_probs()):
+                    break
 
             vf = p_algo.policy_evaluation_for_scenario(scenario)
 
