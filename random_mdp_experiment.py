@@ -74,7 +74,7 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
         # ),
     ]
 
-    lr_samples = np.logspace(-8, -2, 10)
+    lr_samples = np.logspace(-6, -2, 10)
 
     approaches = [
         dict(
