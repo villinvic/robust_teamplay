@@ -212,7 +212,7 @@ def prisoners_experiment(
     if self_play:
         belief.initialize_certain(belief.dim - 1)
     else:
-        #belief.initialize_randomly()
+        #belief.initialize_randomly()print
         belief.initialize_uniformly()
 
 
@@ -317,7 +317,7 @@ def prisoners_experiment(
             algo.exact_pg(bg_population, belief, vf, previous_copy=previous_robust_policy)
             belief.update_prior(vf_s0, regret=False)
 
-        print(belief(), regret_s0)
+        print(prior_lr, belief(), regret_s0)
 
 
 

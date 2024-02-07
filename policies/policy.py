@@ -101,10 +101,6 @@ class Policy:
             state_frequencies[self.environment.s_terminal] = 0.
         state_frequencies /= np.sum(state_frequencies)
 
-        print(state_frequencies)
-
-
-
         return state_frequencies
 
     def  get_state_action_visitation(self, transition_function):
