@@ -199,12 +199,15 @@ class PolicyIteration:
 
             Q = induced_reward_function + self.environment.gamma * np.sum(induced_transition_function * V[np.newaxis, np.newaxis], axis=-1)
 
+            if reward_weights[0] == 0.5:
+                scenario_prob *= 2
 
             gradients.append(scenario_prob * self.policy.compute_pg(
                 Q, V, transition_function=induced_transition_function, lambda_=self.lambda_
             ))
-            print(V)
-            sleep(3)
+
+        print(gradients)
+        sleep(3)
 
         #np.random.shuffle(gradients)
         #for g in gradients:
