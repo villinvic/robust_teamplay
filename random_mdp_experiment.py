@@ -159,7 +159,7 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
         whiskers = (0, 50)
         plot_type = "utility"
 
-    name = f"random_mdp_{plot_type}_n_steps={n_steps}_lr={policy_lr:.0E}_beta_lr={prior_lr:.0E}"
+    name = f"random_mdp_{plot_type}_n_steps={n_steps}_env_seed={env_seed}_lr={policy_lr:.0E}_beta_lr={prior_lr:.0E}"
 
     make_grouped_plot(train_grouped_data, name=f"train_{name}")
     make_grouped_boxplot(test_grouped_data, name=f"boxplot_{name}", whiskers=whiskers)
