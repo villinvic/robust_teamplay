@@ -457,6 +457,7 @@ def random_mdp_experiment(
     return {
         "train": {
             "regret":regret_scores,
+            "minimax regret": regrets,
             "worst-case regret":worst_case_regrets,
         },
         "test": test_results
