@@ -74,21 +74,21 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
         # ),
     ]
 
-    lr_samples = np.logspace(-6, -3, 10)
-
-    approaches = [
-        dict(
-            scenario_distribution_optimization=f"Regret maximizing beta_lr={lr:.0E}",
-            use_regret=True,
-            policy_lr=policy_lr,
-            prior_lr=lr,
-            n_steps=n_steps,
-            n_states=n_states,
-            n_actions=n_actions,
-            history_window=history_window,
-            true_solution=False
-        )
-        for lr in lr_samples]
+    # lr_samples = np.logspace(-6, -3, 10)
+    #
+    # approaches = [
+    #     dict(
+    #         scenario_distribution_optimization=f"Regret maximizing beta_lr={lr:.0E}",
+    #         use_regret=True,
+    #         policy_lr=policy_lr,
+    #         prior_lr=lr,
+    #         n_steps=n_steps,
+    #         n_states=n_states,
+    #         n_actions=n_actions,
+    #         history_window=history_window,
+    #         true_solution=False
+    #     )
+    #     for lr in lr_samples]
 
     all_jobs = []
     for seed in range(n_seeds):
