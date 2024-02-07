@@ -18,7 +18,7 @@ def make_grouped_boxplot(data, name="grouped_boxplot", whiskers=(0, 100)):
 
     plt.figure()
 
-    colors = ['lightblue', 'lightgreen', 'lightcoral', 'lightskyblue', 'lightgreen', 'lightcoral']
+    colors = ['lightblue', 'lightgreen', 'lightcoral', 'lightskyblue', 'lightskygreen', 'gray']
 
     num_runs = len(data)
 
