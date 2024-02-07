@@ -402,7 +402,7 @@ def random_mdp_experiment(
     }
 
 
-    # We sample 3 random test sets with 7 environments
+    # We sample 3 random test sets with 9 environments
     if episode_length > 1:
 
 
@@ -440,8 +440,8 @@ def random_mdp_experiment(
         regret_s0 = best_response_vfs[:, environment.s0] - vf_s0
 
         np.random.seed(4)
-        for random_set_idx in range(5):
-            scenario_idxs = np.random.choice(len(test_background_population.policies) + 1, size=7, replace=False)
+        for random_set_idx in range(3):
+            scenario_idxs = np.random.choice(len(test_background_population.policies) + 1, size=9, replace=False)
 
             test_results[f"random_test_set_{random_set_idx}"] = {
                 "utility": vf_s0[scenario_idxs],
