@@ -1,9 +1,12 @@
 import itertools
 import os
+import pickle
 import string
+import time
 from collections import defaultdict
 from typing import Union
 
+import lockfile
 import pandas
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -42,7 +45,7 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
             policy_lr=policy_lr,
             prior_lr=prior_lr,
             n_steps=n_steps,
-            true_solution=False
+            main_approach=True,
         ),
         dict(
             scenario_distribution_optimization="Utility minimizing",
@@ -50,7 +53,7 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
             policy_lr=policy_lr,
             prior_lr=prior_lr,
             n_steps=n_steps,
-            true_solution=False
+            main_approach=False
 
         ),
         dict(
@@ -59,7 +62,16 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
             policy_lr=policy_lr,
             prior_lr=0.,
             n_steps=n_steps,
-            true_solution=False
+            main_approach=False,
+        ),
+        dict(
+            scenario_distribution_optimization="Self play",
+            use_regret=False,
+            policy_lr=policy_lr,
+            prior_lr=0.,
+            n_steps=n_steps,
+            self_play=True,
+            main_approach=False,
         ),
         dict(
             scenario_distribution_optimization="Random policy",
@@ -67,7 +79,7 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
             policy_lr=0.,
             prior_lr=0.,
             n_steps=2,
-            true_solution=False
+            main_approach=False,
         ),
         # dict(
         #     true_solution=True
@@ -89,6 +101,14 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
     #         true_solution=False
     #     )
     #     for lr in lr_samples]
+
+    if plot_regret:
+        whiskers = (50, 100)
+        plot_type = "regret"
+    else:
+        whiskers = (0, 50)
+        plot_type = "utility"
+    name = f"random_mdp_n_steps={n_steps}_env_seed={env_seed}_lr={policy_lr:.0E}_beta_lr={prior_lr:.0E}"
 
     all_jobs = []
     for seed in range(n_seeds):
@@ -152,17 +172,8 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
 
         test_grouped_data[approach] = run_data
 
-    if plot_regret:
-        whiskers = (50, 100)
-        plot_type = "regret"
-    else:
-        whiskers = (0, 50)
-        plot_type = "utility"
-
-    name = f"random_mdp_{plot_type}_n_steps={n_steps}_env_seed={env_seed}_lr={policy_lr:.0E}_beta_lr={prior_lr:.0E}"
-
     make_grouped_plot(train_grouped_data, name=f"train_{name}")
-    make_grouped_boxplot(test_grouped_data, name=f"boxplot_{name}", whiskers=whiskers)
+    make_grouped_boxplot(test_grouped_data, name=f"boxplot_{plot_type}_{name}", whiskers=whiskers)
 
 def run_job(config):
     job = config.pop("job")
@@ -185,6 +196,8 @@ def random_mdp_experiment(
         n_actions=2,
         history_window=2,
         env_seed=0,
+        main_approach=False,
+        run_name="",
         **kwargs):
 
     np.random.seed(seed)
@@ -223,10 +236,18 @@ def random_mdp_experiment(
     priors = []
     priors.append(belief().copy())
     best_responses = {}
+
+
     for p_id in range(len(bg_population.policies) + 1):
         print(p_id)
         best_response = TabularPolicy(environment)
         best_response.initialize_uniformly()
+
+        policy_history = [
+            best_response.get_probs(),
+            best_response.get_probs()
+        ]
+
         p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=episode_length)
         if p_id < len(bg_population.policies):
             scenario = bg_population.policies[p_id], (1, 0)
@@ -234,7 +255,9 @@ def random_mdp_experiment(
             scenario = best_response.get_probs(), (0.5, 0.5)
         for i in range(episode_length * 5):
             if p_id == len(bg_population.policies):
-                scenario = best_response.get_probs(), (0.5, 0.5)
+                policy_history.append(best_response.get_probs())
+                old_best_response = policy_history.pop(0)
+                scenario = old_best_response.get_probs(), (0.5, 0.5)
             vf = p_algo.policy_evaluation_for_scenario(scenario)
 
             p_algo.policy_improvement_for_scenario(scenario, vf)
@@ -269,7 +292,6 @@ def random_mdp_experiment(
     regrets = []
     worst_case_regrets = []
     policy_history = [
-        TabularPolicy(environment, robust_policy.get_probs()),
         TabularPolicy(environment, robust_policy.get_probs()),
         TabularPolicy(environment, robust_policy.get_probs())
                       ]
@@ -353,12 +375,32 @@ def random_mdp_experiment(
     # print("Results:")
     #print("Test time score (utility, regret):", np.mean(vf_s0), np.mean(regret_s0))
 
-    print(use_regret, prior_lr, list(priors[-1]))
+    minimax_worst_case_distribution_path = run_name + "worst_case_distribution.pkl"
+    if main_approach:
+        minimax_worst_case_distribution = priors[-1]
+        with open(minimax_worst_case_distribution_path, "wb+") as f:
+            pickle.dump(minimax_worst_case_distribution, f)
+    else:
+        while not os.path.exists(minimax_worst_case_distribution_path):
+            time.sleep(1)
+        time.sleep(1)
+
+        with open(minimax_worst_case_distribution_path, "rb") as f:
+            minimax_worst_case_distribution = pickle.load(f)
+
+
+
     # EVALUATION
     print("Running evaluation...")
 
     test_results = {
         "uniform over\ntraining population" : {"utility": vf_s0, "regret": regret_s0}
+    }
+
+    samples = np.random.choice(len(minimax_worst_case_distribution), 2048, p=minimax_worst_case_distribution)
+    test_results["Maximin"] = {
+        "utility": vf_s0[samples],
+        "regret" : regret_s0[samples]
     }
 
 
@@ -378,10 +420,16 @@ def random_mdp_experiment(
             if p_id < len(test_background_population.policies):
                 scenario = test_background_population.policies[p_id], (1, 0)
             else:
+                policy_history = [
+                    best_response.get_probs(),
+                    best_response.get_probs()
+                ]
                 scenario = best_response.get_probs(), (0.5, 0.5)
             for i in range(episode_length * 5):
                 if p_id == len(test_background_population.policies):
-                    scenario = best_response.get_probs(), (0.5, 0.5)
+                    policy_history.append(best_response.get_probs())
+                    old_best_response = policy_history.pop(0)
+                    scenario = old_best_response.get_probs(), (0.5, 0.5)
                 vf = p_algo.policy_evaluation_for_scenario(scenario)
 
                 p_algo.policy_improvement_for_scenario(scenario, vf)
