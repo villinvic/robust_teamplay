@@ -40,12 +40,9 @@ class RandomMDP2P(MultiAgentEnv):
         self.reward_function = np.zeros((self.observation_space[0].n, self.action_space[0].n, self.action_space[0].n),
                                         dtype=np.float32)
 
-        self.historyless_transition_function = self.random.exponential(1., (n_states, n_actions, n_actions, n_states))
-        self.historyless_reward_function = self.random.exponential(1., (n_states, n_actions, n_actions))
-
-        print(n_states, n_actions, history_window)
-        print(f"num_states {len(self.reward_function)}, num_policies:{self.action_space[0].n ** len(self.reward_function)}")
-
+        self.historyless_transition_function = self.random.exponential(1, (n_states, n_actions, n_actions, n_states))
+        self.historyless_transition_function /= (self.historyless_transition_function.sum(axis=-1, keepdims=True)+1e-8)
+        self.historyless_reward_function = self.random.uniform(0., 1.,(n_states, n_actions, n_actions))
 
         self.curr_state_to_opp_state = {}
 
@@ -102,15 +99,11 @@ class RandomMDP2P(MultiAgentEnv):
 
         self.transition_function /= (self.transition_function.sum(axis=-1, keepdims=True)+1e-8)
 
-        print(self.transition_function.sum(axis=-1))
-
-
-
         super(RandomMDP2P, self).__init__()
 
 
 if __name__ == '__main__':
 
-    mdp = RandomMDP2P(n_states=1, n_actions=2, history_window=2)
-    print(mdp.observation_space[0].n)
+    mdp = RandomMDP2P(n_states=2, n_actions=2, history_window=1)
 
+    print(mdp.transition_function[4, :, 0, :])
