@@ -28,7 +28,7 @@ import multiprocessing as mp
 from pyplot_utils import make_grouped_boxplot, make_grouped_plot
 
 
-def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=1000,
+def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2, n_steps=1000,
          n_states=2,
          n_actions=2,
          history_window=2,
@@ -111,6 +111,7 @@ def main(policy_lr, prior_lr, n_seeds=1, episode_length=10, pop_size=2, n_steps=
     all_jobs = []
     for seed in range(n_seeds):
         seeded_configs = [{
+            "lambda_": lambda_,
             "n_states": n_states,
             "n_actions": n_actions,
             "history_window": history_window,
@@ -627,6 +628,7 @@ if __name__ == '__main__':
         main(
             args.policy_lr,
             args.prior_lr,
+            args.lambda_,
             args.n_seeds,
             args.episode_length,
             args.pop_size,
