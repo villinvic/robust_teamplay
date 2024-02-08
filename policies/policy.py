@@ -78,7 +78,6 @@ class Policy:
         else:
             gradient -= np.mean(gradient, axis=1, keepdims=True)
 
-        print("g", gradient)
         self.action_logits[:] = np.clip(lr * gradient  + self.action_logits, -100., 100.)
 
         print(self.action_logits)
