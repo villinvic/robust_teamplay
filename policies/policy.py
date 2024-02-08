@@ -80,8 +80,6 @@ class Policy:
 
         self.action_logits[:] = np.clip(lr * gradient  + self.action_logits, -100., 100.)
 
-        print(self.action_logits)
-
 
 
     def get_state_visitation(self, transition_function):
