@@ -380,12 +380,12 @@ def prisoners_experiment(
     print("Running evaluation...")
 
     test_results = {
-        "r$\Sigma(\mathcal{B}^\text{train})$" : {"utility": vf_s0, "regret": regret_s0},
-        "r$\Sigma^\text{self-play}$": {"utility": vf_s0[-1:], "regret": regret_s0[-1:]}
+        r"$\Sigma(\mathcal{B}^\text{train})$" : {"utility": vf_s0, "regret": regret_s0},
+        r"$\Sigma^\text{self-play}$": {"utility": vf_s0[-1:], "regret": regret_s0[-1:]}
     }
 
     samples = np.random.choice(len(minimax_worst_case_distribution), 2048, p=minimax_worst_case_distribution)
-    test_results["r$ \\beta^* $"] = {
+    test_results[r"$ \beta^* $"] = {
         "utility": vf_s0[samples],
         "regret" : regret_s0[samples]
     }
