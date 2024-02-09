@@ -13,7 +13,7 @@ def set_box_color(bp):
     plt.setp(bp['means'], color=color)
 
 
-def make_grouped_boxplot(data, name="grouped_boxplot", whiskers=(0, 100)):
+def make_grouped_boxplot(data, name="grouped_boxplot", whiskers=(0, 100), plot_type="regret"):
     # data[approach][metric (run type)]
 
     plt.figure()
@@ -23,7 +23,6 @@ def make_grouped_boxplot(data, name="grouped_boxplot", whiskers=(0, 100)):
     num_runs = len(data)
 
     widths = 1. / (num_runs * 0.9)
-
 
     spacings = np.linspace(-0.7 + widths * 0.5, 0.7 - widths * 0.5, num=num_runs)
 
@@ -55,6 +54,7 @@ def make_grouped_boxplot(data, name="grouped_boxplot", whiskers=(0, 100)):
 
     norm = (datamax - datamin) * 0.1
 
+    plt.ylabel(plot_type.capitalize())
     plt.ylim(np.maximum(datamin - norm, -1e-3), datamax + norm * 3)
     plt.grid(axis="y", alpha=0.3)
     plt.tight_layout()

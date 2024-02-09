@@ -96,7 +96,7 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
     #     for lr in lr_samples]
 
     if plot_regret:
-        whiskers = (0, 100)
+        whiskers = (50, 100)
         plot_type = "regret"
     else:
         whiskers = (0, 50)
@@ -164,7 +164,7 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
         test_grouped_data[approach] = run_data
 
     make_grouped_plot(train_grouped_data, name=f"train_{name}")
-    make_grouped_boxplot(test_grouped_data, name=f"boxplot_{plot_type}_{name}", whiskers=whiskers)
+    make_grouped_boxplot(test_grouped_data, name=f"boxplot_{plot_type}_{name}", whiskers=whiskers, plot_type=plot_type)
 
 def run_job(config):
     job = config.pop("job")
@@ -380,12 +380,12 @@ def prisoners_experiment(
     print("Running evaluation...")
 
     test_results = {
-        "uniform over\ntraining population" : {"utility": vf_s0, "regret": regret_s0},
-        "self play": {"utility": vf_s0[-1:], "regret": regret_s0[-1:]}
+        "r$\Sigma(\Mathcal{B}^\text{train})$" : {"utility": vf_s0, "regret": regret_s0},
+        "r$\Sigma^\text{self-play}$": {"utility": vf_s0[-1:], "regret": regret_s0[-1:]}
     }
 
     samples = np.random.choice(len(minimax_worst_case_distribution), 2048, p=minimax_worst_case_distribution)
-    test_results["Maximin"] = {
+    test_results["r$\beta^*$"] = {
         "utility": vf_s0[samples],
         "regret" : regret_s0[samples]
     }
@@ -434,7 +434,7 @@ def prisoners_experiment(
         for random_set_idx in range(3):
             scenario_idxs = np.random.choice(len(test_background_population.policies) + 1, size=9, replace=False)
 
-            test_results[f"random_test_set_{random_set_idx}"] = {
+            test_results[fr"$\Sigma^{{ {random_set_idx+1} }}$"] = {
                 "utility": vf_s0[scenario_idxs],
                 "regret" : regret_s0[scenario_idxs]
             }
