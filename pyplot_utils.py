@@ -1,7 +1,10 @@
 from collections import defaultdict
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
+
+mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}'] #for \text command
 
 
 def set_box_color(bp):
