@@ -5,7 +5,7 @@ import matplotlib as mpl
 import numpy as np
 
 plt.rc('text', usetex=True)
-plt.rc("font", size=16)
+plt.rc("font", size=14)
 plt.rc('text.latex', preamble=r'\usepackage{amsmath}')
 
 
