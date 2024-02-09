@@ -31,7 +31,7 @@ class Policy:
         return np.argmax(self.action_logits[state])
 
     def get_params(self):
-        return self.action_logits
+        return self.action_logits.copy()
 
     def get_probs(self, explore=True):
         exp = np.exp(self.action_logits - self.action_logits.max(axis=-1, keepdims=True))
