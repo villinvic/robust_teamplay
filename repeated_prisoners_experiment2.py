@@ -380,7 +380,7 @@ def prisoners_experiment(
     print("Running evaluation...")
 
     test_results = {
-        "r$\Sigma(\Mathcal{B}^\text{train})$" : {"utility": vf_s0, "regret": regret_s0},
+        "r$\Sigma(\mathcal{B}^\text{train})$" : {"utility": vf_s0, "regret": regret_s0},
         "r$\Sigma^\text{self-play}$": {"utility": vf_s0[-1:], "regret": regret_s0[-1:]}
     }
 
