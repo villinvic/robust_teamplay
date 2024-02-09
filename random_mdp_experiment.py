@@ -245,7 +245,6 @@ def random_mdp_experiment(
 
         policy_history = [
             best_response.get_probs(),
-            best_response.get_probs(),
             best_response.get_probs()
 
         ]
