@@ -245,8 +245,8 @@ def random_mdp_experiment(
 
         policy_history = [
             best_response.get_probs(),
+            best_response.get_probs(),
             best_response.get_probs()
-
         ]
 
         p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=episode_length)
@@ -255,8 +255,9 @@ def random_mdp_experiment(
         else:
             scenario = best_response.get_probs(), (0.5, 0.5)
         for i in range(episode_length * 5):
+            old_best_response = sum(policy_history) / len(policy_history)
             policy_history.append(best_response.get_probs())
-            old_best_response = policy_history.pop(0)
+            policy_history.pop(0)
             print(p_id, i, old_best_response, best_response.get_probs())
             if p_id == len(bg_population.policies):
                 scenario = old_best_response, (0.5, 0.5)
