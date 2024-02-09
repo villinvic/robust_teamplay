@@ -385,7 +385,7 @@ def prisoners_experiment(
     }
 
     samples = np.random.choice(len(minimax_worst_case_distribution), 2048, p=minimax_worst_case_distribution)
-    test_results["r$ \beta^* $"] = {
+    test_results["r$ \\beta^* $"] = {
         "utility": vf_s0[samples],
         "regret" : regret_s0[samples]
     }
