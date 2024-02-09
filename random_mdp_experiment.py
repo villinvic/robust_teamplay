@@ -38,7 +38,7 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
 
 
     approaches = [dict(
-            scenario_distribution_optimization="Regret maximizing",
+            scenario_distribution_optimization="Minimax Regret",
             use_regret=True,
             policy_lr=policy_lr,
             prior_lr=prior_lr,
@@ -46,7 +46,7 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
             main_approach=True,
         ),
         dict(
-            scenario_distribution_optimization="Utility minimizing",
+            scenario_distribution_optimization="Maximin Utility",
             use_regret=False,
             policy_lr=policy_lr,
             prior_lr=prior_lr,
@@ -55,7 +55,7 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
 
         ),
         dict(
-            scenario_distribution_optimization="Fixed uniform",
+            scenario_distribution_optimization="Uniform Distribution",
             use_regret=False,
             policy_lr=policy_lr,
             prior_lr=0.,
@@ -63,7 +63,7 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
             main_approach=False,
         ),
         dict(
-            scenario_distribution_optimization="Self play",
+            scenario_distribution_optimization="Self-play",
             use_regret=False,
             policy_lr=policy_lr,
             prior_lr=0.,
@@ -72,7 +72,7 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
             main_approach=False,
         ),
         dict(
-            scenario_distribution_optimization="Random policy",
+            scenario_distribution_optimization="Random Policy",
             use_regret=False,
             policy_lr=0.,
             prior_lr=0.,
@@ -101,7 +101,7 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
     #     for lr in lr_samples]
 
     if plot_regret:
-        whiskers = (0, 100)
+        whiskers = (50, 100)
         plot_type = "regret"
     else:
         whiskers = (0, 50)
@@ -256,7 +256,7 @@ def random_mdp_experiment(
         for i in range(episode_length * 5):
             policy_history.append(best_response.get_probs())
             old_best_response = policy_history.pop(0)
-
+            print(p_id, i, old_best_response[:, 0].mean(), best_response.get_probs()[:, 0].mean())
             if p_id == len(bg_population.policies):
                 scenario = old_best_response, (0.5, 0.5)
             vf = p_algo.policy_evaluation_for_scenario(scenario)
