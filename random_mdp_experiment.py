@@ -246,6 +246,9 @@ def random_mdp_experiment(
         policy_history = [
             best_response.get_probs(),
             best_response.get_probs(),
+            best_response.get_probs(),
+            best_response.get_probs(),
+            best_response.get_probs(),
             best_response.get_probs()
         ]
 
@@ -264,7 +267,7 @@ def random_mdp_experiment(
             vf = p_algo.policy_evaluation_for_scenario(scenario)
             p_algo.policy_improvement_for_scenario(scenario, vf)
 
-            if np.allclose(old_best_response, best_response.get_probs()):
+            if np.allclose(policy_history[-1], best_response.get_probs()):
                 break
             else:
                 print("alors?", p_id, i, old_best_response-best_response.get_probs())
