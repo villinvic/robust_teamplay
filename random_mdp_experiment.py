@@ -397,12 +397,12 @@ def random_mdp_experiment(
     print("Running evaluation...")
 
     test_results = {
-        "uniform over\ntraining population" : {"utility": vf_s0, "regret": regret_s0},
-        "self play" : {"utility": vf_s0[-1:], "regret": regret_s0[-1:]}
+        r"\[\Sigma(\mathcal{B}^\text{train})\]" : {"utility": vf_s0, "regret": regret_s0},
+        r"\[\Sigma^\text{self-play}\]" : {"utility": vf_s0[-1:], "regret": regret_s0[-1:]}
     }
 
     samples = np.random.choice(len(minimax_worst_case_distribution), 2048, p=minimax_worst_case_distribution)
-    test_results["Maximin"] = {
+    test_results[r"\[ \beta^* \]"] = {
         "utility": vf_s0[samples],
         "regret" : regret_s0[samples]
     }
@@ -452,7 +452,7 @@ def random_mdp_experiment(
         for random_set_idx in range(3):
             scenario_idxs = np.random.choice(len(test_background_population.policies) + 1, size=9, replace=False)
 
-            test_results[f"random_test_set_{random_set_idx}"] = {
+            test_results[fr"\[\Sigma^{{ {random_set_idx+1} }}\]"] = {
                 "utility": vf_s0[scenario_idxs],
                 "regret" : regret_s0[scenario_idxs]
             }
