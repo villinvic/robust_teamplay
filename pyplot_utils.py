@@ -5,7 +5,7 @@ import matplotlib as mpl
 import numpy as np
 
 plt.rc('text', usetex=True)
-plt.rc("font", size=14)
+plt.rc("font", size=13)
 plt.rc('text.latex', preamble=r'\usepackage{amsmath}')
 
 
@@ -61,7 +61,7 @@ def make_grouped_boxplot(data, name="grouped_boxplot", whiskers=(0, 100), plot_t
     norm = (datamax - datamin) * 0.1
 
     plt.ylabel(plot_type.capitalize())
-    plt.ylim(np.maximum(datamin - norm, -1e-3), datamax + norm * 5)
+    plt.ylim(np.maximum(datamin - norm, -1e-3), datamax + norm * 6)
     plt.grid(axis="y", alpha=0.3)
     plt.tight_layout()
     plt.savefig(f'{name}.png')
