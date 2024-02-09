@@ -92,7 +92,7 @@ def make_grouped_plot(data, name):
 
         plt.legend()
         plt.xlabel("Iterations")
-        plt.ylabel(metric)
+        plt.ylabel(metric.capitalize())
         plt.grid(axis="both", alpha=0.3)
         plt.tight_layout()
         plt.savefig(f'{name}_{metric}.png')
