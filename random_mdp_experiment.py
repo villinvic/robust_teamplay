@@ -245,7 +245,9 @@ def random_mdp_experiment(
 
         policy_history = [
             best_response.get_probs(),
+            best_response.get_probs(),
             best_response.get_probs()
+
         ]
 
         p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=episode_length)
