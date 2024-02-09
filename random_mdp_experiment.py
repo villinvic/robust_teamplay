@@ -267,7 +267,7 @@ def random_mdp_experiment(
             if np.allclose(old_best_response, best_response.get_probs()):
                 break
             else:
-                print(old_best_response-best_response.get_probs())
+                print("alors?", p_id, i, old_best_response-best_response.get_probs())
 
         vf = p_algo.policy_evaluation_for_scenario(scenario)
 
