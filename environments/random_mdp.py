@@ -153,6 +153,7 @@ class HistorylessRandomMDP2P(MultiAgentEnv):
 
         print("transition", self.transition_function[0, :, :, 0], "rewards", self.reward_function)
 
+        exit()
         super(HistorylessRandomMDP2P, self).__init__()
 
 
