@@ -18,7 +18,7 @@ class BackgroundPopulation:
 
     def build_randomly(self, size):
 
-        self.policies = np.float32(np.random.exponential(1, (size, self.n_states, self.n_actions)))
-        self.policies /= self.policies.sum(axis=-1, keepdims=True)
+        policies = np.exp(np.random.exponential(1, (size, self.n_states, self.n_actions)))
+        self.policies = np.float32(policies / policies.sum(axis=-1, keepdims=True))
 
 
