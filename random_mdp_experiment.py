@@ -298,16 +298,15 @@ def random_mdp_experiment(
 
     regrets = []
     worst_case_regrets = []
-    policy_history = [
-        TabularPolicy(environment, robust_policy.get_probs()) for _ in range(32)
-                      ]
+    policy_history = []
 
     #belief.beta_logits[:] = 0.3333, 0.3333, 0.3333
 
     for i in range(n_steps):
 
-        policy_history.append(TabularPolicy(environment, robust_policy.get_probs()))
-        previous_robust_policy = policy_history.pop(np.random.randint(len(policy_history)))
+        if i % 10 == 0:
+            policy_history.append(TabularPolicy(environment, robust_policy.get_probs()))
+        previous_robust_policy = np.random.choice(policy_history)
 
         expected_vf, vf = algo.policy_evaluation_for_prior(bg_population, belief)
 
