@@ -34,6 +34,7 @@ class DeterministicPoliciesPopulation(bg_population.BackgroundPopulation):
 
             policies = build_deterministic_policies(self.n_actions, self.n_states - 1, size)
 
+            print("background pop size :", len(policies))
             self.policies = np.zeros((len(policies), self.n_states, self.n_actions))
             self.policies[:, :-1] = policies
 
