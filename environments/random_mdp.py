@@ -133,17 +133,18 @@ class HistorylessRandomMDP2P(MultiAgentEnv):
             }
         )
         self.transition_function = np.zeros((n_states, n_actions, n_actions, n_states), dtype=np.float32)
+        self.reward_function = np.zeros((self.observation_space[0].n, self.action_space[0].n, self.action_space[0].n),
+                                        dtype=np.float32)
         for action1 in range(n_actions):
             for action2 in range(n_actions):
                 p = self.random.exponential(1, (n_states, n_states))
                 self.transition_function[:, action1, action2] = p
                 self.transition_function[:, action2, action1] = p
+                self.reward_function[-1, action1, action2] = 1
+                self.reward_function[-1, action2, action1] = 1
 
 
-        self.reward_function = np.zeros((self.observation_space[0].n, self.action_space[0].n, self.action_space[0].n),
-                                        dtype=np.float32)
-        self.reward_function[-1] = 1
-
+        print("transition", self.transition_function[0, 0, 0], "rewards", self.reward_function)
         self.curr_state_to_opp_state = {i: i for i in range(n_states)}
 
         self.gamma = 1.
