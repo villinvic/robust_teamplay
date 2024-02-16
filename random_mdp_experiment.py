@@ -299,8 +299,7 @@ def random_mdp_experiment(
     regrets = []
     worst_case_regrets = []
     policy_history = [
-        TabularPolicy(environment, robust_policy.get_probs()),
-        TabularPolicy(environment, robust_policy.get_probs())
+        TabularPolicy(environment, robust_policy.get_probs()) for _ in range(15)
                       ]
 
     #belief.beta_logits[:] = 0.3333, 0.3333, 0.3333
