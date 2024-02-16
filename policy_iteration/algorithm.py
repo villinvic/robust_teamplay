@@ -4,7 +4,7 @@ import numpy as np
 from gymnasium.spaces import Discrete
 from gymnasium.spaces import Dict
 
-from background_population.bg_population import TabularBackgroundPopulation
+from background_population.bg_population import BackgroundPopulation
 from background_population.deterministic import DeterministicPoliciesPopulation
 from beliefs.prior import Prior
 from environments.mdp import compute_multiagent_mdp
@@ -28,7 +28,7 @@ class PolicyIteration:
 
     def policy_evaluation_for_prior(
             self,
-            bg_population: TabularBackgroundPopulation,
+            bg_population: BackgroundPopulation,
             prior: Prior,
     ):
         # samples [batch_size, state, next_state, reward]

@@ -13,7 +13,7 @@ import joypy
 from matplotlib import cm
 from tqdm import tqdm
 
-from background_population.bg_population import TabularBackgroundPopulation
+from background_population.bg_population import BackgroundPopulation
 from background_population.deterministic import DeterministicPoliciesPopulation
 from beliefs.prior import Prior
 from environments.mdp import compute_multiagent_mdp
@@ -458,7 +458,7 @@ def prisoners_experiment(
         # # And well known interesting policies
         #
         #
-        # test_background_population = TabularBackgroundPopulation(environment)
+        # test_background_population = BackgroundPopulation(environment)
         #
         # test_background_population.policies = np.stack([environment.cooperate_then_defect, environment.tit_for_tat, cooperative, defective])
         #

@@ -2,7 +2,7 @@ import gymnasium
 import numpy as np
 
 
-class TabularBackgroundPopulation:
+class BackgroundPopulation:
 
     def __init__(self, environment: gymnasium.Env):
         self.n_actions = environment.action_space[0].n
@@ -15,5 +15,10 @@ class TabularBackgroundPopulation:
         policy = np.empty_like(self.policies[0])
 
         policy[:] = np.sum(prior()[:-1] * self.policies, axis=0) + prior[-1] * trained_policy.get_params()
+
+    def build_randomly(self, size):
+
+        self.policies = np.float32(np.random.exponential(1, (size, self.n_states, self.n_actions)))
+        self.policies /= self.policies.sum(axis=-1, keepdims=True)
 
 

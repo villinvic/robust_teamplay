@@ -13,11 +13,11 @@ import joypy
 from matplotlib import cm
 from tqdm import tqdm
 
-from background_population.bg_population import TabularBackgroundPopulation
+from background_population.bg_population import BackgroundPopulation
 from background_population.deterministic import DeterministicPoliciesPopulation
 from beliefs.prior import Prior
 from environments.mdp import compute_multiagent_mdp
-from environments.random_mdp import RandomMDP2P
+from environments.random_mdp import RandomMDP2P, HistorylessRandomMDP2P
 from policies.policy import Policy
 from policies.tabular_policy import TabularPolicy
 from policy_iteration.algorithm import PolicyIteration
@@ -202,7 +202,11 @@ def random_mdp_experiment(
 
     np.random.seed(seed)
 
-    environment = RandomMDP2P(episode_length=episode_length, n_states=n_states, n_actions=n_actions, history_window=history_window,
+    if history_window == 0:
+        environment = HistorylessRandomMDP2P(episode_length=episode_length, n_states=n_states, n_actions=n_actions,
+                                  seed=env_seed)
+    else:
+        environment = RandomMDP2P(episode_length=episode_length, n_states=n_states, n_actions=n_actions, history_window=history_window,
                               seed=env_seed)
 
     robust_policy = Policy(environment)
@@ -412,8 +416,8 @@ def random_mdp_experiment(
     if episode_length > 1:
 
 
-        test_background_population = DeterministicPoliciesPopulation(environment)
-        test_background_population.build_population(pop_size*4)
+        test_background_population = BackgroundPopulation(environment)
+        test_background_population.build_randomly(9*3)
 
         _, main_policy_vf = algo_p.policy_evaluation_for_prior(test_background_population, Prior(len(test_background_population.policies)+1, learning_rate=0))
         best_response_vfs = np.empty((len(test_background_population.policies) + 1, robust_policy.n_states), dtype=np.float32)
@@ -450,7 +454,7 @@ def random_mdp_experiment(
 
         np.random.seed(4)
         for random_set_idx in range(3):
-            scenario_idxs = np.random.choice(len(test_background_population.policies) + 1, size=9, replace=False)
+            scenario_idxs = np.arange(random_set_idx*9, (random_set_idx+1)*9)
 
             test_results[fr"\[\Sigma^{{ {random_set_idx+1} }}\]"] = {
                 "utility": vf_s0[scenario_idxs],
@@ -476,7 +480,7 @@ def random_mdp_experiment(
         # # And well known interesting policies
         #
         #
-        # test_background_population = TabularBackgroundPopulation(environment)
+        # test_background_population = BackgroundPopulation(environment)
         #
         # test_background_population.policies = np.stack([environment.cooperate_then_defect, environment.tit_for_tat, cooperative, defective])
         #

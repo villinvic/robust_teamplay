@@ -102,6 +102,51 @@ class RandomMDP2P(MultiAgentEnv):
         super(RandomMDP2P, self).__init__()
 
 
+class HistorylessRandomMDP2P(MultiAgentEnv):
+    def __init__(
+            self,
+            episode_length: int = 5,
+            n_states: int = 5,
+            n_actions: int = 2,
+            seed: int = None,
+            *args,
+            **kwargs,
+    ):
+        self.random = np.random.default_rng(seed=seed)
+        self.episode_length = episode_length
+
+        self.current_step = 0
+
+        self._agent_ids = {0, 1}
+
+        self.action_space = spaces.Dict(
+            {
+                i: spaces.Discrete(n_actions) for i in self._agent_ids
+            }
+        )
+
+        self.observation_space = spaces.Dict(
+            {
+                i: spaces.Discrete(
+                    n_states
+                ) for i in self._agent_ids
+            }
+        )
+        self.transition_function = self.random.exponential(1, (n_states, n_actions, n_actions, n_states))
+        self.reward_function = np.zeros((self.observation_space[0].n, self.action_space[0].n, self.action_space[0].n),
+                                        dtype=np.float32)
+        self.reward_function[-1] = 1
+
+        self.curr_state_to_opp_state = {i: i for i in range(n_states)}
+
+        self.gamma = 1.
+        self.s0 = 0
+
+        self.transition_function /= (self.transition_function.sum(axis=-1, keepdims=True)+1e-8)
+
+        super(HistorylessRandomMDP2P, self).__init__()
+
+
 if __name__ == '__main__':
 
     mdp = RandomMDP2P(n_states=2, n_actions=2, history_window=1)

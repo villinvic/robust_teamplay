@@ -21,7 +21,7 @@ def build_deterministic_policies(n_actions, n_states, size=None):
     return policies
 
 
-class DeterministicPoliciesPopulation(bg_population.TabularBackgroundPopulation):
+class DeterministicPoliciesPopulation(bg_population.BackgroundPopulation):
 
     def __init__(self, environment: gymnasium.Env):
         super().__init__(environment)
@@ -39,6 +39,8 @@ class DeterministicPoliciesPopulation(bg_population.TabularBackgroundPopulation)
 
         else:
             self.policies = build_deterministic_policies(self.n_actions, self.n_states, size)
+
+
 
 
 
