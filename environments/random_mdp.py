@@ -143,14 +143,15 @@ class HistorylessRandomMDP2P(MultiAgentEnv):
                 self.reward_function[-1, action1, action2] = 1
                 self.reward_function[-1, action2, action1] = 1
 
-
-        print("transition", self.transition_function[0, 0, 0], "rewards", self.reward_function)
         self.curr_state_to_opp_state = {i: i for i in range(n_states)}
 
         self.gamma = 1.
         self.s0 = 0
 
+
         self.transition_function /= (self.transition_function.sum(axis=-1, keepdims=True)+1e-8)
+
+        print("transition", self.transition_function[0, :, :, 0], "rewards", self.reward_function)
 
         super(HistorylessRandomMDP2P, self).__init__()
 
