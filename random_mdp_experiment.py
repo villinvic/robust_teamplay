@@ -304,8 +304,9 @@ def random_mdp_experiment(
 
     for i in range(n_steps):
 
-        if i % 10 == 0:
-            policy_history.append(TabularPolicy(environment, robust_policy.get_probs()))
+        policy_history.append(TabularPolicy(environment, robust_policy.get_probs()))
+        if len(policy_history) > 32 :
+            policy_history.pop(0)
         previous_robust_policy = np.random.choice(policy_history)
 
         expected_vf, vf = algo.policy_evaluation_for_prior(bg_population, belief)
