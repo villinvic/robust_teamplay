@@ -138,15 +138,19 @@ class HistorylessRandomMDP2P(MultiAgentEnv):
         for action1 in range(n_actions):
             for action2 in range(n_actions):
                 if action1 == action2 == 0:
-                    r = 1.
-                elif (action1 == 0 and action2 != 0)\
-                        or (action2 == 0 and action1 != 0):
-                    r = -n_actions
+                    r1 = 1.
+                    r2 = 1.
+                elif (action1 == 0 and action2 != 0):
+                    r1 = 0.
+                    r2 = -1
+                elif (action1 != 0 and action2 == 0):
+                    r1 = -1.
+                    r2 = 0.
                 p = self.random.exponential(1, (n_states, n_states))
                 self.transition_function[:, action1, action2] = p
                 self.transition_function[:, action2, action1] = p
-                self.reward_function[-1, action1, action2] = r
-                self.reward_function[-1, action2, action1] = r
+                self.reward_function[-1, action1, action2] = r1
+                self.reward_function[-1, action2, action1] = r2
 
 
         self.curr_state_to_opp_state = {i: i for i in range(n_states)}
