@@ -306,7 +306,7 @@ def random_mdp_experiment(
     for i in range(n_steps):
 
         policy_history.append(robust_policy.get_probs())
-        if len(policy_history) > 2048 :
+        if len(policy_history) > 4096 :
             policy_history.pop(0)
         previous_robust_policy = sum(policy_history) / len(policy_history)
 
