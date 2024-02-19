@@ -306,9 +306,9 @@ def random_mdp_experiment(
     for i in range(n_steps):
 
         policy_history.append(robust_policy.get_probs())
-        if len(policy_history) > 3 :
+        if len(policy_history) > 2048 :
             policy_history.pop(0)
-        previous_robust_policy = policy_history[np.random.randint(0, len(policy_history))]
+        previous_robust_policy = sum(policy_history) / len(policy_history)
 
         expected_vf, vf = algo.policy_evaluation_for_prior(bg_population, belief)
 
