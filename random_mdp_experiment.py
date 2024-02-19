@@ -46,23 +46,23 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
             n_steps=n_steps,
             main_approach=True,
         ),
-    #     dict(
-    #         scenario_distribution_optimization="Maximin Utility",
-    #         use_regret=False,
-    #         policy_lr=policy_lr,
-    #         prior_lr=prior_lr,
-    #         n_steps=n_steps,
-    #         main_approach=False
-    #
-    #     ),
-    #     dict(
-    #         scenario_distribution_optimization="Uniform Distribution",
-    #         use_regret=False,
-    #         policy_lr=policy_lr,
-    #         prior_lr=0.,
-    #         n_steps=n_steps,
-    #         main_approach=False,
-    #     ),
+        dict(
+            scenario_distribution_optimization="Maximin Utility",
+            use_regret=False,
+            policy_lr=policy_lr,
+            prior_lr=prior_lr,
+            n_steps=n_steps,
+            main_approach=False
+
+        ),
+        dict(
+            scenario_distribution_optimization="Uniform Distribution",
+            use_regret=False,
+            policy_lr=policy_lr,
+            prior_lr=0.,
+            n_steps=n_steps,
+            main_approach=False,
+        ),
         dict(
             scenario_distribution_optimization="Self-play",
             use_regret=False,
