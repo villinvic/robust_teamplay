@@ -40,9 +40,26 @@ class RandomMDP2P(MultiAgentEnv):
         self.reward_function = np.zeros((self.observation_space[0].n, self.action_space[0].n, self.action_space[0].n),
                                         dtype=np.float32)
 
-        self.historyless_transition_function = self.random.exponential(1, (n_states, n_actions, n_actions, n_states))
-        self.historyless_transition_function /= (self.historyless_transition_function.sum(axis=-1, keepdims=True)+1e-8)
-        self.historyless_reward_function = self.random.uniform(0., 1.,(n_states, n_actions, n_actions))
+        self.historyless_transition_function = np.zeros((n_states, n_actions, n_actions, n_states), dtype=np.float32)
+        self.historyless_reward_function = np.zeros((self.observation_space[0].n, self.action_space[0].n, self.action_space[0].n),
+                                        dtype=np.float32)
+        for action1 in range(n_actions):
+            for action2 in range(n_actions):
+                r1 = action1
+                r2 = action2
+                if action1 == action2:
+                    r1 *= 2
+                    r2 *= 2
+                else:
+                    if r1 < r2:
+                        r2 = -r2
+                    else:
+                        r1 = -r1
+                p = self.random.exponential(1, (n_states, n_states))
+                self.historyless_transition_function[:, action1, action2] = p
+                self.historyless_transition_function[:, action2, action1] = p
+                self.historyless_reward_function[-1, action1, action2] = r1
+                self.historyless_reward_function[-1, action2, action1] = r2
 
         self.curr_state_to_opp_state = {}
 
@@ -137,15 +154,16 @@ class HistorylessRandomMDP2P(MultiAgentEnv):
                                         dtype=np.float32)
         for action1 in range(n_actions):
             for action2 in range(n_actions):
-                if action1 == action2 == 0:
-                    r1 = 1.
-                    r2 = 1.
-                elif (action1 == 0 and action2 != 0):
-                    r1 = -1.
-                    r2 = 0.
-                elif (action1 != 0 and action2 == 0):
-                    r1 = 0.
-                    r2 = -1.
+                r1 = action1
+                r2 = action2
+                if action1 == action2:
+                    r1 *= 2
+                    r2 *= 2
+                else:
+                    if r1 < r2:
+                        r2 = -r2
+                    else:
+                        r1 = -r1
                 p = self.random.exponential(1, (n_states, n_states))
                 self.transition_function[:, action1, action2] = p
                 self.transition_function[:, action2, action1] = p
