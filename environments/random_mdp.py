@@ -48,8 +48,8 @@ class RandomMDP2P(MultiAgentEnv):
                 r1 = action1
                 r2 = action2
                 if action1 == action2:
-                    r1 *= 2
-                    r2 *= 2
+                    r1 *= 0.5
+                    r2 *= 0.5
                 else:
                     if r1 < r2:
                         r2 = -r2
@@ -158,8 +158,8 @@ class HistorylessRandomMDP2P(MultiAgentEnv):
                 r1 = action1
                 r2 = action2
                 if action1 == action2:
-                    r1 *= 2
-                    r2 *= 2
+                    r1 *= 0.5
+                    r2 *= 0.5
                 else:
                     if r1 < r2:
                         r2 = -r2
