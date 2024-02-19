@@ -38,14 +38,14 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
 
 
     approaches = [
-    #dict(
-    #         scenario_distribution_optimization="Minimax Regret",
-    #         use_regret=True,
-    #         policy_lr=policy_lr,
-    #         prior_lr=prior_lr,
-    #         n_steps=n_steps,
-    #         main_approach=True,
-    #     ),
+    dict(
+            scenario_distribution_optimization="Minimax Regret",
+            use_regret=True,
+            policy_lr=policy_lr,
+            prior_lr=prior_lr,
+            n_steps=n_steps,
+            main_approach=True,
+        ),
     #     dict(
     #         scenario_distribution_optimization="Maximin Utility",
     #         use_regret=False,
