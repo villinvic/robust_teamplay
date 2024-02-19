@@ -168,12 +168,12 @@ class PolicyIteration:
 
         self.policy.action_logits[:] = self.policy.action_logits * (1-self.lr) + self.lr * new_policy
 
-    def exact_pg(self, bg_population, prior: Prior, vf, previous_copy: TabularPolicy = None):
+    def exact_pg(self, bg_population, prior: Prior, vf, previous_copy = None):
 
         action_probs = self.policy.get_probs()
         all_policies = [bg_population.policies]
         if previous_copy is not None:
-            all_policies.append(previous_copy.get_probs()[np.newaxis])
+            all_policies.append(previous_copy[np.newaxis])
         else:
             all_policies.append(action_probs[np.newaxis])
 
