@@ -37,31 +37,32 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
 
 
 
-    approaches = [dict(
-            scenario_distribution_optimization="Minimax Regret",
-            use_regret=True,
-            policy_lr=policy_lr,
-            prior_lr=prior_lr,
-            n_steps=n_steps,
-            main_approach=True,
-        ),
-        dict(
-            scenario_distribution_optimization="Maximin Utility",
-            use_regret=False,
-            policy_lr=policy_lr,
-            prior_lr=prior_lr,
-            n_steps=n_steps,
-            main_approach=False
-
-        ),
-        dict(
-            scenario_distribution_optimization="Uniform Distribution",
-            use_regret=False,
-            policy_lr=policy_lr,
-            prior_lr=0.,
-            n_steps=n_steps,
-            main_approach=False,
-        ),
+    approaches = [
+    #dict(
+    #         scenario_distribution_optimization="Minimax Regret",
+    #         use_regret=True,
+    #         policy_lr=policy_lr,
+    #         prior_lr=prior_lr,
+    #         n_steps=n_steps,
+    #         main_approach=True,
+    #     ),
+    #     dict(
+    #         scenario_distribution_optimization="Maximin Utility",
+    #         use_regret=False,
+    #         policy_lr=policy_lr,
+    #         prior_lr=prior_lr,
+    #         n_steps=n_steps,
+    #         main_approach=False
+    #
+    #     ),
+    #     dict(
+    #         scenario_distribution_optimization="Uniform Distribution",
+    #         use_regret=False,
+    #         policy_lr=policy_lr,
+    #         prior_lr=0.,
+    #         n_steps=n_steps,
+    #         main_approach=False,
+    #     ),
         dict(
             scenario_distribution_optimization="Self-play",
             use_regret=False,
@@ -316,6 +317,8 @@ def random_mdp_experiment(
         all_regrets = best_response_vfs - vf
 
         regret_s0 = all_regrets[:, environment.s0]
+
+        print(belief())
 
         if use_regret:
             # p_algo = PolicyIteration(best_responses[belief.dim-1], environment, learning_rate=1, epsilon=3)
