@@ -68,6 +68,8 @@ class Policy:
 
         gradients = state_visitation[:, np.newaxis] * action_probs * (A - lambda_ * np.log(action_probs+1e-8))
 
+        gradients += np.random.normal(0, 1, gradients.shape)
+
         return gradients
 
     def apply_gradient(self, gradient, lr, normalize=False):
