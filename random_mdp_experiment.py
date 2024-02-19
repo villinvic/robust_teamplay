@@ -318,8 +318,6 @@ def random_mdp_experiment(
 
         regret_s0 = all_regrets[:, environment.s0]
 
-        print(belief())
-
         if use_regret:
             # p_algo = PolicyIteration(best_responses[belief.dim-1], environment, learning_rate=1, epsilon=3)
             # scenario = robust_policy.get_probs(), (0.5, 0.5)
