@@ -173,6 +173,7 @@ class PolicyIteration:
         action_probs = self.policy.get_probs()
         all_policies = [bg_population.policies]
         if previous_copy is not None:
+            print(previous_copy)
             all_policies.append(previous_copy[np.newaxis])
         else:
             all_policies.append(action_probs[np.newaxis])
