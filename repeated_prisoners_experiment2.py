@@ -488,8 +488,12 @@ def evaluate_on_test_set(policy, environment, test_set: List[Scenario]):
     regrets = []
     for test_scenario in test_set:
 
-        _, main_policy_vf = algo_p.policy_evaluation_for_prior(test_scenario.background_policies,
-                                                               Prior(1, learning_rate=0))
+        if test_scenario.num_copies == 1:
+            scenario = policy.get_probs(), (0.5, 0.5)
+        else:
+            scenario = test_scenario.background_policies.policies[0], (1, 0)
+
+        main_policy_vf = algo_p.policy_evaluation_for_scenario(scenario)
 
         best_response = TabularPolicy(environment)
         best_response.initialize_uniformly()
