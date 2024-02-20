@@ -121,7 +121,7 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
             "episode_length": episode_length,
             "pop_size": pop_size,
             "run_name": name,
-            "approach": approach["scenario_distribution_optimization"]
+            "approach": approach["scenario_distribution_optimization"],
             "job": random_mdp_experiment_with_config #if idx < len(approaches)-1
             #else repeated_prisoners_best_solution_with_config
         } for approach in approaches]
