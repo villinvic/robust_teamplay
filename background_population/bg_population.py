@@ -21,4 +21,6 @@ class BackgroundPopulation:
         policies = np.exp(np.random.exponential(5, (size, self.n_states, self.n_actions)))
         self.policies = np.float32(policies / policies.sum(axis=-1, keepdims=True))
 
+        return self.policies
+
 

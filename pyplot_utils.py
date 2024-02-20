@@ -118,8 +118,9 @@ def plot_prior(prior_overtime, name):
                 label = "..."
             elif i == len(np_data) - 1:
                 label = "Self-play"
+                color = "r"
             else:
-                label =None
+                label = None
         else:
 
             if i < len(np_data) - 1:
