@@ -56,7 +56,7 @@ class Prior:
         #print("prior:", self.beta_logits)
 
 
-        self.beta_logits[self.beta_logits < 0] = 1e-4
+        self.beta_logits[self.beta_logits < 0] = 1e-3
 
         self.beta_logits[:] /= self.beta_logits.sum()
 
