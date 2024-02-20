@@ -105,7 +105,7 @@ def make_grouped_plot(data, name):
 
 def plot_prior(prior_overtime, name):
 
-    np_data = np.tile(prior_overtime).T
+    np_data = np.stack(prior_overtime).T
     colors = mc.XKCD_COLORS
 
 
