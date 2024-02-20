@@ -380,7 +380,7 @@ def prisoners_experiment(
 
     # EVALUATION
     print("Running evaluation...")
-    np.random.seed(1)
+    np.random.seed(4)
 
     test_results = {
         r"\[\Sigma(\mathcal{B}^\text{train})\]" : {"utility": vf_s0, "regret": regret_s0},
