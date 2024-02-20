@@ -106,7 +106,7 @@ def make_grouped_plot(data, name):
 def plot_prior(prior_overtime, name):
 
     np_data = np.stack(prior_overtime).T
-    colors = mc.CSS4_COLORS
+    colors = mc.XKCD_COLORS
 
 
     for i, (scenario_prob_overtime, color) in enumerate(zip(np_data, colors)):

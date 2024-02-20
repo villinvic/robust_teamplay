@@ -61,7 +61,7 @@ class Prior:
 
         normalized_loss = loss
 
-        next_beta = self.beta_logits + normalized_loss * self.learning_rate
+        next_beta = np.maximum(self.beta_logits + normalized_loss * self.learning_rate, 0.)
 
         #print("prior loss:", loss * self.learning_rate)
         #print("prior:", self.beta_logits)
@@ -71,7 +71,9 @@ class Prior:
 
         #self.beta_logits[:] /= self.beta_logits.sum()
 
-        self.beta_logits[:] = project_to_simplex(next_beta)
+        self.beta_logits[:] = next_beta / next_beta.sum()
+
+        #self.beta_logits[:] = project_to_simplex(next_beta)
 
         #print("prior post projection:", self.beta_logits)
 
