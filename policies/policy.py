@@ -68,7 +68,7 @@ class Policy:
 
         gradients = state_visitation[:, np.newaxis] * action_probs * (A - lambda_ * np.log(action_probs+1e-8))
 
-        gradients += np.random.normal(0, 0., gradients.shape)
+        gradients += np.random.normal(0, 1., gradients.shape)
 
         return gradients
 
@@ -80,7 +80,7 @@ class Policy:
         else:
             gradient -= np.mean(gradient, axis=1, keepdims=True)
 
-        self.action_logits[:] = np.clip(lr * gradient  + self.action_logits, -100., 100.)
+        self.action_logits[:] = np.clip(lr * gradient + self.action_logits, -100., 100.)
 
 
 
