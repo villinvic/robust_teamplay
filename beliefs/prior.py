@@ -61,7 +61,7 @@ class Prior:
 
         normalized_loss = loss
 
-        next_beta = np.maximum(self.beta_logits + normalized_loss * self.learning_rate, self.learning_rate)
+        next_beta = np.maximum(self.beta_logits + normalized_loss * self.learning_rate, 0.)
 
         #print("prior loss:", loss * self.learning_rate)
         #print("prior:", self.beta_logits)
