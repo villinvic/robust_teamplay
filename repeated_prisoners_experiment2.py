@@ -399,7 +399,7 @@ def prisoners_experiment(
     if episode_length > 1:
         sf = ScenarioFactory(environment)
         def copies_distribution():
-            return np.random.choice([0, 1], p=[1-1/pop_size, 1/pop_size])
+            return np.random.choice([0, 1], p=[1-1.5/pop_size, 1.5/pop_size])
 
         for random_set_idx in range(3):
             test_set = [sf(copies_distribution) for _ in range(9)]

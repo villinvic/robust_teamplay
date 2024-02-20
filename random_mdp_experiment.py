@@ -26,6 +26,8 @@ import subprocess
 import multiprocessing as mp
 
 from pyplot_utils import make_grouped_boxplot, make_grouped_plot, plot_prior
+from repeated_prisoners_experiment2 import evaluate_on_test_set
+from scenarios.scenario import ScenarioFactory
 
 
 def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2, n_steps=1000,
@@ -419,102 +421,19 @@ def random_mdp_experiment(
 
     # We sample 3 random test sets with 9 environments
     if episode_length > 1:
+        sf = ScenarioFactory(environment)
 
-        test_background_population = BackgroundPopulation(environment)
-        test_background_population.build_randomly(9*3)
-
-        _, main_policy_vf = algo_p.policy_evaluation_for_prior(test_background_population, Prior(len(test_background_population.policies)+1, learning_rate=0))
-        best_response_vfs = np.empty((len(test_background_population.policies) + 1, robust_policy.n_states), dtype=np.float32)
-        for p_id in range(len(test_background_population.policies) + 1):
-            best_response = TabularPolicy(environment)
-            best_response.initialize_uniformly()
-            p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=episode_length)
-            policy_history = [
-                best_response.get_probs(),
-                best_response.get_probs()
-            ]
-            if p_id < len(test_background_population.policies):
-                scenario = test_background_population.policies[p_id], (1, 0)
-            else:
-                scenario = best_response.get_probs(), (0.5, 0.5)
-            for i in range(episode_length * 5):
-                policy_history.append(best_response.get_probs())
-                old_best_response = policy_history.pop(0)
-                if p_id == len(test_background_population.policies):
-                    scenario = old_best_response, (0.5, 0.5)
-                vf = p_algo.policy_evaluation_for_scenario(scenario)
-
-                p_algo.policy_improvement_for_scenario(scenario, vf)
-
-                if np.allclose(old_best_response, best_response.get_probs()):
-                    break
-
-            vf = p_algo.policy_evaluation_for_scenario(scenario)
-
-            best_response_vfs[p_id] = vf
-
-        vf_s0 = main_policy_vf[:, environment.s0]
-        regret_s0 = best_response_vfs[:, environment.s0] - vf_s0
+        def copies_distribution():
+            return np.random.choice([0, 1], p=[1 - 1.5 / pop_size, 1.5 / pop_size])
 
         for random_set_idx in range(3):
-            scenario_idxs = np.arange(random_set_idx*9, (random_set_idx+1)*9)
-
-            test_results[fr"\[\Sigma^{{ {random_set_idx+1} }}\]"] = {
-                "utility": vf_s0[scenario_idxs],
-                "regret" : regret_s0[scenario_idxs]
+            test_set = [sf(copies_distribution) for _ in range(9)]
+            test_values, test_regrets = evaluate_on_test_set(robust_policy, environment, test_set)
+            test_results[fr"\[\Sigma^{{ {random_set_idx + 1} }}\]"] = {
+                "utility": test_values,
+                "regret": test_regrets
             }
 
-
-        # we also test against the minimax distribution (TODO)
-        # samples = np.random.choice(len(minimax), 512, p=minimax)
-        # results["minimax"] = {
-        #     "utility": vf_s0[samples],
-        #     "regret" : regret_s0[samples]
-        # }
-
-
-        # lastly, We handpick a set, with:
-        # a fully cooperating, defective policy, selfplay
-        # cooperative = np.zeros_like(robust_policy.action_logits)
-        # cooperative[:, 0] = 1
-        # defective = np.zeros_like(robust_policy.action_logits)
-        # defective[:, 1] = 1
-        #
-        # # And well known interesting policies
-        #
-        #
-        # test_background_population = BackgroundPopulation(environment)
-        #
-        # test_background_population.policies = np.stack([environment.cooperate_then_defect, environment.tit_for_tat, cooperative, defective])
-        #
-        # _, main_policy_vf = algo_p.policy_evaluation_for_prior(test_background_population, Prior(len(test_background_population.policies)+1, learning_rate=0))
-        # best_response_vfs = np.empty((len(test_background_population.policies) + 1, robust_policy.n_states), dtype=np.float32)
-        # for p_id in range(len(test_background_population.policies) + 1):
-        #     best_response = TabularPolicy(environment)
-        #     best_response.initialize_uniformly()
-        #     p_algo = PolicyIteration(best_response, environment, learning_rate=1, epsilon=episode_length)
-        #     if p_id < len(test_background_population.policies):
-        #         scenario = test_background_population.policies[p_id], (1, 0)
-        #     else:
-        #         scenario = best_response.get_probs(), (0.5, 0.5)
-        #     for i in range(episode_length * 5):
-        #         if p_id == len(test_background_population.policies):
-        #             scenario = best_response.get_probs(), (0.5, 0.5)
-        #         vf = p_algo.policy_evaluation_for_scenario(scenario)
-        #
-        #         p_algo.policy_improvement_for_scenario(scenario, vf)
-        #
-        #     vf = p_algo.policy_evaluation_for_scenario(scenario)
-        #
-        #     best_response_vfs[p_id] = vf
-        #
-        # vf_s0 = main_policy_vf[:, environment.s0]
-        # regret_s0 = best_response_vfs[:, environment.s0] - vf_s0
-        #
-        # results["handpicked"] = {
-        #     "utility": vf_s0,
-        #     "regret": regret_s0
-        # }
 
     return {
         "train": {
