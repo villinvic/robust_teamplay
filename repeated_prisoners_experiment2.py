@@ -520,8 +520,8 @@ def evaluate_on_test_set(policy, environment, test_set: List[Scenario]):
 
                 if np.allclose(old_best_response, best_response.get_probs()):
                     break
-        vf_s0 = main_policy_vf[:, environment.s0]
-        regret_s0 = best_response_vf[:, environment.s0] - vf_s0
+        vf_s0 = main_policy_vf[0, environment.s0]
+        regret_s0 = best_response_vf[environment.s0] - vf_s0
 
         vfs.append(vf_s0)
         regrets.append(regret_s0)
