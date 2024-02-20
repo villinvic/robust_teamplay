@@ -6,7 +6,8 @@ def project_to_simplex(p):
     cumulative_sum = np.cumsum(p_sorted)
     rho = np.argmax(p_sorted > (cumulative_sum - 1) / np.arange(1, len(p) + 1))
     theta = np.max([0, (cumulative_sum[rho] - 1) / (rho + 1)])
-    return np.maximum(p - theta, 0)
+    x = np.maximum(p - theta, 0)
+    return x / x.sum()
 
 
 class Prior:
