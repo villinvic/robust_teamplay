@@ -50,8 +50,8 @@ class RandomMDP2P(MultiAgentEnv):
                 p = self.random.exponential(1, (n_states, n_states))
                 self.historyless_transition_function[:, action1, action2] = p
                 self.historyless_transition_function[:, action2, action1] = p
-                self.historyless_reward_function[-1, action1, action2] = r1
-                self.historyless_reward_function[-1, action2, action1] = r2
+                self.historyless_reward_function[:, action1, action2] = r1
+                self.historyless_reward_function[:, action2, action1] = r2
 
         self.curr_state_to_opp_state = {}
 
