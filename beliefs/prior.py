@@ -46,21 +46,24 @@ class Prior:
         # Score is the value of the policy
         # Thus, we want to minimize it, ie maximize regret
 
-        loss -= np.mean(loss)
+        #loss -= np.mean(loss)
         if not regret:
             loss = -loss #np.max(loss) - loss + np.min(loss)
 
         normalized_loss = loss
 
-        self.beta_logits[:] = self.beta_logits + normalized_loss * self.learning_rate
+        next_beta = self.beta_logits + normalized_loss * self.learning_rate
+        exp_beta = np.exp(next_beta - next_beta.max())
 
         #print("prior loss:", loss * self.learning_rate)
         #print("prior:", self.beta_logits)
 
 
-        self.beta_logits[self.beta_logits < 0] = 1e-3
+        #self.beta_logits[self.beta_logits < 0] = 1e-3
 
-        self.beta_logits[:] /= self.beta_logits.sum()
+        #self.beta_logits[:] /= self.beta_logits.sum()
+
+        self.beta_logits[:] = exp_beta / exp_beta.sum()
 
         #print("prior post projection:", self.beta_logits)
 
