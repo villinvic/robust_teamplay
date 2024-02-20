@@ -45,6 +45,8 @@ class Prior:
 
         # Score is the value of the policy
         # Thus, we want to minimize it, ie maximize regret
+
+        loss -= np.mean(loss)
         if not regret:
             loss = -loss #np.max(loss) - loss + np.min(loss)
 
