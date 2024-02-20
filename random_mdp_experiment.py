@@ -384,7 +384,7 @@ def random_mdp_experiment(
 
     minimax_worst_case_distribution_path = run_name + "worst_case_distribution.pkl"
 
-    plot_prior(priors, run_name)
+    plot_prior(priors, "prior_overtime_" + run_name)
 
     if main_approach:
         minimax_worst_case_distribution = priors[-1]
