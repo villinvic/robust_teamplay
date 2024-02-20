@@ -133,7 +133,7 @@ def plot_prior(prior_overtime, name):
     plt.legend()
     plt.xlabel("Iterations")
     plt.ylabel("Scenario probability")
-    plt.title("Learned Prior Visualization")
+    plt.title("Scenario Distribution Over Time")
     plt.grid(axis="both", alpha=0.3)
     plt.tight_layout()
     plt.savefig(f'{name}.png')
