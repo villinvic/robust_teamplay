@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.colors as mc
 import numpy as np
 
 plt.rc('text', usetex=True)
@@ -99,6 +100,28 @@ def make_grouped_plot(data, name):
         plt.savefig(f'{name}_{metric}.png')
         print("saved ", f'{name}_{metric}.png')
         plt.clf()
+
+
+
+def plot_prior(prior_overtime, name):
+
+    np_data = np.tile(prior_overtime).T
+    colors = mc.XKCD_COLORS
+
+
+    for i, (scenario_prob_overtime, color) in enumerate(zip(np_data, colors)):
+        plt.plot(scenario_prob_overtime, color=color, label=f"Scenario {i}" if i < len(np_data) - 1 else "Self-play scenario")
+
+
+    plt.legend()
+    plt.xlabel("Iterations")
+    plt.ylabel("Scenario probability")
+    plt.title("Learned Prior Visualization")
+    plt.grid(axis="both", alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(f'{name}.png')
+    print("saved ", f'{name}.png')
+    plt.clf()
 
 
 if __name__ == '__main__':

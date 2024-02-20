@@ -25,7 +25,7 @@ import argparse
 import subprocess
 import multiprocessing as mp
 
-from pyplot_utils import make_grouped_boxplot, make_grouped_plot
+from pyplot_utils import make_grouped_boxplot, make_grouped_plot, plot_prior
 
 
 def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2, n_steps=1000,
@@ -383,6 +383,9 @@ def random_mdp_experiment(
     #print("Test time score (utility, regret):", np.mean(vf_s0), np.mean(regret_s0))
 
     minimax_worst_case_distribution_path = run_name + "worst_case_distribution.pkl"
+
+    plot_prior(priors, run_name)
+
     if main_approach:
         minimax_worst_case_distribution = priors[-1]
         with open(minimax_worst_case_distribution_path, "wb+") as f:
