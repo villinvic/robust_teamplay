@@ -112,8 +112,10 @@ def plot_prior(prior_overtime, name):
     for i, (scenario_prob_overtime, color) in enumerate(zip(np_data, colors)):
 
         if len(np_data) > 7:
-            if i < 3:
+            if i < 2:
                 label = f"Scenario {i}"
+            elif i == 3:
+                label = "..."
             elif i == len(np_data) - 1:
                 label = "Self-play"
             else:
