@@ -121,9 +121,10 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
             "episode_length": episode_length,
             "pop_size": pop_size,
             "run_name": name,
+            "approach": approach["scenario_distribution_optimization"]
             "job": random_mdp_experiment_with_config #if idx < len(approaches)-1
             #else repeated_prisoners_best_solution_with_config
-        } for idx in range(len(approaches))]
+        } for approach in approaches]
 
         for config, approach in zip(seeded_configs, approaches):
             config.update(**approach)
@@ -384,7 +385,7 @@ def random_mdp_experiment(
 
     minimax_worst_case_distribution_path = run_name + "worst_case_distribution.pkl"
 
-    plot_prior(priors, "prior_overtime_" + run_name)
+    plot_prior(priors, "prior_overtime_" + kwargs["scenario_distribution_optimization"] + run_name)
 
     if main_approach:
         minimax_worst_case_distribution = priors[-1]
