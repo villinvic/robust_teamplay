@@ -403,6 +403,7 @@ def random_mdp_experiment(
 
     # EVALUATION
     print("Running evaluation...")
+    np.random.seed(4)
 
     test_results = {
         r"\[\Sigma(\mathcal{B}^\text{train})\]" : {"utility": vf_s0, "regret": regret_s0},
@@ -418,7 +419,6 @@ def random_mdp_experiment(
 
     # We sample 3 random test sets with 9 environments
     if episode_length > 1:
-
 
         test_background_population = BackgroundPopulation(environment)
         test_background_population.build_randomly(9*3)
@@ -456,7 +456,6 @@ def random_mdp_experiment(
         vf_s0 = main_policy_vf[:, environment.s0]
         regret_s0 = best_response_vfs[:, environment.s0] - vf_s0
 
-        np.random.seed(4)
         for random_set_idx in range(3):
             scenario_idxs = np.arange(random_set_idx*9, (random_set_idx+1)*9)
 

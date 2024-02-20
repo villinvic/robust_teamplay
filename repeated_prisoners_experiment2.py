@@ -25,7 +25,7 @@ import argparse
 import subprocess
 import multiprocessing as mp
 
-from pyplot_utils import make_grouped_boxplot, make_grouped_plot
+from pyplot_utils import make_grouped_boxplot, make_grouped_plot, plot_prior
 
 
 def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2, n_steps=1000,
@@ -111,9 +111,10 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
             "episode_length": episode_length,
             "pop_size": pop_size,
             "run_name": name,
+            "scenario_distribution_optimization": approach["scenario_distribution_optimization"],
             "job": prisoners_experiment_with_config #if idx < len(approaches)-1
             #else repeated_prisoners_best_solution_with_config
-        } for idx in range(len(approaches))]
+        } for approach in approaches]
 
         for config, approach in zip(seeded_configs, approaches):
             config.update(**approach)
@@ -280,17 +281,16 @@ def prisoners_experiment(
 
     regrets = []
     worst_case_regrets = []
-    policy_history = [
-        TabularPolicy(environment, robust_policy.get_probs()),
-        TabularPolicy(environment, robust_policy.get_probs())
-                      ]
+    policy_history = []
 
     #belief.beta_logits[:] = 0.3333, 0.3333, 0.3333
 
     for i in range(n_steps):
 
-        policy_history.append(TabularPolicy(environment, robust_policy.get_probs()))
-        previous_robust_policy = policy_history.pop(0)
+        policy_history.append(robust_policy.get_probs())
+        if len(policy_history) > 4096:
+            policy_history.pop(0)
+        previous_robust_policy = sum(policy_history) / len(policy_history)
 
         expected_vf, vf = algo.policy_evaluation_for_prior(bg_population, belief)
 
@@ -362,6 +362,8 @@ def prisoners_experiment(
     #print("Test time score (utility, regret):", np.mean(vf_s0), np.mean(regret_s0))
 
     minimax_worst_case_distribution_path = run_name + "worst_case_distribution.pkl"
+    plot_prior(priors, "prior_overtime_" + kwargs["scenario_distribution_optimization"] + run_name)
+
     if main_approach:
         minimax_worst_case_distribution = priors[-1]
         with open(minimax_worst_case_distribution_path, "wb+") as f:
@@ -378,6 +380,7 @@ def prisoners_experiment(
 
     # EVALUATION
     print("Running evaluation...")
+    np.random.seed(1)
 
     test_results = {
         r"\[\Sigma(\mathcal{B}^\text{train})\]" : {"utility": vf_s0, "regret": regret_s0},
@@ -393,9 +396,8 @@ def prisoners_experiment(
 
     # We sample 3 random test sets with 9 environments
     if episode_length > 1:
-
-        test_background_population = DeterministicPoliciesPopulation(environment)
-        test_background_population.build_population(pop_size*4)
+        test_background_population = BackgroundPopulation(environment)
+        test_background_population.build_randomly(9 * 3)
 
         _, main_policy_vf = algo_p.policy_evaluation_for_prior(test_background_population, Prior(len(test_background_population.policies)+1, learning_rate=0))
         best_response_vfs = np.empty((len(test_background_population.policies) + 1, robust_policy.n_states), dtype=np.float32)
@@ -430,9 +432,8 @@ def prisoners_experiment(
         vf_s0 = main_policy_vf[:, environment.s0]
         regret_s0 = best_response_vfs[:, environment.s0] - vf_s0
 
-        np.random.seed(4)
         for random_set_idx in range(3):
-            scenario_idxs = np.random.choice(len(test_background_population.policies) + 1, size=9, replace=False)
+            scenario_idxs = np.arange(random_set_idx * 9, (random_set_idx + 1) * 9)
 
             test_results[fr"\[\Sigma^{{ {random_set_idx+1} }}\]"] = {
                 "utility": vf_s0[scenario_idxs],
