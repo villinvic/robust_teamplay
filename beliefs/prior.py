@@ -1,6 +1,14 @@
 import numpy as np
 
 
+def project_to_simplex(p):
+    p_sorted = -np.sort(-p)
+    cumulative_sum = np.cumsum(p_sorted)
+    rho = np.argmax(p_sorted > (cumulative_sum - 1) / np.arange(1, len(p) + 1))
+    theta = np.max([0, (cumulative_sum[rho] - 1) / (rho + 1)])
+    return np.maximum(p - theta, 0)
+
+
 class Prior:
 
     def __init__(self, dim, learning_rate=5e-2):
@@ -48,12 +56,11 @@ class Prior:
 
         #loss -= np.mean(loss)
         if not regret:
-            loss = -loss #np.max(loss) - loss + np.min(loss)
+            loss = np.max(loss) - loss + np.min(loss)
 
         normalized_loss = loss
 
         next_beta = self.beta_logits + normalized_loss * self.learning_rate
-        exp_beta = np.exp(next_beta - next_beta.max())
 
         #print("prior loss:", loss * self.learning_rate)
         #print("prior:", self.beta_logits)
@@ -63,7 +70,7 @@ class Prior:
 
         #self.beta_logits[:] /= self.beta_logits.sum()
 
-        self.beta_logits[:] = exp_beta / exp_beta.sum()
+        self.beta_logits[:] = project_to_simplex(next_beta)
 
         #print("prior post projection:", self.beta_logits)
 
@@ -72,16 +79,14 @@ class Prior:
 if __name__ == "__main__":
 
     prior = Prior(5, learning_rate=1e-3)
-    prior.initialize_randomly()
-
-    prior.beta_logits[:] = 10, -1, -1, -1, -1
+    prior.initialize_uniformly()
 
     loss = np.array([
-        4,5,1,5,1
+        4,-5,1,5,1
     ])
 
     for j in range(100):
 
         prior.update_prior(loss)
 
-        print(prior.get_probs(), prior.beta_logits)
+        print(prior.get_probs())
