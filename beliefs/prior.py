@@ -1,13 +1,16 @@
 import numpy as np
 
 
-def project_to_simplex(p):
-    p_sorted = -np.sort(-p)
-    cumulative_sum = np.cumsum(p_sorted)
-    rho = np.argmax(p_sorted > (cumulative_sum - 1) / np.arange(1, len(p) + 1))
-    theta = np.max([0, (cumulative_sum[rho] - 1) / (rho + 1)])
-    x = np.maximum(p - theta, 0)
-    return x / x.sum()
+def project_onto_simplex(v, z=1):
+    n_features = len(v)
+    u = np.sort(v)[::-1]
+    cssv = np.cumsum(u) - z
+    ind = np.arange(n_features) + 1
+    cond = u - cssv / ind > 0
+    rho = ind[cond][-1]
+    theta = cssv[cond][-1] / float(rho)
+    w = np.maximum(v - theta, 0)
+    return w
 
 
 class Prior:
@@ -61,7 +64,7 @@ class Prior:
 
         normalized_loss = loss
 
-        next_beta = np.maximum(self.beta_logits + normalized_loss * self.learning_rate, 0.)
+        #next_beta = np.maximum(self.beta_logits + normalized_loss * self.learning_rate, 0.)
 
         #print("prior loss:", loss * self.learning_rate)
         #print("prior:", self.beta_logits)
@@ -71,7 +74,7 @@ class Prior:
 
         #self.beta_logits[:] /= self.beta_logits.sum()
 
-        self.beta_logits[:] = next_beta / next_beta.sum()
+        self.beta_logits[:] = project_onto_simplex(self.beta_logits + normalized_loss * self.learning_rate)
 
         #self.beta_logits[:] = project_to_simplex(next_beta)
 
