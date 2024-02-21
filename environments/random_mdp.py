@@ -51,10 +51,10 @@ class RandomMDP2P(MultiAgentEnv):
                     r1 = r2 = 2
                 elif action1 == 0 and action2 != 0:
                     r1 = 0
-                    r2 = 1 / 2
+                    r2 = 1
                 elif action1 != 0 and action2 == 0:
                     r2 = 0
-                    r1 = 1 / 2
+                    r1 = 1
                 elif action1 == action2:
                     r1 = r2 = 1 / n_actions
                 p = self.random.exponential(1, (n_states, n_states))
