@@ -154,17 +154,24 @@ class HistorylessRandomMDP2P(MultiAgentEnv):
                 #     r2 = 0
                 # else:
                 #     r1 = r2 = 0
-                r1 = np.random.exponential(1/2, n_states)
-                r2 = np.random.exponential(3/2, n_states)
-                if action2 < action1:
+                r1 = 0
+                r2 = 0
+                if action1 == action2 == 0:
+                    r1 = r2 = 2
+                elif action1 == 0 and action2 != 0:
                     r1 = 0
-                elif action1 > action2:
+                    r2 = 1/2
+                elif action1 != 0 and action2 == 0:
                     r2 = 0
+                    r1 = 1 / 2
+                elif action1 == action2:
+                    r1 = r2 = 1 / n_actions
+
                 p = self.random.exponential(1, (n_states, n_states))
                 self.transition_function[:, action1, action2] = p
                 self.transition_function[:, action2, action1] = p
-                self.reward_function[:, action1, action2] = r1
-                self.reward_function[:, action2, action1] = r2
+                self.reward_function[-1, action1, action2] = r1
+                self.reward_function[-1, action2, action1] = r2
 
 
         self.curr_state_to_opp_state = {i: i for i in range(n_states)}
