@@ -7,10 +7,9 @@ from matplotlib import cm
 
 from background_population.deterministic import DeterministicPoliciesPopulation
 from beliefs.prior import Prior
-from environments.many_actions import ManyActionEnv
+from environments.matrix_form.many_actions import ManyActionEnv
 import numpy as np
 
-from environments.mdp import compute_multiagent_mdp
 from policies.policy import Policy
 from policies.tabular_policy import TabularPolicy
 from policy_iteration.algorithm import PolicyIteration

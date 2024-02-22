@@ -1,4 +1,4 @@
-from time import time, sleep
+from time import time
 
 import numpy as np
 from gymnasium.spaces import Discrete
@@ -7,7 +7,7 @@ from gymnasium.spaces import Dict
 from background_population.bg_population import BackgroundPopulation
 from background_population.deterministic import DeterministicPoliciesPopulation
 from beliefs.prior import Prior
-from environments.mdp import compute_multiagent_mdp
+from environments.matrix_form.mdp import compute_multiagent_mdp
 from policies.policy import Policy
 from policies.tabular_policy import TabularPolicy
 

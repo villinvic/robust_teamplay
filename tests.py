@@ -1,5 +1,5 @@
 from background_population.bg_population import BackgroundPopulation
-from environments.repeated_prisoners import RepeatedPrisonersDilemmaEnv
+from environments.matrix_form.repeated_prisoners import RepeatedPrisonersDilemmaEnv
 
 if __name__ == '__main__':
 

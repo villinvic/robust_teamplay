@@ -1,10 +1,6 @@
-import itertools
 import os
-import string
 from collections import defaultdict
-from typing import Union
 
-import pandas
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,13 +11,11 @@ from tqdm import tqdm
 from background_population.bg_population import BackgroundPopulation
 from background_population.deterministic import DeterministicPoliciesPopulation
 from beliefs.prior import Prior
-from environments.mdp import compute_multiagent_mdp
-from environments.repeated_prisoners import RepeatedPrisonersDilemmaEnv
+from environments.matrix_form.repeated_prisoners import RepeatedPrisonersDilemmaEnv
 from policies.policy import Policy
 from policies.tabular_policy import TabularPolicy
 from policy_iteration.algorithm import PolicyIteration
 import argparse
-import subprocess
 import multiprocessing as mp
 
 from pyplot_utils import make_grouped_boxplot, make_grouped_plot
