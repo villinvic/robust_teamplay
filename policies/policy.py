@@ -109,7 +109,7 @@ class Policy:
 
         return state_frequencies
 
-    def  get_state_action_visitation(self, transition_function):
+    def get_state_action_visitation(self, transition_function):
         action_probs = self.get_probs()
         state_frequencies = self.get_state_visitation(transition_function)
         state_action_frequencies = state_frequencies[:, np.newaxis] * action_probs
