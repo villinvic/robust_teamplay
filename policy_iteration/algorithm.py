@@ -109,7 +109,7 @@ class PolicyIteration:
         #
         #     e = np.max(np.abs(old_value - values[-1]))
 
-        return np.sum(values * prior(smooth=True)[:, np.newaxis], axis=0), values
+        return np.sum(values * prior()[:, np.newaxis], axis=0), values
 
 
     def policy_evaluation_for_scenario(
@@ -191,7 +191,7 @@ class PolicyIteration:
         gradients = []
 
         for teammate, reward_weights, V, scenario_prob \
-                in zip(all_policies, all_rewards, vf, prior(smooth=True)):
+                in zip(all_policies, all_rewards, vf, prior()):
 
             induced_transition_function, induced_reward_function = compute_multiagent_mdp(
                 self.environment.transition_function, self.environment.reward_function,
