@@ -366,7 +366,7 @@ def prisoners_experiment(
     plot_prior(priors, "prior_overtime_" + kwargs["scenario_distribution_optimization"] + run_name)
 
     if main_approach:
-        minimax_worst_case_distribution = priors[-1]
+        minimax_worst_case_distribution = belief(smooth=True)
         with open(minimax_worst_case_distribution_path, "wb+") as f:
             pickle.dump(minimax_worst_case_distribution, f)
     else:
