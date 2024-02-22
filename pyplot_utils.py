@@ -152,5 +152,4 @@ if __name__ == '__main__':
         for approach in range(3)
     }
 
-
     make_grouped_boxplot(data, name="test")

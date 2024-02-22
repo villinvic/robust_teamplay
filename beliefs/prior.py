@@ -15,26 +15,33 @@ def project_onto_simplex(v, z=1):
 
 class Prior:
 
-    def __init__(self, dim, learning_rate=5e-2):
+    def __init__(self, dim, learning_rate=5e-2, smoothing_window=256):
         self.dim = dim
         self.beta_logits : np.ndarray
         self.learning_rate = learning_rate
 
+        self.smoothing_window = smoothing_window
+        self.past_priors = []
         self.initialize_uniformly()
 
     def initialize_uniformly(self):
 
         self.beta_logits = np.full((self.dim,), fill_value=1/self.dim, dtype=np.float32)
 
+        self.past_priors = [self.beta_logits.copy()]
+
     def initialize_randomly(self):
 
         self.beta_logits = np.random.random((self.dim,)) * 4
         self.beta_logits /= self.beta_logits.sum(keepdims=True)
+        self.past_priors = [self.beta_logits.copy()]
+
 
     def sample_test_set(self, num_scenarios=3):
 
         self.beta_logits[np.random.choice(self.dim, size=num_scenarios, replace=False)] = 1.
         self.beta_logits /= num_scenarios
+        self.past_priors = [self.beta_logits.copy()]
 
 
     def initialize_certain(self, idx=0):
@@ -44,14 +51,19 @@ class Prior:
 
         self.beta_logits = np.zeros((self.dim,), dtype=np.float32)
         self.beta_logits[idx] = 1
+        self.past_priors = [self.beta_logits.copy()]
 
-    def get_probs(self):
-        return self.beta_logits
+    def get_probs(self, smooth=False):
+
+        if smooth:
+            return sum(self.past_priors) / len(self.past_priors)
+        else:
+            return self.beta_logits
         #exp = np.exp((self.beta_logits - self.beta_logits.max())*0.5)
         #return exp / exp.sum()
 
-    def __call__(self):
-        return self.get_probs()
+    def __call__(self, smooth=False):
+        return self.get_probs(smooth=smooth)
 
     def update_prior(self, loss, regret=True):
 
@@ -79,6 +91,10 @@ class Prior:
         #self.beta_logits[:] = project_to_simplex(next_beta)
 
         #print("prior post projection:", self.beta_logits)
+
+        self.past_priors.append(self.beta_logits.copy())
+        if len(self.past_priors) > self.smoothing_window:
+            self.past_priors.pop(0)
 
 
 
