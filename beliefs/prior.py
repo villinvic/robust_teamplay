@@ -15,7 +15,7 @@ def project_onto_simplex(v, z=1):
 
 class Prior:
 
-    def __init__(self, dim, learning_rate=5e-2, smoothing_window=256):
+    def __init__(self, dim, learning_rate=5e-2, smoothing_window=2000):
         self.dim = dim
         self.beta_logits : np.ndarray
         self.learning_rate = learning_rate
