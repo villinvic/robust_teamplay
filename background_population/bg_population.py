@@ -1,7 +1,6 @@
 import gymnasium
 import numpy as np
 
-
 class BackgroundPopulation:
 
     def __init__(self, environment: gymnasium.Env):
@@ -18,9 +17,7 @@ class BackgroundPopulation:
 
     def build_randomly(self, size):
 
-        policies = np.exp(np.random.exponential(5, (size, self.n_states, self.n_actions)))
+        policies = np.exp(np.random.exponential(8, (size, self.n_states, self.n_actions)))
         self.policies = np.float32(policies / policies.sum(axis=-1, keepdims=True))
 
         return self.policies
-
-
