@@ -333,7 +333,7 @@ def prisoners_experiment(
         # print("Regret per scenario", regret_s0)
 
 
-        priors.append(belief().copy())
+        priors.append(belief(smooth=True))
         a_probs = robust_policy.get_probs()
         #entropy = np.mean(np.sum(-a_probs * np.log(a_probs+1e-8), axis=-1))
         #print("Current distribution over scenarios :", belief())
