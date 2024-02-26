@@ -23,6 +23,6 @@ def compute_theoretical_learning_rates(environment, epsilon=1e-1):
 
 if __name__ == '__main__':
 
-    env = RepeatedPrisonersDilemmaEnv(3)
+    env = RepeatedPrisonersDilemmaEnv(1)
 
     print(compute_theoretical_learning_rates(env, epsilon=1))
