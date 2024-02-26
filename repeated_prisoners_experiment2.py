@@ -555,7 +555,6 @@ if __name__ == '__main__':
     if args.auto_hps:
         dummy_env = RepeatedPrisonersDilemmaEnv(args.episode_length)
         policy_lr, prior_lr = compute_theoretical_learning_rates(dummy_env, args.epsilon)
-        print(policy_lr, prior_lr)
     else:
         policy_lr = args.policy_lr
         prior_lr = args.prior_lr
