@@ -13,6 +13,7 @@ from tqdm import tqdm
 from background_population.deterministic import DeterministicPoliciesPopulation
 from beliefs.prior import Prior
 from environments.matrix_form.repeated_prisoners import RepeatedPrisonersDilemmaEnv
+from hps import compute_theoretical_learning_rates
 from policies.policy import Policy
 from policies.tabular_policy import TabularPolicy
 from policy_iteration.algorithm import PolicyIteration
@@ -26,8 +27,6 @@ from scenarios.scenario import Scenario, ScenarioFactory
 def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2, n_steps=1000,
          env_seed=0,
          plot_regret=True):
-
-
 
     approaches = [
         dict(
@@ -546,17 +545,24 @@ if __name__ == '__main__':
     parser.add_argument("--pop_size", type=int, default=4)
     parser.add_argument("--n_seeds", type=int, default=50)
 
-    parser.add_argument("--env_seed", type=int, default=0)
-
-
+    parser.add_argument("--env_seed", type=int, default=0.)
+    parser.add_argument("--auto_hps", action='store_true')
+    parser.add_argument("--epsilon", type=float, default=1.)
 
 
     args = parser.parse_args()
 
+    if args.auto_hps:
+        dummy_env = RepeatedPrisonersDilemmaEnv(args.episode_length)
+        policy_lr, prior_lr = compute_theoretical_learning_rates(dummy_env)
+    else:
+        policy_lr = args.policy_lr
+        prior_lr = args.prior_lr
+
     if args.experiment == "unit_run":
         prisoners_experiment(
-            args.policy_lr,
-            args.prior_lr,
+            policy_lr,
+            prior_lr,
             args.use_regret,
             args.sp,
             args.lambda_,
@@ -571,8 +577,8 @@ if __name__ == '__main__':
         )
     elif args.experiment == "main":
         main(
-            args.policy_lr,
-            args.prior_lr,
+            policy_lr,
+            prior_lr,
             args.lambda_,
             args.n_seeds,
             args.episode_length,

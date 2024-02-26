@@ -42,6 +42,8 @@ class RepeatedPrisonersDilemmaEnv(MultiAgentEnv):
         self.current_step = 0
         self.max_reward = 5
         self._agent_ids = {0, 1}
+        self.max_score = 5 * episode_length
+        self.n_actions = 2
 
         self.action_space = spaces.Dict(
             {
