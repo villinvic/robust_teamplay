@@ -97,6 +97,10 @@ class Prior:
             self.past_priors.pop(0)
 
 
+    def sample(self, size):
+        return np.random.choice(self.dim, size, p=self())
+
+
 
 if __name__ == "__main__":
 

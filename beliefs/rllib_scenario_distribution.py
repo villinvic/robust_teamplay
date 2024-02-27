@@ -1,48 +1,41 @@
-from typing import Dict, Tuple, Union, Optional
+from typing import Dict, Tuple, Union, Optional, List
 
 from ray.rllib import Policy, SampleBatch, BaseEnv
 from ray.rllib.algorithms import Algorithm
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.evaluation import Episode
 from ray.rllib.evaluation.episode_v2 import EpisodeV2
+from ray.rllib.utils.deprecation import DEPRECATED_VALUE
+from ray.rllib.utils.from_config import NotProvided
 from ray.rllib.utils.typing import ResultDict, AgentID, PolicyID
+from ray.rllib.algorithms.ppo.ppo import PPOConfig
 
 
-def decorate_with_learnable_matchmaking(algo: Algorithm):
+class PPOBFSGDAConfig(PPOConfig):
+    def __init__(self, algo_class = None):
+        super().__init__(algo_class=algo_class)
 
-    class BackgroundFocalSGDA(algo):
+        self.beta_lr = 5e-2
 
-        def setup(self, config):
-            # Create the LeagueBuilder object, allowing it to build the multiagent
-            # config as well.
-            self.scenario_distribution = ScenarioDistribution(self, config)
+    def training(
+        self,
+        *,
+        beta_lr: Optional[float] = NotProvided,
+        **kwargs,
+    ) -> "PPOConfig":
 
-            super().setup(config)
-
-        def step(self) -> ResultDict:
-            # Perform a full step (including evaluation).
-            result = super().step()
-
-            # Based on the (train + evaluate) results, update the distribution of scenarios
-            self.scenario_distribution.update(result=result)
-
-            return result
-
-
-
-
-    BackgroundFocalSGDA.__name__ = f"BackgroundFocalSGDA[{Algorithm.__name__}]"
-    BackgroundFocalSGDA.__qualname__ = f"BackgroundFocalSGDA[{Algorithm.__name__}]"
-
-    return BackgroundFocalSGDA
+        super().training(**kwargs)
+        if beta_lr is not None:
+            self.beta_lr = beta_lr
 
 
 class BackgroundFocalSGDA(DefaultCallbacks):
     
-    def __init__(self):
+    def __init__(self, beta_lr=5e-2):
         super().__init__()
 
         self.beta: ScenarioDistribution = None
+        self.beta_lr = beta_lr
 
     def on_algorithm_init(
         self,
@@ -52,7 +45,6 @@ class BackgroundFocalSGDA(DefaultCallbacks):
     ) -> None:
 
         self.beta = ScenarioDistribution(algorithm)
-
 
     def on_postprocess_trajectory(
         self,
@@ -105,6 +97,7 @@ class ScenarioDistribution:
         self.config = algo.config["scenario_distribution_config"]
         self.lr = lr
         self.learn_best_responses = learn_best_responses
+
 
 
     def update(self, result: ResultDict):

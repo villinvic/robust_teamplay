@@ -11,8 +11,8 @@ def compute_theoretical_learning_rates(environment, epsilon=1e-1):
     n_actions = environment.n_actions
     T = environment.episode_length
 
-    l = (n_actions + 1) * T**2
-    L = episode_max_return * T **2
+    l = (n_actions + 1) * T * episode_max_return
+    L = episode_max_return * T * episode_max_return
     D = np.sqrt(2)
 
     lr_pi = epsilon ** 4 / (l ** 3 * L ** 2 * D **2)
@@ -25,4 +25,4 @@ if __name__ == '__main__':
 
     env = RepeatedPrisonersDilemmaEnv(1)
 
-    print(compute_theoretical_learning_rates(env, epsilon=0.1))
+    print(compute_theoretical_learning_rates(env, epsilon=3.))
