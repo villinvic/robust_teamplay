@@ -16,26 +16,29 @@ class PPOBFSGDAConfig(PPOConfig):
         super().__init__(algo_class=algo_class)
 
         self.beta_lr = 5e-2
+        self.learn_best_responses = False
 
     def training(
         self,
         *,
         beta_lr: Optional[float] = NotProvided,
+        learn_best_responses: Optional[float] = NotProvided,
         **kwargs,
     ) -> "PPOConfig":
 
         super().training(**kwargs)
         if beta_lr is not None:
             self.beta_lr = beta_lr
+        if learn_best_responses is not None:
+            self.learn_best_responses = learn_best_responses
 
 
 class BackgroundFocalSGDA(DefaultCallbacks):
     
-    def __init__(self, beta_lr=5e-2):
+    def __init__(self):
         super().__init__()
 
         self.beta: ScenarioDistribution = None
-        self.beta_lr = beta_lr
 
     def on_algorithm_init(
         self,
@@ -84,7 +87,7 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
 class ScenarioDistribution:
 
-    def __init__(self, algo: Algorithm, lr=1e-2, learn_best_responses=False):
+    def __init__(self, algo: Algorithm):
         # The background population should already be loaded in the multiagent config of the algorithm
         # TODO : this needs information on
         # Which scenario do we need to optimize on ? -> All that can be constructed from the bg population !
@@ -94,9 +97,10 @@ class ScenarioDistribution:
         # TODO : write a way to load a background population, and compute all bru needed -> dump into file.
         # -> Focus iteratively on each scenario with a new initialized policy, dump after t timesteps, repeat (skip if entry already in file)
         self.algo: Algorithm = algo
-        self.config = algo.config["scenario_distribution_config"]
-        self.lr = lr
-        self.learn_best_responses = learn_best_responses
+        self.config = algo.config
+        self.lr = algo.config["beta_lr"]
+        self.learn_best_responses = algo.config["learn_best_responses"]
+
 
 
 
