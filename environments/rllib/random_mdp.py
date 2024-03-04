@@ -17,6 +17,7 @@ class RandomPOMDP(MultiAgentEnv):
             n_actions: int = 2,
             seed: int = None,
             num_players: int = 2,
+            history_length: int = 1,
             **kwargs
     ):
         self.random = np.random.default_rng(seed=seed)
@@ -24,9 +25,9 @@ class RandomPOMDP(MultiAgentEnv):
         self.current_step = 0
         self.current_state = 0
         self.n_states = n_states
-        self.n_global_states = sum([self.n_states ** (i+1) for i in range(num_players)])
         self.n_actions = n_actions
         self.num_players = num_players
+        self.history_length = history_length
 
         self._agent_ids = {i for i in range(num_players)}
 
@@ -37,8 +38,12 @@ class RandomPOMDP(MultiAgentEnv):
         )
 
         self.observation_space = spaces.Dict(
-            {i: spaces.Discrete(n_states) for i in self._agent_ids}
+            {i: spaces.MultiDiscrete(
+                (self.n_actions,) * self.history_length + (self.n_states,) * (self.history_length + 1)
+            ) for i in self._agent_ids}
         )
+
+        self.reset_history()
 
         self.transition_function = {}
         self.reward_function = {}
@@ -70,6 +75,20 @@ class RandomPOMDP(MultiAgentEnv):
         self.gamma = 1.
         self.s0 = 0
 
+    def reset_history(self):
+        self.past_actions = {
+            i: [0 for _ in range(self.history_length)] for i in self._agent_ids
+        }
+        self.past_states = {
+            i: [0 for _ in range(self.history_length)] for i in self._agent_ids
+        }
+
+    def get_state(self):
+
+        return {
+            i: np.array(self.past_actions[i] + self.past_states[i] + [self.player_states[i]])
+            for i in self._agent_ids
+        }
 
     def reset(
         self,
@@ -79,8 +98,9 @@ class RandomPOMDP(MultiAgentEnv):
     ) -> Tuple[MultiAgentDict, MultiAgentDict]:
         self.current_step = 0
         self.player_states = {p_id: 0 for p_id in self._agent_ids}
+        self.reset_history()
 
-        return copy(self.player_states), {}
+        return self.get_state(), {}
 
     def step(
         self, action_dict: MultiAgentDict
@@ -102,7 +122,6 @@ class RandomPOMDP(MultiAgentEnv):
             rewards[agent_id] = self.reward_function[(player_state, action), player_tuples]
 
 
-        states = copy(self.player_states)
 
         done = self.current_step >= self.episode_length
         dones = {
@@ -110,7 +129,7 @@ class RandomPOMDP(MultiAgentEnv):
         }
         dones["__all__"] = done
 
-        return states, rewards, dones, dones, {}
+        return self.get_state(), rewards, dones, dones, {}
 
 
 
