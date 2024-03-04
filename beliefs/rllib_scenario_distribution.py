@@ -33,7 +33,6 @@ class PPOBFSGDAConfig(PPOConfig):
         beta_lr: Optional[float] = NotProvided,
         beta_smoothing: Optional[float] = NotProvided,
         use_utility: Optional[bool] = NotProvided,
-
         **kwargs,
     ) -> "PPOConfig":
 
@@ -46,7 +45,6 @@ class PPOBFSGDAConfig(PPOConfig):
             self.use_utility = use_utility
 
         return self
-
 
 
 
