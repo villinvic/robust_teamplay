@@ -28,6 +28,7 @@ class RandomPOMDP(MultiAgentEnv):
         self.n_actions = n_actions
         self.num_players = num_players
         self.history_length = history_length
+        self._obs_space_in_preferred_format = True
 
         self._agent_ids = {i for i in range(num_players)}
 
@@ -50,30 +51,32 @@ class RandomPOMDP(MultiAgentEnv):
 
         action_combinations = itertools.combinations_with_replacement(range(n_actions), num_players)
         for actions in action_combinations:
-                for ordered_actions in itertools.permutations(actions, num_players):
-                    for player_states in itertools.combinations_with_replacement(range(n_states), num_players):
-                        for ordered_player_states in itertools.permutations(player_states, num_players):
+            for ordered_actions in itertools.permutations(actions, num_players):
+                for player_states in itertools.combinations_with_replacement(range(n_states), num_players):
+                    for ordered_player_states in itertools.permutations(player_states, num_players):
 
-                            player_tuples = tuple(sorted([
-                                (s, a) for s,a in zip(ordered_player_states, ordered_actions)
-                            ]))
+                        player_tuples = tuple(sorted([
+                            (s, a) for s,a in zip(ordered_player_states, ordered_actions)
+                        ]))
 
-                            for player_tuple in player_tuples:
+                        for player_tuple in player_tuples:
 
-                                transition_probs = self.random.exponential(1, self.n_states)
-                                transition_probs[:] = transition_probs / transition_probs.sum()
-                                self.transition_function[
-                                    player_tuple, player_tuples
-                                ] = transition_probs
+                            transition_probs = self.random.exponential(1, self.n_states)
+                            transition_probs[:] = transition_probs / transition_probs.sum()
+                            self.transition_function[
+                                player_tuple, player_tuples
+                            ] = transition_probs
 
-                                state, _ = player_tuple
-                                if state == n_states-1:
-                                    self.reward_function[player_tuple, player_tuples] = self.random.normal(0, 1)
-                                else:
-                                    self.reward_function[player_tuple, player_tuples] = 0.
+                            state, _ = player_tuple
+                            if state == n_states-1:
+                                self.reward_function[player_tuple, player_tuples] = self.random.normal(0, 1)
+                            else:
+                                self.reward_function[player_tuple, player_tuples] = 0.
 
         self.gamma = 1.
         self.s0 = 0
+
+        super().__init__()
 
     def reset_history(self):
         self.past_actions = {
@@ -83,12 +86,21 @@ class RandomPOMDP(MultiAgentEnv):
             i: [0 for _ in range(self.history_length)] for i in self._agent_ids
         }
 
-    def get_state(self):
+    def update_history(self, actions):
+        for i in self._agent_ids:
+            self.past_actions[i].pop(0)
+            self.past_actions[i].append(actions[i])
+            self.past_states[i].pop(0)
+            self.past_states[i].append(self.player_states[i])
 
-        return {
-            i: np.array(self.past_actions[i] + self.past_states[i] + [self.player_states[i]])
+    def get_state(self):
+        s = {
+            i: np.array(self.past_actions[i] + self.past_states[i] + [self.player_states[i]], dtype=np.int64)
             for i in self._agent_ids
         }
+
+        assert self.observation_space.contains(s), s
+        return s
 
     def reset(
         self,
@@ -107,6 +119,8 @@ class RandomPOMDP(MultiAgentEnv):
     ) -> Tuple[
         MultiAgentDict, MultiAgentDict, MultiAgentDict, MultiAgentDict, MultiAgentDict
     ]:
+
+        print(self.player_states.values(), action_dict.values())
 
         player_tuples = tuple(sorted([
             (s, a) for s, a in zip(self.player_states.values(), action_dict.values())
@@ -129,7 +143,10 @@ class RandomPOMDP(MultiAgentEnv):
         }
         dones["__all__"] = done
 
-        return self.get_state(), rewards, dones, dones, {}
+        state = self.get_state()
+        self.update_history(action_dict)
+
+        return state, rewards, dones, dones, {}
 
 
 

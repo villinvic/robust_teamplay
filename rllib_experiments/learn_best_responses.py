@@ -4,18 +4,19 @@ from ray import tune
 from ray.rllib.policy.policy import PolicySpec
 from ray.tune import register_env
 
-from beliefs.rllib_scenario_distribution import Scenario, PPOBFSGDAConfig
+from beliefs.rllib_scenario_distribution import Scenario, PPOBFSGDAConfig, ScenarioMapper, ScenarioSet
 from environments.rllib.random_mdp import RandomPOMDP
 from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
 
 
 def env_maker(env_config):
 
-    return RandomPOMDP(*env_config)
+    return RandomPOMDP(**env_config)
 
-register_env("RandomMDP", RandomPOMDP)
+register_env("RandomMDP", env_maker)
 
 num_workers = 4
+
 rollout_fragment_length = 16
 
 
@@ -42,21 +43,32 @@ def main(
     policies = {
         f"background_{i}": (
             RLlibDeterministicPolicy,
-            dummy_env.observation_space,
-            dummy_env.action_space,
+            dummy_env.observation_space[0],
+            dummy_env.action_space[0],
             dict(
                 config=env_config,
-                seed=bg_policy_seed
+                seed=bg_policy_seed,
+                _disable_preprocessor_api=True,
+
             )
+
 
         ) for i, bg_policy_seed in enumerate(scenario_bg_policies)
     }
-    policies[Scenario.MAIN_POLICY_ID] = (None, dummy_env.observation_space, dummy_env.action_space, {})
+    background_population = list(policies.keys())
+    scenarios = ScenarioSet(
+        num_players=env_config["num_players"],
+        background_population=background_population
+    )
+
+    policies[Scenario.MAIN_POLICY_ID] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
+
 
     config = PPOBFSGDAConfig().training(
         beta_lr=2e-2,
         beta_smoothing=2000,
         use_utility=True,
+        scenarios=scenarios,
 
         lambda_=0.95,
         gamma=0.99,
@@ -81,15 +93,21 @@ def main(
         create_env_on_local_worker=False,
         num_envs_per_worker=1,
         rollout_fragment_length=rollout_fragment_length,
-        batch_mode="truncate_episodes"
+        batch_mode="truncate_episodes",
+        enable_connectors=False,
     ).environment(
         env="RandomMDP",
         env_config=env_config
-    ).resources(num_gpus=1
+    ).resources(num_gpus=0
     ).framework(framework="tf"
     ).multi_agent(
         policies=policies,
         policies_to_train={Scenario.MAIN_POLICY_ID},
+        policy_mapping_fn=ScenarioMapper(
+            scenarios=scenarios
+        ),
+    ).experimental(
+        _disable_preprocessor_api=False
     )
 
     exp = tune.run(
@@ -102,7 +120,7 @@ def main(
         stop={
             "timesteps_total": 1_000_000_000,
         },
-        local_dir="rllib_runs",
+        #local_dir="rllib_runs",
         # restore=""
         # resume=True
     )

@@ -17,64 +17,32 @@ from ray.rllib.algorithms.ppo.ppo import PPOConfig
 from beliefs.prior import project_onto_simplex
 
 
-class PPOBFSGDAConfig(PPOConfig):
-    def __init__(self, algo_class = None):
-        super().__init__(algo_class=algo_class)
-
-        self.beta_lr = 5e-2
-        self.beta_smoothing = 1000
-        self.use_utility = False
-
-        self.callbacks_class = BackgroundFocalSGDA
-
-    def training(
-        self,
-        *,
-        beta_lr: Optional[float] = NotProvided,
-        beta_smoothing: Optional[float] = NotProvided,
-        use_utility: Optional[bool] = NotProvided,
-        **kwargs,
-    ) -> "PPOConfig":
-
-        super().training(**kwargs)
-        if beta_lr is not None:
-            self.beta_lr = beta_lr
-        if beta_smoothing is not None:
-            self.beta_smoothing = beta_smoothing
-        if use_utility is not None:
-            self.use_utility = use_utility
-
-        return self
-
-
-
 class BackgroundFocalSGDA(DefaultCallbacks):
-    
+
     def __init__(self):
         super().__init__()
 
         self.beta: ScenarioDistribution = None
 
     def on_algorithm_init(
-        self,
-        *,
-        algorithm: "Algorithm",
-        **kwargs,
+            self,
+            *,
+            algorithm: "Algorithm",
+            **kwargs,
     ) -> None:
-
         self.beta = ScenarioDistribution(algorithm)
 
     def on_postprocess_trajectory(
-        self,
-        *,
-        worker: "RolloutWorker",
-        episode: Episode,
-        agent_id: AgentID,
-        policy_id: PolicyID,
-        policies: Dict[PolicyID, Policy],
-        postprocessed_batch: SampleBatch,
-        original_batches: Dict[AgentID, Tuple[Policy, SampleBatch]],
-        **kwargs,
+            self,
+            *,
+            worker: "RolloutWorker",
+            episode: Episode,
+            agent_id: AgentID,
+            policy_id: PolicyID,
+            policies: Dict[PolicyID, Policy],
+            postprocessed_batch: SampleBatch,
+            original_batches: Dict[AgentID, Tuple[Policy, SampleBatch]],
+            **kwargs,
     ) -> None:
         """
         Swap rewards to mean focal per capita return
@@ -88,18 +56,16 @@ class BackgroundFocalSGDA(DefaultCallbacks):
         mean_focal_per_capita = sum(focal_rewards) / len(focal_rewards)
         postprocessed_batch[SampleBatch.REWARDS][:] = mean_focal_per_capita
 
-
     def on_episode_end(
-        self,
-        *,
-        worker: "RolloutWorker",
-        base_env: BaseEnv,
-        policies: Dict[PolicyID, Policy],
-        episode: Union[Episode, EpisodeV2, Exception],
-        env_index: Optional[int] = None,
-        **kwargs,
+            self,
+            *,
+            worker: "RolloutWorker",
+            base_env: BaseEnv,
+            policies: Dict[PolicyID, Policy],
+            episode: Union[Episode, EpisodeV2, Exception],
+            env_index: Optional[int] = None,
+            **kwargs,
     ) -> None:
-
         focal_rewards = [
             episode.agent_rewards[agent_id, policy_id] for agent_id, policy_id in episode.agent_rewards
             if policy_id == Scenario.MAIN_POLICY_ID
@@ -109,18 +75,16 @@ class BackgroundFocalSGDA(DefaultCallbacks):
         policies = episode._agent_to_policy.values()
         scenario_name = Scenario.get_scenario_name(list(policies))
 
-        episode.custom_metrics[f"{scenario_name}_utility" ] = episodic_mean_focal_per_capita
+        episode.custom_metrics[f"{scenario_name}_utility"] = episodic_mean_focal_per_capita
 
     def on_train_result(
-        self,
-        *,
-        algorithm: "Algorithm",
-        result: dict,
-        **kwargs,
+            self,
+            *,
+            algorithm: "Algorithm",
+            result: dict,
+            **kwargs,
     ) -> None:
-
         self.beta.update(result)
-
 
 
 class ScenarioSet:
@@ -139,51 +103,91 @@ class ScenarioSet:
     def sample_scenario(self, distribution):
         return np.random.choice(self.scenario_list, p=distribution)
 
+    def __getitem__(self, item):
+        return self.scenarios[item]
+
     def __len__(self):
         return len(self.scenario_list)
 
 
-class Scenario:
+class PPOBFSGDAConfig(PPOConfig):
+    def __init__(self, algo_class=None):
+        super().__init__(algo_class=algo_class)
 
+        self.beta_lr = 5e-2
+        self.beta_smoothing = 1000
+        self.use_utility = False
+        self.scenarios = None
+
+        self.callbacks_class = BackgroundFocalSGDA
+
+    def training(
+            self,
+            *,
+            beta_lr: Optional[float] = NotProvided,
+            beta_smoothing: Optional[float] = NotProvided,
+            use_utility: Optional[bool] = NotProvided,
+            scenarios: ScenarioSet = NotProvided,
+            **kwargs,
+    ) -> "PPOConfig":
+
+        super().training(**kwargs)
+        if beta_lr is not NotProvided:
+            self.beta_lr = beta_lr
+        if beta_smoothing is not NotProvided:
+            self.beta_smoothing = beta_smoothing
+        if use_utility is not NotProvided:
+            self.use_utility = use_utility
+        assert scenarios is not NotProvided, "You must provide an initial scenario set."
+        self.scenarios = scenarios
+
+        return self
+
+
+class Scenario:
     MAIN_POLICY_ID = "MAIN_POLICY"
 
     def __init__(self, num_copies, background_policies):
         self.num_copies = num_copies
         self.background_policies = background_policies
 
-    def get_policies(self, main_policy_id):
-        policies = [main_policy_id] * self.num_copies + self.background_policies
+    def get_policies(self):
+        policies = [Scenario.MAIN_POLICY_ID] * self.num_copies + self.background_policies
+
+        # We suppose the order of players does not matter, but we shuffle it in cases s0 is different for each player.
         np.random.shuffle(policies)
         return policies
 
     @staticmethod
     def get_scenario_name(policies):
-
         np_policies = np.array(policies)
         main_policy_mask = np_policies == Scenario.MAIN_POLICY_ID
         num_copies = len(np.argwhere(main_policy_mask))
 
-        return f"<c={num_copies}, b={tuple(sorted(np_policies[not main_policy_mask]))}>"
+        return f"<c={num_copies}, b={tuple(sorted(np_policies[np.logical_not(main_policy_mask)]))}>"
 
 
 class ScenarioMapper:
-    def __init__(self, distribution, scenarios):
+    def __init__(self, scenarios, distribution=None):
+        if distribution is None:
+            distribution = np.ones(len(scenarios), dtype=np.float32) / len(scenarios)
 
         self.mappings = {}
         self.distribution = distribution
         self.scenarios = scenarios
 
     def __call__(self, agent_id, episode, worker, **kwargs):
-            if episode.episode_id not in self.mappings:
-                self.mappings[episode.episode_id] = self.scenarios.sample_scenario(self.distribution).get_policies()
+        if episode.episode_id not in self.mappings:
+            scenario_name = self.scenarios.sample_scenario(self.distribution)
 
-            mapping = self.mappings[episode.episode_id]
-            policy_id = mapping.pop()
-            if len(mapping) == 0:
-                del self.mappings[episode.episode_id]
+            self.mappings[episode.episode_id] = self.scenarios[scenario_name].get_policies()
 
-            return policy_id
+        mapping = self.mappings[episode.episode_id]
+        policy_id = mapping.pop()
+        if len(mapping) == 0:
+            del self.mappings[episode.episode_id]
 
+        return policy_id
 
 
 class ScenarioDistribution:
@@ -203,20 +207,21 @@ class ScenarioDistribution:
 
         self.best_responses_utility = {}
 
-        self.scenarios = ScenarioSet(self.algo.config.multiagent["policies"])
+        self.scenarios = self.config.scenarios
         self.beta_logits = np.ones(len(self.scenarios), dtype=np.float32)
 
         self.past_priors = list()
 
-    def beta_gradients(self, loss):
-
+    def beta_gradients(self, utility):
         if self.config.use_utility:
-            loss = np.max(loss) - loss + np.min(loss)
+            loss = np.max(utility) - utility + np.min(utility)
 
+        else:
+            best_response_utility = ...
+            loss = best_response_utility - utility
         self.beta_logits[:] = project_onto_simplex(self.beta_logits + loss * self.config.beta_lr)
 
         self.past_priors.append(self.beta_logits.copy())
-
 
     def update(self, result: ResultDict):
         """
@@ -224,12 +229,16 @@ class ScenarioDistribution:
         Update the policy mapping function after
         """
 
-        print(result)
+        # TODO -> smooth selfplay
 
-
+        utilities = result["custom_metrics"]
         # Compute loss
-        # loss = ...
-        # self.beta_gradients(loss)
+        beta_losses = [
+            utilities.get(f"{scenario}_utility_mean", np.nan)
+            for scenario in self.scenarios.scenario_list
+        ]
+        self.beta_gradients(beta_losses)
+
         #
         # self.algo.workers.foreach_worker(
         #     lambda w: w.set_policy_mapping_fn(
@@ -237,10 +246,4 @@ class ScenarioDistribution:
         # ),
         # )
 
-
         # TODO : plot evolution of distribution
-
-
-
-
-
