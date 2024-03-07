@@ -16,7 +16,7 @@ from environments.matrix_form.repeated_prisoners import RepeatedPrisonersDilemma
 from hps import compute_theoretical_learning_rates
 from policies.policy import Policy
 from policies.tabular_policy import TabularPolicy
-from policy_iteration.algorithm import PolicyIteration
+from rl_algorithms.policy_iteration import PolicyIteration
 import argparse
 import multiprocessing as mp
 

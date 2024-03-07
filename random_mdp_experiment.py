@@ -14,7 +14,7 @@ from beliefs.prior import Prior
 from environments.matrix_form.random_mdp import RandomMDP2P, HistorylessRandomMDP2P
 from policies.policy import Policy
 from policies.tabular_policy import TabularPolicy
-from policy_iteration.algorithm import PolicyIteration
+from rl_algorithms.policy_iteration import PolicyIteration
 import argparse
 import multiprocessing as mp
 

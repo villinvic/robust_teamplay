@@ -12,7 +12,7 @@ import numpy as np
 
 from policies.policy import Policy
 from policies.tabular_policy import TabularPolicy
-from policy_iteration.algorithm import PolicyIteration
+from rl_algorithms.policy_iteration import PolicyIteration
 
 
 def many_actions_experiment(n_actions, policy_lr, prior_lr, lambda_, use_regret=True, self_play=False):

@@ -15,7 +15,7 @@ def env_maker(env_config):
 
 register_env("RandomMDP", env_maker)
 
-num_workers = 4
+num_workers = 7
 
 rollout_fragment_length = 16
 
@@ -49,7 +49,6 @@ def main(
                 config=env_config,
                 seed=bg_policy_seed,
                 _disable_preprocessor_api=True,
-
             )
 
 
@@ -61,14 +60,16 @@ def main(
         background_population=background_population
     )
 
-    policies[Scenario.MAIN_POLICY_ID] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
-
+    for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
+        policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
 
     config = PPOBFSGDAConfig().training(
         beta_lr=2e-2,
         beta_smoothing=2000,
-        use_utility=True,
+        use_utility=False,
         scenarios=scenarios,
+        copy_weights_freq=10,
+        best_response_timesteps_max=1_000_000,
 
         lambda_=0.95,
         gamma=0.99,
@@ -84,7 +85,7 @@ def main(
         sgd_minibatch_size=512,
         num_sgd_iter=32,
         model={
-            "fcnet_hiddens"   : [8],
+            "fcnet_hiddens": [8],
             "fcnet_activation": "relu",
         }
     ).rollouts(

@@ -120,8 +120,6 @@ class RandomPOMDP(MultiAgentEnv):
         MultiAgentDict, MultiAgentDict, MultiAgentDict, MultiAgentDict, MultiAgentDict
     ]:
 
-        print(self.player_states.values(), action_dict.values())
-
         player_tuples = tuple(sorted([
             (s, a) for s, a in zip(self.player_states.values(), action_dict.values())
         ]))
@@ -162,19 +160,17 @@ if __name__ == '__main__':
     p2 = np.random.random((n_states, n_actions))
     p3 = np.random.random((n_states, n_actions))
 
-
     players = [p1, p2, p3]
 
     for p in players:
         p[:] = p / p.sum(axis=1, keepdims=True)
-
 
     env = RandomPOMDP(n_states=n_states, n_actions=n_actions, num_players=len(players), episode_length=50000, seed=0)
 
     rewards = defaultdict(int)
 
     obs, _ = env.reset()
-    done = {"__all__":False}
+    done = {"__all__": False}
     states = []
     while not done["__all__"]:
         # print({
@@ -190,7 +186,6 @@ if __name__ == '__main__':
 
         for p_id, r in step_rewards.items():
             rewards[p_id] += r
-
 
     print(rewards)
 

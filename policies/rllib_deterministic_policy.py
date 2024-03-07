@@ -31,7 +31,8 @@ class RLlibDeterministicPolicy(Policy):
         super().__init__(observation_space, action_space, config)
 
         self.n_actions = action_space.n
-        self.observation_space = observation_space.original_space
+        self.observation_space = observation_space if not hasattr(observation_space, "original_space")\
+            else observation_space.original_space
 
         if isinstance(self.observation_space, MultiDiscrete):
             self.state_shape = self.observation_space.nvec
@@ -46,6 +47,9 @@ class RLlibDeterministicPolicy(Policy):
     def initialize(self, seed=None):
         random = np.random.default_rng(seed=seed)
         self.policy[:] = random.integers(0, self.n_actions, self.policy.shape)
+
+    def get_action(self, obs):
+        return self.policy[obs]
 
     def compute_single_action(
         self,
