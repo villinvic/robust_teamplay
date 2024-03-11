@@ -97,13 +97,13 @@ def main(
         lr=1e-2,
         use_critic=False,
         use_gae=False,
-        kl_coeff=0.,
-        # kl_target=1e-1, #1e-2
-        clip_param=10.,
+        #kl_coeff=0.,
+        #kl_target=1e-2, #1e-2
+        #clip_param=10.,
         # #clip_param=0.2,
         grad_clip=100.,
         train_batch_size=64*num_workers*8,
-        sgd_minibatch_size=64*num_workers*4,
+        sgd_minibatch_size=64*num_workers*2,
         num_sgd_iter=8,
         model={
             "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
