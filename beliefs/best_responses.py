@@ -30,7 +30,7 @@ def display_data(filename):
   print(st1 + " " * (offset - len(st1)) + "Best response utility")
   print("-" * 200)
   for key, value in data.items():
-    print(f"{key}{"" * (offset - len(key))}{value}")
+    print(f"{key}{' ' * (offset - len(key))}{value}")
   print("-" * 200)
 
 def remove_entry(filename, key):
