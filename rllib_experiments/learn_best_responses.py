@@ -88,7 +88,7 @@ def main(
         lambda_=1.0,
         gamma=1.,
         entropy_coeff=0.,
-        lr=5e-2,
+        lr=1e-2,
         use_critic=False,
         use_gae=False,
 
