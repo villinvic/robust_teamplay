@@ -27,12 +27,12 @@ def display_data(filename):
   st1 = "Scenario"
   offset = max([
     len(name) for name in data
-  ]) + 1
+  ] + [len(st1)])
   print("-" * 200)
-  print(st1 + " " * (offset - len(st1)) + "Best response utility")
+  print(st1 + " " * (offset - len(st1)) + "\t\Best response utility")
   print("-" * 200)
   for key, value in data.items():
-    print(f"{key}{' ' * (offset - len(key))}{value}")
+    print(f"{key}{' ' * (offset - len(key))}\t{value}")
   print("-" * 200)
 
 def remove_entry(filename, key):
