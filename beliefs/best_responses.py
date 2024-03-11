@@ -25,7 +25,9 @@ def display_data(filename):
     return
 
   st1 = "Scenario"
-  offset = max(data.keys(), key=len) - 1
+  offset = max([
+    len(name) for name in data
+  ]) - 1
   print("-" * 200)
   print(st1 + " " * (offset - len(st1)) + "Best response utility")
   print("-" * 200)
