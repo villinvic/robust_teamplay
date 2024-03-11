@@ -183,8 +183,8 @@ class PPOBFSGDAConfig(PPOConfig):
 
 def make_bf_sgda_config(cls):
     class BFSGDAConfig(cls):
-        def __init__(self, algo_class=None):
-            super().__init__(algo_class=algo_class)
+        def __init__(self):
+            super().__init__()
 
             self.beta_lr = 5e-2
             self.beta_smoothing = 1000
