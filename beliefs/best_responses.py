@@ -23,12 +23,12 @@ def display_data(filename):
   if not data:
     print("Dictionary is empty.")
     return
-  print("-" * 30)
-  print("Key\t\tValue")
-  print("-" * 30)
+  print("-" * 200)
+  print("Key\t\t\t\t\tValue")
+  print("-" * 200)
   for key, value in data.items():
-    print(f"{key}\t\t{value}")
-  print("-" * 30)
+    print(f"{key}\t\t\t\t\t{value}")
+  print("-" * 200)
 
 def remove_entry(filename, key):
   data = load_data(filename)

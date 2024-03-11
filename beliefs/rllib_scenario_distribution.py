@@ -181,6 +181,70 @@ class PPOBFSGDAConfig(PPOConfig):
         return self
 
 
+def make_bf_sgda_config(cls):
+    class BFSGDAConfig(cls):
+        def __init__(self, algo_class=None):
+            super().__init__(algo_class=algo_class)
+
+            self.beta_lr = 5e-2
+            self.beta_smoothing = 1000
+            self.use_utility = False
+            self.scenarios = None
+            self.copy_weights_freq = 5
+            self.beta_eps = 1e-2
+
+            self.learn_best_responses_only = True
+            self.best_response_timesteps_max = 1_000_000
+            self.best_response_utilities_path = os.getcwd() + "/data/best_response_utilities/{env_name}.pkl"
+
+            # TODO if we have deep learning bg policies:
+            self.background_population_path = None
+
+            self.callbacks_class = BackgroundFocalSGDA
+
+        def training(
+                self,
+                *,
+                beta_lr: Optional[float] = NotProvided,
+                beta_smoothing: Optional[float] = NotProvided,
+                use_utility: Optional[bool] = NotProvided,
+                copy_weights_freq: Optional[int] = NotProvided,
+                best_response_timesteps_max: Optional[int] = NotProvided,
+                best_response_utilities_path: Optional[str] = NotProvided,
+                learn_best_responses_only: Optional[bool] = NotProvided,
+                beta_eps: Optional[float] = NotProvided,
+                scenarios: ScenarioSet = NotProvided,
+                **kwargs,
+        ) -> "PPOConfig":
+
+            super().training(**kwargs)
+            if beta_lr is not NotProvided:
+                self.beta_lr = beta_lr
+            if beta_smoothing is not NotProvided:
+                self.beta_smoothing = beta_smoothing
+            if use_utility is not NotProvided:
+                self.use_utility = use_utility
+            if copy_weights_freq is not NotProvided:
+                self.copy_weights_freq = copy_weights_freq
+            if learn_best_responses_only is not NotProvided:
+                self.learn_best_responses_only = learn_best_responses_only
+            if best_response_utilities_path is not NotProvided:
+                self.best_response_utilities_path = best_response_utilities_path
+            if beta_eps is not NotProvided:
+                self.beta_eps = beta_eps
+
+            if best_response_timesteps_max is not NotProvided:
+                self.best_response_timesteps_max = best_response_timesteps_max
+
+            assert scenarios is not NotProvided, "You must provide an initial scenario set."
+            self.scenarios = scenarios
+
+            return self
+
+    return BFSGDAConfig
+
+
+
 class Scenario:
     MAIN_POLICY_ID = "MAIN_POLICY"
     MAIN_POLICY_COPY_ID = "MAIN_POLICY_COPY"  # An older version of the main policy
@@ -290,7 +354,7 @@ class ScenarioDistribution:
 
     def copy_weights(self, reset=False):
         if reset:
-            self.weights_history = deque([self.weights_0 for _ in range(5)], maxlen=6)
+            self.weights_history = deque([self.weights_0 for _ in range(19)], maxlen=20)
             self.copy_iter = 0
         else:
             last_weights = ray.put(self.algo.get_weights([Scenario.MAIN_POLICY_ID])[Scenario.MAIN_POLICY_ID])
