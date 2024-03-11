@@ -23,11 +23,14 @@ def display_data(filename):
   if not data:
     print("Dictionary is empty.")
     return
+
+  st1 = "Scenario"
+  offset = max(data.keys(), key=len) - 1
   print("-" * 200)
-  print("Key\t\t\t\t\tValue")
+  print(st1 + " " * (offset - len(st1)) + "Best response utility")
   print("-" * 200)
   for key, value in data.items():
-    print(f"{key}\t\t\t\t\t{value}")
+    print(f"{key}{"" * (offset - len(key))}{value}")
   print("-" * 200)
 
 def remove_entry(filename, key):
