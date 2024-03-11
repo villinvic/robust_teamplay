@@ -7,9 +7,15 @@ from environments.rllib.random_mdp import RandomPOMDP
 from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
 
 
+def force_tuple(data):
+    if isinstance(data, (int, np.int64)):
+        return (data,)
+
+    return tuple(data)
+
 class SARSA:
 
-    def __init__(self, environment, lr=1e-3, epsilon=1., epsilon_min=0.01, epsilon_decay=0.999):
+    def __init__(self, environment, lr=1e-3, epsilon=1., epsilon_min=0.01, epsilon_decay=0.9999):
 
         self.n_states = environment.n_states
         self.n_actions = environment.n_actions
@@ -47,7 +53,7 @@ class SARSA:
         old_Q = None
         iter = 0
         average_utility = 0
-        stat_lr = 0.998
+        stat_lr = 0.9999
         while old_Q != Q:
             old_Q = Q.copy()
 
@@ -69,15 +75,15 @@ class SARSA:
         done = False
         obss, _ = self.env.reset()
 
-        num_focal = sum([int(p==Scenario.MAIN_POLICY_ID) for p in players])
+        num_focal = sum([int(p  in (Scenario.MAIN_POLICY_COPY_ID, Scenario.MAIN_POLICY_ID)) for p in players])
         r = 0
         while not done:
 
             actions = {
-                i: self.get_action(Q, tuple(obs))
-                if player == Scenario.MAIN_POLICY_ID
+                i: self.get_action(Q, force_tuple(obs))
+                if player in (Scenario.MAIN_POLICY_COPY_ID, Scenario.MAIN_POLICY_ID)
                 else
-                player.get_action(tuple(obs))
+                player.get_action(force_tuple(obs))
 
                 for (i, obs), player in zip(obss.items(), players)
             }
@@ -87,7 +93,7 @@ class SARSA:
             done = dones["__all__"]
 
             for i, player in zip(self.env._agent_ids, players):
-                if player == Scenario.MAIN_POLICY_ID:
+                if player in (Scenario.MAIN_POLICY_COPY_ID, Scenario.MAIN_POLICY_ID):
                     self.update(Q, actions[i], obss[i], rewards[i], obss_[i], done)
                     r += rewards[i]
             obss = obss_
@@ -96,10 +102,10 @@ class SARSA:
 
     def update(self, Q, action, state, reward, next_state, done):
 
-        next_action = self.get_action(Q, tuple(next_state))
+        next_action = self.get_action(Q, force_tuple(next_state))
 
-        Q[tuple(state), action] = Q[tuple(state), action] + self.lr * (
-                    reward + done * Q[tuple(next_state), next_action] - Q[tuple(state), action])
+        Q[force_tuple(state), action] = Q[force_tuple(state), action] + self.lr * (
+                    reward + done * Q[force_tuple(next_state), next_action] - Q[force_tuple(state), action])
 
     def get_pi(self, Q):
 
@@ -117,22 +123,30 @@ class SARSA:
 
 if __name__ == '__main__':
     # run algo against set seed opponents and env, compare with RLLIB
+
+    # TODO TEST num possible observations !
+
     env_config = dict(
-        env_seed=0,
+        seed=0,
         n_states=5,
         n_actions=3,
         num_players=2,
         episode_length=64,
         history_length=2,
+        full_one_hot=True
     )
 
     env = RandomPOMDP(**env_config)
 
-    opponent_0 = RLlibDeterministicPolicy(
-        env.observation_space[0], env.action_space[0], {}, seed=0
+    opponent_1 = RLlibDeterministicPolicy(
+        env.observation_space[0], env.action_space[0], {}, seed=1
     )
+
     algo = SARSA(env)
 
-    s = Scenario(1, [opponent_0])
+    s = Scenario(2, [])
+    # [1, 0] ~1.7
+    # [1, 1] ~ 1.4 ?
+    # [2, _] ~ 8.3?
 
     pi = algo.learn(scenario=s)

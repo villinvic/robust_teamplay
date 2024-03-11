@@ -1,7 +1,7 @@
 from typing import Union, List, Optional, Dict, Tuple
 
 import numpy as np
-from gymnasium.spaces import MultiDiscrete
+from gymnasium.spaces import MultiDiscrete, Discrete
 from ray.rllib import Policy, SampleBatch
 from ray.rllib.models.modelv2 import restore_original_dimensions
 from ray.rllib.utils.typing import TensorStructType, TensorType, ModelWeights
@@ -19,6 +19,8 @@ def restore_obs(obs, space):
 
         return np.stack(np.split(indices, B)) - offset[np.newaxis]
 
+    elif isinstance(space, Discrete):
+        return np.where(obs == 1)[1][:, np.newaxis]
 
 
     else:
@@ -36,7 +38,8 @@ class RLlibDeterministicPolicy(Policy):
 
         if isinstance(self.observation_space, MultiDiscrete):
             self.state_shape = self.observation_space.nvec
-
+        elif isinstance(self.observation_space, Discrete):
+            self.state_shape = (self.observation_space.n,)
         else:
             self.state_shape = self.observation_space.shape
 
@@ -84,7 +87,6 @@ class RLlibDeterministicPolicy(Policy):
     ) -> Tuple[TensorType, List[TensorType], Dict[str, TensorType]]:
 
         original_obs = restore_obs(obs_batch, self.observation_space)
-
         actions = [self.policy[tuple(obs)] for obs in original_obs]
 
         return actions, state_batches, {}

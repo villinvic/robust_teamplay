@@ -18,8 +18,12 @@ class RandomPOMDP(MultiAgentEnv):
             seed: int = None,
             num_players: int = 2,
             history_length: int = 1,
+            full_one_hot: bool = True,
             **kwargs
     ):
+        if len(kwargs)> 0:
+            print("non understood env args:", kwargs)
+
         self.random = np.random.default_rng(seed=seed)
         self.episode_length = episode_length
         self.current_step = 0
@@ -28,6 +32,7 @@ class RandomPOMDP(MultiAgentEnv):
         self.n_actions = n_actions
         self.num_players = num_players
         self.history_length = history_length
+        self.full_one_hot = full_one_hot
         self._obs_space_in_preferred_format = True
 
         self._agent_ids = {i for i in range(num_players)}
@@ -38,10 +43,16 @@ class RandomPOMDP(MultiAgentEnv):
             }
         )
 
+        self.base_shape = (self.n_actions,) * self.history_length + (self.n_states,) * (self.history_length + 1)
+        if full_one_hot:
+            obs_space = spaces.Discrete(np.prod(self.base_shape))
+            print(obs_space)
+        else:
+            obs_space = spaces.MultiDiscrete(self.base_shape)
+
         self.observation_space = spaces.Dict(
-            {i: spaces.MultiDiscrete(
-                (self.n_actions,) * self.history_length + (self.n_states,) * (self.history_length + 1)
-            ) for i in self._agent_ids}
+            {i: obs_space
+             for i in self._agent_ids}
         )
 
         self.reset_history()
@@ -93,11 +104,30 @@ class RandomPOMDP(MultiAgentEnv):
             self.past_states[i].pop(0)
             self.past_states[i].append(self.player_states[i])
 
+
+    def get_state_index(self, player_idx):
+        last_offset = 1
+        index = 0
+        for v, offset in zip(self.past_actions[player_idx]
+                             + self.past_states[player_idx]
+                             + [self.player_states[player_idx]],
+                             self.base_shape):
+            index += v * last_offset
+            last_offset *= offset
+
+        return index
+
+
     def get_state(self):
-        s = {
-            i: np.array(self.past_actions[i] + self.past_states[i] + [self.player_states[i]], dtype=np.int64)
-            for i in self._agent_ids
-        }
+        if self.full_one_hot:
+            s = {i: self.get_state_index(i)
+                 for i in self._agent_ids}
+
+        else:
+            s = {
+                i: np.array(self.past_actions[i] + self.past_states[i] + [self.player_states[i]], dtype=np.int64)
+                for i in self._agent_ids
+            }
 
         assert self.observation_space.contains(s), s
         return s
@@ -133,8 +163,6 @@ class RandomPOMDP(MultiAgentEnv):
             self.player_states[agent_id] = next_player_state
             rewards[agent_id] = self.reward_function[(player_state, action), player_tuples]
 
-
-
         done = self.current_step >= self.episode_length
         dones = {
             agent_id: done for agent_id in self._agent_ids
@@ -160,12 +188,14 @@ if __name__ == '__main__':
     p2 = np.random.random((n_states, n_actions))
     p3 = np.random.random((n_states, n_actions))
 
-    players = [p1, p2, p3]
+    players = [p2, p3]
 
     for p in players:
         p[:] = p / p.sum(axis=1, keepdims=True)
 
-    env = RandomPOMDP(n_states=n_states, n_actions=n_actions, num_players=len(players), episode_length=50000, seed=0)
+    env = RandomPOMDP(
+        history_length=2,
+        n_states=n_states, n_actions=n_actions, num_players=len(players), episode_length=64, seed=0)
 
     rewards = defaultdict(int)
 

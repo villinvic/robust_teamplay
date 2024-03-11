@@ -1,3 +1,5 @@
+import os
+
 import fire
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray import tune
@@ -13,11 +15,7 @@ def env_maker(env_config):
 
     return RandomPOMDP(**env_config)
 
-register_env("RandomMDP", env_maker)
-
-num_workers = 7
-
-rollout_fragment_length = 16
+num_workers = os.cpu_count() - 2
 
 
 def main(
@@ -28,6 +26,7 @@ def main(
         num_players=2,
         episode_length=64,
         history_length=2,
+        full_one_hot=True
 ):
     env_config = dict(
         n_states=n_states,
@@ -35,13 +34,22 @@ def main(
         episode_length=episode_length,
         seed=env_seed,
         num_players=num_players,
-        history_length=history_length
+        history_length=history_length,
+        full_one_hot=full_one_hot
     )
+
+
+    config_name = str(env_config).replace("'", "").replace(" ", "").replace(":", "_").replace(",", "_")[1:-1]
+    env_name = f"RandomMDP_{config_name}"
+    register_env(env_name, env_maker)
+
+
+    rollout_fragment_length = episode_length
 
     dummy_env = RandomPOMDP(**env_config)
 
     policies = {
-        f"background_{i}": (
+        f"background_deterministic_{bg_policy_seed}": (
             RLlibDeterministicPolicy,
             dummy_env.observation_space[0],
             dummy_env.action_space[0],
@@ -69,24 +77,35 @@ def main(
         use_utility=False,
         scenarios=scenarios,
         copy_weights_freq=10,
-        best_response_timesteps_max=1_000_000,
 
-        lambda_=0.95,
-        gamma=0.99,
-        entropy_coeff=1e-4,
-        lr=1e-4,
+        learn_best_responses_only=True,
+        best_response_timesteps_max=2_000_000,
 
-        kl_coeff=1.,
-        kl_target=1e-2,
-        clip_param=0.2,
-        grad_clip=1.,
+        # lambda_=0.95,
+        # gamma=0.99,
+        # entropy_coeff=1e-4,
+        # lr=1e-4,
+        lambda_=1.0,
+        gamma=1.,
+        entropy_coeff=0.,
+        lr=5e-2,
+        use_critic=False,
+        use_gae=False,
+
+        kl_coeff=0.,
+        kl_target=1e-1, #1e-2
+        clip_param=10.,
+        #clip_param=0.2,
+        grad_clip=100.,
+        #optimizer={"type": "SGD", "lr": 0.003},
         #optimizer="rmsprop",
-        train_batch_size=512 * 16,
-        sgd_minibatch_size=512,
-        num_sgd_iter=32,
+        train_batch_size=64*num_workers,
+        sgd_minibatch_size=64*num_workers,
+        num_sgd_iter=1,
         model={
-            "fcnet_hiddens": [8],
-            "fcnet_activation": "relu",
+            "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
+            "vf_share_layers": False,
+            "fcnet_activation": "linear",
         }
     ).rollouts(
         num_rollout_workers=num_workers,
@@ -94,10 +113,10 @@ def main(
         create_env_on_local_worker=False,
         num_envs_per_worker=1,
         rollout_fragment_length=rollout_fragment_length,
-        batch_mode="truncate_episodes",
+        batch_mode="complete_episodes",
         enable_connectors=False,
     ).environment(
-        env="RandomMDP",
+        env=env_name,
         env_config=env_config
     ).resources(num_gpus=0
     ).framework(framework="tf"
@@ -113,7 +132,7 @@ def main(
 
     exp = tune.run(
         "PPO",
-        name="BF_SGDA_v0.1",
+        name="BF_SGDA_v0.3",
         config=config,
         checkpoint_at_end=False,
         checkpoint_freq=30,

@@ -35,14 +35,7 @@ class BackgroundFocalSGDA(DefaultCallbacks):
             **kwargs,
     ) -> None:
 
-        print(algorithm.local_replay_buffer)
         self.beta = ScenarioDistribution(algorithm)
-
-        # def post_init(ctx, config, env_creator):
-        #     ctx.post_init(config, env_creator)
-        #     self.beta.set_matchmaking()
-        #
-        # algorithm._init = post_init
 
     def on_postprocess_trajectory(
             self,
@@ -104,13 +97,16 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 class ScenarioSet:
     def __init__(self, num_players, background_population):
         self.scenarios = {}
+
         for num_copies in range(1, num_players + 1):
 
             for background_policies in itertools.combinations_with_replacement(background_population,
                                                                                num_players - num_copies):
                 policies = (Scenario.MAIN_POLICY_ID,) + (Scenario.MAIN_POLICY_COPY_ID,) * (
                         num_copies - 1) + background_policies
+
                 scenario_name = Scenario.get_scenario_name(policies)
+
                 self.scenarios[scenario_name] = Scenario(num_copies, list(background_policies))
 
         self.scenario_list = np.array(list(self.scenarios.keys()))
@@ -134,9 +130,11 @@ class PPOBFSGDAConfig(PPOConfig):
         self.use_utility = False
         self.scenarios = None
         self.copy_weights_freq = 5
+        self.beta_eps = 1e-2
 
+        self.learn_best_responses_only = True
         self.best_response_timesteps_max = 1_000_000
-        self.best_response_utilities_path = "data/best_response_utilities/{env_name}.pkl"
+        self.best_response_utilities_path = os.getcwd() +  "/data/best_response_utilities/{env_name}.pkl"
 
         # TODO if we have deep learning bg policies:
         self.background_population_path = None
@@ -152,6 +150,8 @@ class PPOBFSGDAConfig(PPOConfig):
             copy_weights_freq: Optional[int] = NotProvided,
             best_response_timesteps_max: Optional[int] = NotProvided,
             best_response_utilities_path: Optional[str] = NotProvided,
+            learn_best_responses_only: Optional[bool] = NotProvided,
+            beta_eps: Optional[float] = NotProvided,
             scenarios: ScenarioSet = NotProvided,
             **kwargs,
     ) -> "PPOConfig":
@@ -165,10 +165,14 @@ class PPOBFSGDAConfig(PPOConfig):
             self.use_utility = use_utility
         if copy_weights_freq is not NotProvided:
             self.copy_weights_freq = copy_weights_freq
-        if best_response_utilities_path is not best_response_utilities_path:
+        if learn_best_responses_only is not NotProvided:
+            self.learn_best_responses_only = learn_best_responses_only
+        if best_response_utilities_path is not NotProvided:
             self.best_response_utilities_path = best_response_utilities_path
+        if beta_eps is not NotProvided:
+            self.beta_eps = beta_eps
 
-        if best_response_timesteps_max is not best_response_timesteps_max:
+        if best_response_timesteps_max is not NotProvided:
             self.best_response_timesteps_max = best_response_timesteps_max
 
         assert scenarios is not NotProvided, "You must provide an initial scenario set."
@@ -186,7 +190,7 @@ class Scenario:
         self.background_policies = background_policies
 
     def get_policies(self):
-        policies = [Scenario.MAIN_POLICY_ID] * self.num_copies + self.background_policies
+        policies = [Scenario.MAIN_POLICY_ID] + [Scenario.MAIN_POLICY_COPY_ID] * (self.num_copies-1) + self.background_policies
 
         # We suppose the order of players does not matter, but we shuffle it in cases s0 is different for each player.
         np.random.shuffle(policies)
@@ -202,7 +206,7 @@ class Scenario:
 
 
 class ScenarioMapper:
-    def __init__(self, scenarios, distribution=None):
+    def __init__(self, scenarios=None, distribution=None):
         if distribution is None:
             distribution = np.ones(len(scenarios), dtype=np.float32) / len(scenarios)
 
@@ -212,9 +216,9 @@ class ScenarioMapper:
 
     def __call__(self, agent_id, episode, worker, **kwargs):
         if episode.episode_id not in self.mappings:
-            scenario_name = self.scenarios.sample_scenario(self.distribution)
+            scenario_name = worker.config.scenarios.sample_scenario(self.distribution)
 
-            self.mappings[episode.episode_id] = self.scenarios[scenario_name].get_policies()
+            self.mappings[episode.episode_id] = worker.config.scenarios[scenario_name].get_policies()
 
         mapping = self.mappings[episode.episode_id]
         policy_id = mapping.pop()
@@ -242,7 +246,7 @@ class ScenarioDistribution:
         self.best_response_utilities = {}
 
         self.scenarios = self.config.scenarios
-        self.beta_logits = np.ones(len(self.scenarios), dtype=np.float32)
+        self.beta_logits = np.ones(len(self.scenarios), dtype=np.float32) / len(self.scenarios)
         self.past_priors = list()
         self.weights_history = None
         self.copy_iter = 0
@@ -253,11 +257,12 @@ class ScenarioDistribution:
         self.copy_weights(reset=True)
         self.missing_best_responses: list = []
         self.current_best_response_scenario = None
+        self.current_best_response_utility = 0.
 
         if not self.config.use_utility:
 
             self.best_response_timesteps = defaultdict(int)
-            self.missing_best_responses: deque = deque(list(self.scenarios.scenario_list.copy()))
+            self.missing_best_responses: deque = deque(list(self.scenarios.scenario_list))
             self.load_best_response_utilities()
             if len(self.missing_best_responses) > 0:
                 self.current_best_response_scenario = self.missing_best_responses.popleft()
@@ -279,23 +284,26 @@ class ScenarioDistribution:
 
         self.algo.workers.foreach_worker(
             lambda w: w.set_policy_mapping_fn(
-                ScenarioMapper(distrib, deepcopy(self.scenarios))
+                ScenarioMapper(distribution=distrib)
             ),
         )
 
-        print("QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ", distrib)
-
-    def copy_weights(self, reset=True):
+    def copy_weights(self, reset=False):
         if reset:
-            self.weights_history = deque([self.weights_0 for _ in range(11)], maxlen=11)
+            self.weights_history = deque([self.weights_0 for _ in range(5)], maxlen=6)
             self.copy_iter = 0
         else:
             last_weights = ray.put(self.algo.get_weights([Scenario.MAIN_POLICY_ID])[Scenario.MAIN_POLICY_ID])
             self.weights_history.append(last_weights)
 
         weights = self.weights_history.popleft()
+
+        d = {Scenario.MAIN_POLICY_COPY_ID: weights}
+        if reset:
+            d[Scenario.MAIN_POLICY_ID] = weights
+
         self.algo.workers.foreach_worker(
-            lambda w: w.set_weights({Scenario.MAIN_POLICY_COPY_ID: weights})
+            lambda w: w.set_weights(d)
         )
 
     def load_best_response_utilities(self):
@@ -328,6 +336,9 @@ class ScenarioDistribution:
     def beta_gradients(self, loss):
         self.beta_logits[:] = project_onto_simplex(self.beta_logits + loss * self.config.beta_lr)
 
+        # Allow any scenario to be sampled with beta_eps prob
+        self.beta_logits[:] = self.beta_logits * (1-self.config.beta_eps) + self.config.beta_eps / len(self.beta_logits)
+
         self.past_priors.append(self.beta_logits.copy())
 
     def update(self, result: ResultDict):
@@ -344,11 +355,28 @@ class ScenarioDistribution:
         # Test if we are done learning some best responses
         if (not self.config.use_utility) and (self.current_best_response_scenario is not None):
 
+
+            expected_utility = iter_data.get(f"{self.current_best_response_scenario}_utility_mean", 0.)
+            if self.current_best_response_scenario not in self.best_response_utilities:
+                self.current_best_response_utility = expected_utility
+                self.best_response_utilities[self.current_best_response_scenario] = expected_utility
+            else:
+                lr = 0.993
+                self.current_best_response_utility = (self.current_best_response_utility * lr
+                                                      + expected_utility * (1-lr))
+
+                self.best_response_utilities[self.current_best_response_scenario] = np.maximum(
+                    self.current_best_response_utility,
+                    self.best_response_utilities[self.current_best_response_scenario]
+                )
+
             self.best_response_timesteps[self.current_best_response_scenario] += time_steps - self.prev_timesteps
             if self.best_response_timesteps[
                     self.current_best_response_scenario] >= self.config.best_response_timesteps_max:
-                expected_utility = iter_data[f"{self.current_best_response_scenario}_utility_mean"]
-                self.best_response_utilities[self.current_best_response_scenario] = expected_utility
+
+                #expected_utility = iter_data[f"{self.current_best_response_scenario}_utility_mean"]
+                #self.best_response_utilities[self.current_best_response_scenario] = expected_utility
+
                 self.save_best_response_utilities()
                 if len(self.missing_best_responses) > 0:
                     self.current_best_response_scenario = self.missing_best_responses.popleft()
@@ -362,10 +390,13 @@ class ScenarioDistribution:
 
         self.copy_iter += 1
 
-        if self.config.copy_weights_freq % self.copy_iter == 0:
+        if self.copy_iter % self.config.copy_weights_freq == 0:
             self.copy_weights()
 
-        if self.config.use_utility and (self.current_best_response_scenario is None):
+        if self.config.use_utility or (self.current_best_response_scenario is None):
+            if self.config.learn_best_responses_only:
+                # We are done computing best responses, stop
+                self.algo.stop()
             # Compute loss
 
             if self.config.use_utility:
@@ -379,6 +410,9 @@ class ScenarioDistribution:
                     self.best_response_utilities[scenario] - iter_data.get(f"{scenario}_utility_mean", np.nan)
                     for scenario in self.scenarios.scenario_list
                 ])
+                for scenario in self.scenarios.scenario_list:
+                    if f"{scenario}_utility_mean" in iter_data:
+                        iter_data[f"{scenario}_regret_mean"] = self.best_response_utilities[scenario] - iter_data[f"{scenario}_utility_mean"]
 
             # Todo : is this fine ? We shouldn't make this  happen with large batch sizes
             beta_losses[np.isnan(beta_losses)] = np.nanmean(beta_losses)
@@ -391,13 +425,22 @@ class ScenarioDistribution:
 
         self.prev_timesteps = time_steps
 
-        result["custom_metrics"]["missing_best_response_utilities"] = len(self.missing_best_responses)
-        if self.current_best_response_scenario is None:
-            result["custom_metrics"]["best_response_timesteps"] = 0
 
-        else:
-            result["custom_metrics"]["best_response_timesteps"] = self.best_response_timesteps[self.current_best_response_scenario]
+        if not self.config.use_utility:
+            result["custom_metrics"]["missing_best_response_utilities"] = len(self.missing_best_responses)
+            if self.current_best_response_scenario is None:
+                result["custom_metrics"]["best_response_timesteps"] = 0
+
+            else:
+                result["custom_metrics"]["best_response_timesteps"] = self.best_response_timesteps[self.current_best_response_scenario]
+
+
 
         result["hist_stats"]["scenario_distribution"] = self.beta_logits.copy()
+        for scenario, prob in zip(self.scenarios.scenario_list, self.beta_logits):
+            result["custom_metrics"][f"{scenario}_probability"] = prob
+
+        # Get rid of duplicates
+        del result["sampler_results"]["custom_metrics"]
 
         return result
