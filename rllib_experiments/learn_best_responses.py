@@ -134,7 +134,7 @@ def main(
     )
 
     exp = tune.run(
-        "A2C",
+        "PPO",
         name="BF_SGDA_v0.3",
         config=config,
         checkpoint_at_end=False,
