@@ -74,7 +74,7 @@ def main(
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
 
-    config = make_bf_sgda_config(A2CConfig).training(
+    config = make_bf_sgda_config(PPOConfig).training(
         beta_lr=2e-2,
         beta_smoothing=2000,
         use_utility=False,
@@ -84,36 +84,27 @@ def main(
         learn_best_responses_only=True,
         best_response_timesteps_max=2_000_000,
 
-        #A2C
-        lr=1e-3,
-        entropy_coeff=0.,
-        use_critic=False,
-        gamma=1.,
-        train_batch_size=64*num_workers,
-        sample_async=False,
+
 
         # PPO
         # lambda_=0.95,
         # gamma=0.99,
         # entropy_coeff=1e-4,
         # lr=1e-4,
-        # lambda_=1.0,
-        # gamma=1.,
-        # entropy_coeff=0.,
-        # lr=1e-2,
-        # use_critic=False,
-        # use_gae=False,
-        #
-        # kl_coeff=0.,
+        lambda_=1.0,
+        gamma=1.,
+        entropy_coeff=0.,
+        lr=1e-2,
+        use_critic=False,
+        use_gae=False,
+        kl_coeff=0.,
         # kl_target=1e-1, #1e-2
-        # clip_param=10.,
+        clip_param=10.,
         # #clip_param=0.2,
-        # grad_clip=100.,
-        # #optimizer={"type": "SGD", "lr": 0.003},
-        # #optimizer="rmsprop",
-        # train_batch_size=64*num_workers,
-        # sgd_minibatch_size=64*num_workers,
-        # num_sgd_iter=1,
+        grad_clip=100.,
+        train_batch_size=64*num_workers*8,
+        sgd_minibatch_size=64*num_workers*4,
+        num_sgd_iter=8,
         model={
             "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
             "vf_share_layers": False,
@@ -141,8 +132,6 @@ def main(
     ).experimental(
         _disable_preprocessor_api=False
     )
-
-    print(config.to_dict())
 
     exp = tune.run(
         "A2C",
