@@ -142,6 +142,8 @@ def main(
         _disable_preprocessor_api=False
     )
 
+    print(config.to_dict())
+
     exp = tune.run(
         "A2C",
         name="BF_SGDA_v0.3",
