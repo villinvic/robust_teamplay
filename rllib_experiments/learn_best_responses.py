@@ -90,6 +90,7 @@ def main(
         use_critic=False,
         gamma=1.,
         train_batch_size=64*num_workers,
+        sample_async=False,
 
         # PPO
         # lambda_=0.95,
