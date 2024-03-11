@@ -79,7 +79,7 @@ def main(
         beta_smoothing=2000,
         use_utility=False,
         scenarios=scenarios,
-        copy_weights_freq=10,
+        copy_weights_freq=1,
 
         learn_best_responses_only=True,
         best_response_timesteps_max=8_000_000,
