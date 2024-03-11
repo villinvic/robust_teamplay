@@ -241,7 +241,7 @@ def make_bf_sgda_config(cls):
 
             return self
 
-    return BFSGDAConfig
+    return BFSGDAConfig()
 
 
 

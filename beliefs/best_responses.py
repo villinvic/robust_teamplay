@@ -29,7 +29,7 @@ def display_data(filename):
     len(name) for name in data
   ] + [len(st1)])
   print("-" * 200)
-  print(st1 + " " * (offset - len(st1)) + "\t\Best response utility")
+  print(st1 + " " * (offset - len(st1)) + "\tBest response utility")
   print("-" * 200)
   for key, value in data.items():
     print(f"{key}{' ' * (offset - len(key))}\t{value}")
