@@ -82,7 +82,7 @@ def main(
         copy_weights_freq=10,
 
         learn_best_responses_only=True,
-        best_response_timesteps_max=2_000_000,
+        best_response_timesteps_max=8_000_000,
 
 
 
