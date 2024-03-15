@@ -14,7 +14,7 @@ from policies.tabular_policy import TabularPolicy
 
 class PolicyIteration:
 
-    def __init__(self, initial_policy : Policy, environment, epsilon=1e-3, learning_rate=1e-3, lambda_=1e-3):
+    def __init__(self, initial_policy : Policy, environment, epsilon=1e-3, learning_rate=1e-3, lambda_=1e-3, clip=None):
 
         self.policy = initial_policy
         self.n_states = self.policy.action_logits.shape[0]
@@ -24,6 +24,7 @@ class PolicyIteration:
         self.n_iter = 100
         self.lr = learning_rate
         self.lambda_ = lambda_
+        self.clip = clip
 
 
     def policy_evaluation_for_prior(
@@ -215,7 +216,7 @@ class PolicyIteration:
 
         #np.random.shuffle(gradients)
         #for g in gradients:
-        self.policy.apply_gradient(sum(gradients), lr=self.lr)
+        self.policy.apply_gradient(sum(gradients), lr=self.lr, clip=self.clip)
 
 
     def exact_pg_mixture(self, bg_population, prior: Prior, vf, previous_copy: TabularPolicy = None):

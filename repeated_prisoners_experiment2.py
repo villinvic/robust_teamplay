@@ -24,7 +24,7 @@ from pyplot_utils import make_grouped_boxplot, make_grouped_plot, plot_prior
 from scenarios.scenario import Scenario, ScenarioFactory
 
 
-def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2, n_steps=1000,
+def main(policy_lr, prior_lr, lambda_, clip, n_seeds=1, episode_length=10, pop_size=2, n_steps=1000,
          env_seed=0,
          plot_regret=True):
 
@@ -35,6 +35,7 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
             policy_lr=policy_lr,
             prior_lr=prior_lr,
             n_steps=n_steps,
+            clip=clip,
             main_approach=True,
         ),
         dict(
@@ -43,6 +44,7 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
             policy_lr=policy_lr,
             prior_lr=prior_lr,
             n_steps=n_steps,
+            clip=clip,
             main_approach=False
 
         ),
@@ -52,6 +54,7 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
             policy_lr=policy_lr,
             prior_lr=0.,
             n_steps=n_steps,
+            clip=clip,
             main_approach=False,
         ),
         dict(
@@ -61,6 +64,7 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
             prior_lr=0.,
             n_steps=n_steps,
             self_play=True,
+            clip=clip,
             main_approach=False,
         ),
         dict(
@@ -69,6 +73,7 @@ def main(policy_lr, prior_lr, lambda_, n_seeds=1, episode_length=10, pop_size=2,
             policy_lr=0.,
             prior_lr=0.,
             n_steps=2,
+            clip=clip,
             main_approach=False,
         ),
     ]
@@ -174,6 +179,7 @@ def prisoners_experiment(
         use_regret=False,
         self_play=False,
         lambda_=0.5,
+        clip=None,
         seed=0,
         episode_length=1,
         pop_size=None,
@@ -196,7 +202,8 @@ def prisoners_experiment(
     bg_population = DeterministicPoliciesPopulation(environment)
     bg_population.build_population(size=num_policies)
 
-    algo = PolicyIteration(robust_policy, environment, epsilon=episode_length, learning_rate=policy_lr, lambda_=lambda_)
+    algo = PolicyIteration(robust_policy, environment, epsilon=episode_length, learning_rate=policy_lr, lambda_=lambda_,
+                           clip=clip)
 
     # belief over worst teammate policy (all bg individuals and our self)
     belief = Prior(len(bg_population.policies)+1, learning_rate=prior_lr)
@@ -548,6 +555,8 @@ if __name__ == '__main__':
     parser.add_argument("--env_seed", type=int, default=0.)
     parser.add_argument("--auto_hps", action='store_true')
     parser.add_argument("--epsilon", type=float, default=1.)
+    parser.add_argument("--clip", type=float, default=0.)
+
 
 
     args = parser.parse_args()
@@ -566,6 +575,7 @@ if __name__ == '__main__':
             args.use_regret,
             args.sp,
             args.lambda_,
+            args.clip if args.clip > 0 else None,
             args.seed,
             args.episode_length,
             args.pop_size,

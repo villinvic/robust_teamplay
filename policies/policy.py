@@ -72,7 +72,7 @@ class Policy:
 
         return gradients
 
-    def apply_gradient(self, gradient, lr, normalize=False):
+    def apply_gradient(self, gradient, lr, normalize=False, clip=None):
         if normalize:
             mean_grad = np.mean(gradient)
             std = np.maximum(np.std(gradient), 1e-2)
@@ -81,6 +81,10 @@ class Policy:
             gradient -= np.mean(gradient, axis=1, keepdims=True)
 
             #gradient = np.clip(gradient, -2e-2, 2e2)
+
+        if clip is not None:
+            gradient = np.clip(gradient, -clip, clip)
+
 
         self.action_logits[:] = np.clip(lr * gradient + self.action_logits, -8., 8.)
 
