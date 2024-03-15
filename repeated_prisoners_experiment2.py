@@ -590,9 +590,9 @@ if __name__ == '__main__':
             policy_lr,
             prior_lr,
             args.lambda_,
+            args.clip if args.clip > 0 else None,
             args.n_seeds,
             args.episode_length,
             args.pop_size,
             args.n_steps,
-
         )
