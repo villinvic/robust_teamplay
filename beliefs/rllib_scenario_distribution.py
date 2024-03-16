@@ -123,7 +123,7 @@ class ScenarioSet:
         return len(self.scenario_list)
 
     def split(self, n=None):
-        if n in None:
+        if n is None:
             n = len(self.scenario_list)
 
         subsets = []
