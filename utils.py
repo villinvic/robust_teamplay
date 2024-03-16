@@ -3,14 +3,15 @@ import numpy as np
 
 class SmoothMetric:
     def __init__(self, init_value=0, lr=0.993):
-
+        assert  0 <= lr < 1
         self.lr =lr
         self._v = init_value
 
-    def update(self, value):
+    def update(self, value, weight=1.):
 
         if not np.isnan(value):
-         self._v = self.lr * self._v + (1-self.lr) * value
+            lr = np.maximum(1 - (1 - self.lr) * weight, 0.)
+            self._v = lr * self._v + (1 - lr) * value
 
         return self._v
 

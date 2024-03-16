@@ -83,6 +83,7 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
         episode.custom_metrics[f"{scenario_name}_utility"] = episodic_mean_focal_per_capita
 
+
     def on_train_result(
             self,
             *,
@@ -323,7 +324,7 @@ class ScenarioDistribution:
         self.missing_best_responses: list = []
         self.current_best_response_scenario = None
         self.current_best_response_utility = SmoothMetric(lr=0.98)
-        self.scenario_utilities = defaultdict(lambda : SmoothMetric(lr=0.95))
+        self.scenario_utilities = defaultdict(lambda : SmoothMetric(lr=0.99))
 
         if not self.config.use_utility:
 
@@ -334,6 +335,25 @@ class ScenarioDistribution:
                 self.current_best_response_scenario = self.missing_best_responses.popleft()
 
             self.set_matchmaking()
+
+        def _compile_iteration_results(
+        algo, *, episodes_this_iter, step_ctx, iteration_results=None
+    ):
+            r = algo._compile_iteration_results(algo, episodes_this_iter=episodes_this_iter, step_ctx=step_ctx,
+                                            iteration_results=iteration_results)
+
+            scenario_counts = defaultdict(int)
+            for episode in episodes_this_iter:
+                for k in episode.custom_metrics:
+                    if "utility" in k:
+                        scenario_counts[k.rstrip("_utility")] += 1
+
+            r["custom_metrics"]["scenario_counts"] = scenario_counts
+
+            return r
+
+
+        self.algo._compile_iteration_results = _compile_iteration_results
 
 
 
@@ -461,21 +481,26 @@ class ScenarioDistribution:
             if self.config.learn_best_responses_only:
                 # We are done computing best responses, stop
                 self.algo.stop()
-            # Compute loss
+            # Compute lossweight=iter_data["scenario_counts"][scenario]
 
             if self.config.use_utility:
                 beta_losses = np.array([
-                    self.scenario_utilities[scenario].update(iter_data.get(f"{scenario}_utility_mean", np.nan))
+                    self.scenario_utilities[scenario].update(iter_data.get(f"{scenario}_utility_mean", np.nan),
+                                                             weight=iter_data["scenario_counts"][scenario])
                     for scenario in self.scenarios.scenario_list
                 ])
                 beta_losses = np.max(beta_losses) - beta_losses + np.min(beta_losses)
             else:
                 beta_losses = np.array([
-                    self.best_response_utilities[scenario] - self.scenario_utilities[scenario].update(iter_data.get(f"{scenario}_utility_mean", np.nan))
+                    self.best_response_utilities[scenario] - self.scenario_utilities[scenario].update(iter_data.get(f"{scenario}_utility_mean", np.nan),
+                                                                                                      weight=iter_data["scenario_counts"][scenario])
                     for scenario in self.scenarios.scenario_list
                 ])
                 for scenario in self.scenarios.scenario_list:
                     iter_data[f"{scenario}_regret_mean"] =  self.best_response_utilities[scenario] - self.scenario_utilities[scenario].get()
+                iter_data[f"worst_case_regret"] = np.max(beta_losses)
+                iter_data[f"uniform_regret"] = np.mean(beta_losses)
+                iter_data[f"curr_distrib_regret"] = np.sum(beta_losses * self.beta_logits)
 
             # # Todo : is this fine ? We shouldn't make this  happen with large batch sizes
             # beta_losses[np.isnan(beta_losses)] = np.nanmean(beta_losses)
