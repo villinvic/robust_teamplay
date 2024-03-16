@@ -122,6 +122,18 @@ class ScenarioSet:
     def __len__(self):
         return len(self.scenario_list)
 
+    def split(self, n=None):
+        if n in None:
+            n = len(self.scenario_list)
+
+        subsets = []
+        for sublist in np.split(self.scenario_list, n):
+            subset = copy(self)
+            subset.scenario_list = list(sublist)
+            subsets.append(subset)
+        return subsets
+
+
 
 class PPOBFSGDAConfig(PPOConfig):
     def __init__(self, algo_class=None):
@@ -534,3 +546,12 @@ class ScenarioDistribution:
         del result["sampler_results"]["custom_metrics"]
 
         return result
+
+
+if __name__ == '__main__':
+
+    scenario_set = ScenarioSet(2, ["background_bob", "background_luc"])
+    print()
+    l = scenario_set.split(len(scenario_set.scenario_list))
+    for subset in l:
+        print(subset.scenario_list)

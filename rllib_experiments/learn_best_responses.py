@@ -30,7 +30,6 @@ def main(
         episode_length=64,
         history_length=2,
         full_one_hot=True,
-        relevant_scenarios=None
 ):
     env_config = dict(
         n_states=n_states,
@@ -66,29 +65,23 @@ def main(
 
         ) for i, bg_policy_seed in enumerate(bg_policies)
     }
-    if relevant_scenarios is not None:
-        for p in policies:
-            for r in relevant_scenarios:
-                if p in r:
-                    del policies[p]
-                    break
 
     background_population = list(policies.keys())
+
     scenarios = ScenarioSet(
         num_players=env_config["num_players"],
         background_population=background_population
     )
-    if relevant_scenarios is not None:
-        scenarios.scenario_list = relevant_scenarios
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
+
 
     config = make_bf_sgda_config(PPOConfig).training(
         beta_lr=2e-2,
         beta_smoothing=2000,
         use_utility=False,
-        scenarios=scenarios,
+        scenarios=tune.grid_search(scenarios.split()),
         copy_weights_freq=1,
 
         learn_best_responses_only=True,

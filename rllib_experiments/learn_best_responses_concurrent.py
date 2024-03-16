@@ -45,6 +45,8 @@ def run(
         for relevant_scenario in ScenarioSet(num_players, named_bg_policies).scenario_list
     ]
 
+    print(len(run_dicts))
+
     with mp.Pool(num_proc, maxtasksperchild=1) as p:
         p.map(main, run_dicts)
 
