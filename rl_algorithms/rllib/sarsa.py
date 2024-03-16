@@ -139,7 +139,7 @@ if __name__ == '__main__':
     env = RandomPOMDP(**env_config)
 
     opponent_4 = RLlibDeterministicPolicy(
-        env.observation_space[0], env.action_space[0], {}, seed=4
+        env.observation_space[0], env.action_space[0], {}, seed=5
     )
 
     algo = SARSA(env)
