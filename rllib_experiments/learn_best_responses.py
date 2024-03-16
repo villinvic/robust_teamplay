@@ -18,7 +18,7 @@ def env_maker(env_config):
 
     return RandomPOMDP(**env_config)
 
-num_workers = os.cpu_count() - 2
+num_workers = 1 #os.cpu_count() - 2
 
 
 def main(
@@ -111,9 +111,9 @@ def main(
         #clip_param=10.,
         # #clip_param=0.2,
         grad_clip=100.,
-        train_batch_size=64*num_workers*16,
-        sgd_minibatch_size=64*num_workers*2,
-        num_sgd_iter=16,
+        train_batch_size=64*num_workers,
+        sgd_minibatch_size=64*num_workers,
+        num_sgd_iter=1,
         model={
             "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
             "vf_share_layers": False,
