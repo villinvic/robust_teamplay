@@ -72,6 +72,7 @@ def main(
         num_players=env_config["num_players"],
         background_population=background_population
     )
+    print(scenarios.scenario_list)
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
