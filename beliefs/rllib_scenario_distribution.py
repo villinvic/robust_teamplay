@@ -475,7 +475,7 @@ class ScenarioDistribution:
                     for scenario in self.scenarios.scenario_list
                 ])
                 for scenario in self.scenarios.scenario_list:
-                    iter_data[f"{scenario}_regret_mean"] =  self.best_response_utilities[scenario] - self.best_response_utilities[scenario].get()
+                    iter_data[f"{scenario}_regret_mean"] =  self.best_response_utilities[scenario] - self.scenario_utilities[scenario].get()
 
             # # Todo : is this fine ? We shouldn't make this  happen with large batch sizes
             # beta_losses[np.isnan(beta_losses)] = np.nanmean(beta_losses)
