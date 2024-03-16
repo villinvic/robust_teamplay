@@ -353,7 +353,7 @@ class ScenarioDistribution:
             return r
 
 
-        self.algo._compile_iteration_results = _compile_iteration_results
+        self.algo._compile_iteration_results = _compile_iteration_results.__get__(algo, type(algo))
 
 
 
