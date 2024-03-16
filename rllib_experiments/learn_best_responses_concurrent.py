@@ -1,7 +1,7 @@
 import multiprocessing as mp
 
 from beliefs.rllib_scenario_distribution import ScenarioSet
-from learn_best_responses import main
+from rllib_experiments.learn_best_responses import main
 import fire
 import os
 import numpy as np
