@@ -294,23 +294,6 @@ class ScenarioMapper:
         return policy_id
 
 
-def _compile_iteration_results(
-    self, *, episodes_this_iter, step_ctx, iteration_results=None
-):
-    r = self._compile_iteration_results(self, episodes_this_iter=episodes_this_iter, step_ctx=step_ctx,
-                                    iteration_results=iteration_results)
-
-    scenario_counts = defaultdict(int)
-    for episode in episodes_this_iter:
-        for k in episode.custom_metrics:
-            if "utility" in k:
-                scenario_counts[k.rstrip("_utility")] += 1
-
-    r["custom_metrics"]["scenario_counts"] = scenario_counts
-
-    return r
-
-
 class ScenarioDistribution:
 
     def __init__(self, algo: Algorithm, learn_best_responses=False):
@@ -353,6 +336,25 @@ class ScenarioDistribution:
 
             self.set_matchmaking()
 
+        _base_compile_iteration_results = algo._compile_iteration_results
+        def _compile_iteration_results(
+                _, *, episodes_this_iter, step_ctx, iteration_results=None
+        ):
+            r = _base_compile_iteration_results(episodes_this_iter=episodes_this_iter, step_ctx=step_ctx,
+                                                     iteration_results=iteration_results)
+
+            scenario_counts = defaultdict(int)
+            for episode in episodes_this_iter:
+                for k in episode.custom_metrics:
+                    if "utility" in k:
+                        scenario_counts[k.rstrip("_utility")] += 1
+
+            r["custom_metrics"]["scenario_counts"] = scenario_counts
+
+            return r
+
+
+        #setattr(self.algo, "_base_compile_iteration_results", self.algo._compile_iteration_results)
         self.algo._compile_iteration_results = _compile_iteration_results.__get__(self.algo, type(self.algo))
 
 
