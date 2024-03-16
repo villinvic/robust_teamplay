@@ -22,7 +22,7 @@ num_workers = os.cpu_count() - 2
 
 
 def main(
-        scenario_bg_policies=[0],
+        bg_policies=[0],
         env_seed=0,
         n_states=5,
         n_actions=3,
@@ -63,7 +63,7 @@ def main(
             )
 
 
-        ) for i, bg_policy_seed in enumerate(scenario_bg_policies)
+        ) for i, bg_policy_seed in enumerate(bg_policies)
     }
     background_population = list(policies.keys())
     scenarios = ScenarioSet(

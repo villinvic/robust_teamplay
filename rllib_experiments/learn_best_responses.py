@@ -18,18 +18,19 @@ def env_maker(env_config):
 
     return RandomPOMDP(**env_config)
 
-num_workers = 1 #os.cpu_count() - 2
+num_workers = os.cpu_count() - 2
 
 
 def main(
-        scenario_bg_policies=[0],
+        bg_policies=[0],
         env_seed=0,
         n_states=5,
         n_actions=3,
         num_players=2,
         episode_length=64,
         history_length=2,
-        full_one_hot=True
+        full_one_hot=True,
+        relevant_scenarios=None
 ):
     env_config = dict(
         n_states=n_states,
@@ -51,7 +52,7 @@ def main(
 
     dummy_env = RandomPOMDP(**env_config)
 
-    policies = [{
+    policies = {
         f"background_deterministic_{bg_policy_seed}": (
             RLlibDeterministicPolicy,
             dummy_env.observation_space[0],
@@ -61,13 +62,24 @@ def main(
                 seed=bg_policy_seed,
                 _disable_preprocessor_api=True,
             )
-        )
-    } for i, bg_policy_seed in enumerate(scenario_bg_policies)]
+
+
+        ) for i, bg_policy_seed in enumerate(bg_policies)
+    }
+    if relevant_scenarios is not None:
+        for p in policies:
+            for r in relevant_scenarios:
+                if p in r:
+                    del policies[p]
+                    break
+
     background_population = list(policies.keys())
     scenarios = ScenarioSet(
         num_players=env_config["num_players"],
         background_population=background_population
     )
+    if relevant_scenarios is not None:
+        scenarios.scenario_list = relevant_scenarios
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
@@ -99,9 +111,9 @@ def main(
         #clip_param=10.,
         # #clip_param=0.2,
         grad_clip=100.,
-        train_batch_size=64*num_workers,
-        sgd_minibatch_size=64*num_workers,
-        num_sgd_iter=1,
+        train_batch_size=64*num_workers*16,
+        sgd_minibatch_size=64*num_workers*2,
+        num_sgd_iter=16,
         model={
             "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
             "vf_share_layers": False,
@@ -121,7 +133,7 @@ def main(
     ).resources(num_gpus=0
     ).framework(framework="tf"
     ).multi_agent(
-        policies=tune.grid_search(policies),
+        policies=policies,
         policies_to_train={Scenario.MAIN_POLICY_ID},
         policy_mapping_fn=ScenarioMapper(
             scenarios=scenarios
@@ -137,7 +149,6 @@ def main(
         checkpoint_at_end=False,
         checkpoint_freq=30,
         keep_checkpoints_num=3,
-        num_samples=len(policies),
         stop={
             "timesteps_total": 1_000_000_000,
         },
