@@ -45,10 +45,10 @@ def remove_entry(filename, key):
     print(f"Entry with key '{key}' removed.")
     save_data(data, filename)  # Save after removal
 
-def add_entry(filename, key, value):
+def add_entry(filename, key, value: float):
   data = load_data(filename)
   """Adds a new entry to the dictionary based on user input."""
-  data[key] = value
+  data[key] = float(value)
   print(f"Entry with key '{key}' and value '{value}' added.")
   save_data(data, filename)  # Save after addition
 

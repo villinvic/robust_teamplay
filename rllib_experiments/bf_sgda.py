@@ -80,6 +80,7 @@ def main(
         use_utility=False,
         scenarios=scenarios,
         copy_weights_freq=1,
+        beta_eps=2e-2,
 
         learn_best_responses_only=False,
 

@@ -19,6 +19,7 @@ from ray.rllib.utils.typing import ResultDict, AgentID, PolicyID
 from ray.rllib.algorithms.ppo.ppo import PPOConfig
 
 from beliefs.prior import project_onto_simplex
+from utils import SmoothMetric
 
 
 class BackgroundFocalSGDA(DefaultCallbacks):
@@ -321,7 +322,8 @@ class ScenarioDistribution:
         self.copy_weights(reset=True)
         self.missing_best_responses: list = []
         self.current_best_response_scenario = None
-        self.current_best_response_utility = 0.
+        self.current_best_response_utility = SmoothMetric(lr=0.98)
+        self.scenario_utilities = defaultdict(lambda : SmoothMetric(lr=0.95))
 
         if not self.config.use_utility:
 
@@ -422,15 +424,13 @@ class ScenarioDistribution:
 
             expected_utility = iter_data.get(f"{self.current_best_response_scenario}_utility_mean", 0.)
             if self.current_best_response_scenario not in self.best_response_utilities:
-                self.current_best_response_utility = expected_utility
-                self.best_response_utilities[self.current_best_response_scenario] = expected_utility
+                self.current_best_response_utility.set(expected_utility)
+                self.best_response_utilities[self.current_best_response_scenario] = self.current_best_response_utility.get()
             else:
-                lr = 0.993
-                self.current_best_response_utility = (self.current_best_response_utility * lr
-                                                      + expected_utility * (1-lr))
+                self.current_best_response_utility.update(expected_utility)
 
                 self.best_response_utilities[self.current_best_response_scenario] = np.maximum(
-                    self.current_best_response_utility,
+                    self.current_best_response_utility.get(),
                     self.best_response_utilities[self.current_best_response_scenario]
                 )
 
@@ -465,21 +465,20 @@ class ScenarioDistribution:
 
             if self.config.use_utility:
                 beta_losses = np.array([
-                    iter_data.get(f"{scenario}_utility_mean", np.nan)
+                    self.scenario_utilities[scenario].update(iter_data.get(f"{scenario}_utility_mean", np.nan))
                     for scenario in self.scenarios.scenario_list
                 ])
                 beta_losses = np.max(beta_losses) - beta_losses + np.min(beta_losses)
             else:
                 beta_losses = np.array([
-                    self.best_response_utilities[scenario] - iter_data.get(f"{scenario}_utility_mean", np.nan)
+                    self.best_response_utilities[scenario] - self.scenario_utilities[scenario].update(iter_data.get(f"{scenario}_utility_mean", np.nan))
                     for scenario in self.scenarios.scenario_list
                 ])
                 for scenario in self.scenarios.scenario_list:
-                    if f"{scenario}_utility_mean" in iter_data:
-                        iter_data[f"{scenario}_regret_mean"] = self.best_response_utilities[scenario] - iter_data[f"{scenario}_utility_mean"]
+                    iter_data[f"{scenario}_regret_mean"] =  self.best_response_utilities[scenario] - self.best_response_utilities[scenario].get()
 
-            # Todo : is this fine ? We shouldn't make this  happen with large batch sizes
-            beta_losses[np.isnan(beta_losses)] = np.nanmean(beta_losses)
+            # # Todo : is this fine ? We shouldn't make this  happen with large batch sizes
+            # beta_losses[np.isnan(beta_losses)] = np.nanmean(beta_losses)
             self.beta_gradients(beta_losses)
 
             # Update the matchmaking scheme
