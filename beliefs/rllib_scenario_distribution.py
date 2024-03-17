@@ -393,7 +393,7 @@ class ScenarioDistribution:
             self.weights_history = deque([self.weights_0 for _ in range(19)], maxlen=20)
             self.copy_iter = 0
         else:
-            last_weights = ray.put(self.algo.get_weights([Scenario.MAIN_POLICY_ID])[Scenario.MAIN_POLICY_ID])
+            last_weights = self.algo.get_weights([Scenario.MAIN_POLICY_ID])[Scenario.MAIN_POLICY_ID]
             self.weights_history.append(last_weights)
 
         weights = self.weights_history.popleft()
