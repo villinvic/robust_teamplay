@@ -93,16 +93,17 @@ def main(
             {}
         )
 
-
-    config = make_bf_sgda_config(PPOConfig).training(
-        beta_lr=2e-2,
-        beta_smoothing=2000,
-        use_utility=False,
-        scenarios=tune.grid_search(scenarios.split()),
-        copy_weights_freq=10,
-
-        learn_best_responses_only=True,
-        best_response_timesteps_max=10_000_000,
+    config = PPOConfig().training(
+    #
+    # config = make_bf_sgda_config(PPOConfig).training(
+    #     beta_lr=2e-2,
+    #     beta_smoothing=2000,
+    #     use_utility=False,
+    #     scenarios=tune.grid_search(scenarios.split()),
+    #     copy_weights_freq=1,
+    #
+    #     learn_best_responses_only=True,
+    #     best_response_timesteps_max=10_000_000,
 
 
         # PPO
