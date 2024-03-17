@@ -160,7 +160,7 @@ def main(
         checkpoint_at_end=False,
         checkpoint_freq=30,
         keep_checkpoints_num=3,
-        num_samples=len(config.scenarios),
+        num_samples=8,#len(config.scenarios),
         stop={
             "timesteps_total": 1_000_000_000,
         },
