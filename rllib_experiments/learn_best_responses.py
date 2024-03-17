@@ -1,6 +1,7 @@
 import os
 
 import fire
+import numpy as np
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.algorithms.a2c import A2CConfig
 
@@ -146,6 +147,7 @@ def main(
     ).multi_agent(
         policies=policies,
         policies_to_train={Scenario.MAIN_POLICY_ID},
+        policy_mapping_fn= lambda **k: np.random.choice(list(policies.keys()))
         #policy_mapping_fn=ScenarioMapper(
         #    scenarios=scenarios
         #),
