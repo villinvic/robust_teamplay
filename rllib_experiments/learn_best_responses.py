@@ -16,7 +16,7 @@ from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
 
 from ray.rllib.env.multi_agent_env import make_multi_agent
 
-ma_cartpole_cls = make_multi_agent("CartPole-v1")
+ma_cartpole_cls = make_multi_agent("Pendulum-v1")
 
 def env_maker_test(env_config):
     return ma_cartpole_cls({"num_agents": 2})
