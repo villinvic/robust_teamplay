@@ -147,7 +147,7 @@ def main(
     ).multi_agent(
         policies=policies,
         policies_to_train={Scenario.MAIN_POLICY_ID},
-        policy_mapping_fn= lambda _, ep: np.random.choice(list(policies.keys()))
+        policy_mapping_fn= lambda **k: np.random.choice(list(policies.keys()))
         #policy_mapping_fn=ScenarioMapper(
         #    scenarios=scenarios
         #),
