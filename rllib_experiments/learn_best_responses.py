@@ -116,7 +116,7 @@ def main(
         lr=1e-2,
         use_critic=False,
         use_gae=False,
-        #kl_coeff=0.,
+        kl_coeff=0.,
         #kl_target=1e-2, #1e-2
         #clip_param=10.,
         # #clip_param=0.2,
