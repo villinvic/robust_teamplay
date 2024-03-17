@@ -146,9 +146,9 @@ def main(
     ).multi_agent(
         policies=policies,
         policies_to_train={Scenario.MAIN_POLICY_ID},
-        policy_mapping_fn=ScenarioMapper(
-            scenarios=scenarios
-        ),
+        #policy_mapping_fn=ScenarioMapper(
+        #    scenarios=scenarios
+        #),
     ).experimental(
         _disable_preprocessor_api=False
     )
