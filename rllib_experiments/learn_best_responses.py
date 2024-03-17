@@ -5,6 +5,7 @@ from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.algorithms.a2c import A2CConfig
 
 from ray import tune
+from ray.rllib.examples.policy.random_policy import RandomPolicy
 from ray.rllib.policy.policy import PolicySpec
 from ray.tune import register_env
 
@@ -12,6 +13,13 @@ from beliefs.rllib_scenario_distribution import Scenario, PPOBFSGDAConfig, Scena
     make_bf_sgda_config
 from environments.rllib.random_mdp import RandomPOMDP
 from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
+
+from ray.rllib.env.multi_agent_env import make_multi_agent
+
+ma_cartpole_cls = make_multi_agent("CartPole-v1")
+
+def env_maker_test(env_config):
+    return ma_cartpole_cls({"num_agents": 2})
 
 
 def env_maker(env_config):
@@ -43,24 +51,27 @@ def main(
 
 
     config_name = str(env_config).replace("'", "").replace(" ", "").replace(":", "_").replace(",", "_")[1:-1]
-    env_name = f"RandomMDP_{config_name}"
-    register_env(env_name, env_maker)
+    #env_name = f"RandomMDP_{config_name}"
+    env_name = "cartpole"
+    register_env(env_name, env_maker_test)
 
 
     rollout_fragment_length = episode_length
 
-    dummy_env = RandomPOMDP(**env_config)
+    dummy_env = env_maker_test(env_config) #RandomPOMDP(**env_config)
 
     policies = {
-        f"background_deterministic_{bg_policy_seed}": (
-            RLlibDeterministicPolicy,
+        f"background_deterministic_{bg_policy_seed}":
+            (
+            RandomPolicy,
+            #RLlibDeterministicPolicy,
             dummy_env.observation_space[0],
             dummy_env.action_space[0],
-            dict(
-                config=env_config,
-                seed=bg_policy_seed,
-                _disable_preprocessor_api=True,
-            )
+            # dict(
+            #     config=env_config,
+            #     seed=bg_policy_seed,
+            #     _disable_preprocessor_api=True,
+            # )
 
 
         ) for i, bg_policy_seed in enumerate(bg_policies)
@@ -72,7 +83,6 @@ def main(
         num_players=env_config["num_players"],
         background_population=background_population
     )
-    print(scenarios.scenario_list)
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
