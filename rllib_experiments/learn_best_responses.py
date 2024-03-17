@@ -65,8 +65,8 @@ def main(
             (
             RandomPolicy,
             #RLlibDeterministicPolicy,
-            dummy_env.observation_space[0],
-            dummy_env.action_space[0],
+            dummy_env.observation_space,#[0],
+            dummy_env.action_space,#[0],
             # dict(
             #     config=env_config,
             #     seed=bg_policy_seed,
