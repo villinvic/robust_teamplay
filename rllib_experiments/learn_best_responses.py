@@ -85,7 +85,12 @@ def main(
     )
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
-        policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
+        policies[policy_id] = (
+            None,
+            dummy_env.observation_space,#[0],
+            dummy_env.action_space,#[0],
+            {}
+        )
 
 
     config = make_bf_sgda_config(PPOConfig).training(
