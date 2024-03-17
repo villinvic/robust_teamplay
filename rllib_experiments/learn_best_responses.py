@@ -99,7 +99,7 @@ def main(
         beta_smoothing=2000,
         use_utility=False,
         scenarios=tune.grid_search(scenarios.split()),
-        copy_weights_freq=1,
+        copy_weights_freq=10,
 
         learn_best_responses_only=True,
         best_response_timesteps_max=10_000_000,
