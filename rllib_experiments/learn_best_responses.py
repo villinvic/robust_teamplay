@@ -116,8 +116,8 @@ def main(
         gamma=1.,
         entropy_coeff=0.,
         lr=1e-2,
-        use_critic=False,
-        use_gae=False,
+        use_critic=True,
+        use_gae=True,
         kl_coeff=0.,
         #kl_target=1e-2, #1e-2
         #clip_param=10.,
@@ -137,7 +137,7 @@ def main(
         create_env_on_local_worker=False,
         num_envs_per_worker=1,
         rollout_fragment_length=rollout_fragment_length,
-        batch_mode="complete_episodes",
+        batch_mode="truncate_episodes",
         enable_connectors=False,
     ).environment(
         env=env_name,
