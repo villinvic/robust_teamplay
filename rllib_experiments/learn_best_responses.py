@@ -120,8 +120,8 @@ def main(
         #clip_param=10.,
         # #clip_param=0.2,
         grad_clip=100.,
-        train_batch_size=rollout_fragment_length*num_workers*64,
-        sgd_minibatch_size=rollout_fragment_length*num_workers*64,
+        train_batch_size=rollout_fragment_length*num_workers,
+        sgd_minibatch_size=rollout_fragment_length*num_workers,
         num_sgd_iter=1,
         model={
             "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
@@ -160,7 +160,7 @@ def main(
         checkpoint_freq=30,
         keep_checkpoints_num=3,
         #resources_per_trial={"cpu": num_workers},
-        #num_samples=len(config.scenarios),
+        num_samples=len(config.scenarios),
         stop={
             "timesteps_total": 1_000_000_000,
         },
