@@ -120,9 +120,9 @@ def main(
         #clip_param=10.,
         # #clip_param=0.2,
         grad_clip=100.,
-        train_batch_size=rollout_fragment_length*num_workers,
+        train_batch_size=rollout_fragment_length*num_workers * 8,
         sgd_minibatch_size=rollout_fragment_length*num_workers,
-        num_sgd_iter=1,
+        num_sgd_iter=4,
         model={
             "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
             "vf_share_layers": False,
@@ -150,6 +150,8 @@ def main(
         ),
     ).experimental(
         _disable_preprocessor_api=False
+    ).fault_tolerance(
+        recreate_failed_workers=True
     )
 
     exp = tune.run(
