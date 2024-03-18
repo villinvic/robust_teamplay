@@ -83,7 +83,7 @@ def main(
         background_population=background_population
     )
 
-    num_workers = (os.cpu_count() - 2) // len(scenarios)
+    num_workers = (os.cpu_count() - 1) // len(scenarios)
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (
@@ -132,7 +132,7 @@ def main(
     ).rollouts(
         num_rollout_workers=num_workers,
         sample_async=False,
-        create_env_on_local_worker=True,
+        create_env_on_local_worker=False,
         num_envs_per_worker=1,
         rollout_fragment_length=rollout_fragment_length,
         batch_mode="complete_episodes",
