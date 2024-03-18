@@ -137,6 +137,8 @@ class ScenarioSet:
             subset = copy(self)
             subset.scenario_list = list(sublist)
             subsets.append(subset)
+
+        print(subsets)
         return subsets
 
 
