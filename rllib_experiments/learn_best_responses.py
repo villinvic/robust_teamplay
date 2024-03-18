@@ -54,7 +54,7 @@ def main(
     register_env(env_name, env_maker)
 
 
-    rollout_fragment_length = episode_length // 4
+    rollout_fragment_length = episode_length
 
     dummy_env = RandomPOMDP(**env_config)
 
@@ -121,8 +121,8 @@ def main(
         # #clip_param=0.2,
         grad_clip=100.,
         train_batch_size=rollout_fragment_length*num_workers*64,
-        sgd_minibatch_size=512,
-        num_sgd_iter=8,
+        sgd_minibatch_size=rollout_fragment_length*num_workers*64,
+        num_sgd_iter=1,
         model={
             "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
             "vf_share_layers": False,
