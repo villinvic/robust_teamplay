@@ -116,7 +116,7 @@ def main(
         best_response_timesteps_max=5_000_000,
 
         # IMPALA
-        opt_type="rmsprop",
+        #opt_type="rmsprop",
         entropy_coeff=1e-4,
         train_batch_size=rollout_fragment_length * 16,
         momentum=0.,
