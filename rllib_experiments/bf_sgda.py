@@ -28,7 +28,7 @@ def main(
         n_states=5,
         n_actions=3,
         num_players=2,
-        episode_length=64,
+        episode_length=100,
         history_length=2,
         full_one_hot=True
 ):
