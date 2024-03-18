@@ -160,7 +160,7 @@ def main(
         checkpoint_freq=30,
         keep_checkpoints_num=3,
         #resources_per_trial={"cpu": num_workers},
-        num_samples=len(config.scenarios),
+        num_samples=1,#len(config.scenarios),
         stop={
             "timesteps_total": 1_000_000_000,
         },
