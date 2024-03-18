@@ -116,13 +116,13 @@ def main(
         lr=1e-2,
         use_critic=False,
         use_gae=False,
-        #kl_coeff=0.,
+        kl_coeff=0.,
         #kl_target=1e-2, #1e-2
-        #clip_param=10.,
-        # #clip_param=0.2,
+        clip_param=1000.,
+        grad_clip=None,
         train_batch_size=rollout_fragment_length * num_workers * 256,
-        sgd_minibatch_size=rollout_fragment_length * num_workers * 32,
-        num_sgd_iter=32,
+        sgd_minibatch_size=rollout_fragment_length * num_workers * 256,
+        num_sgd_iter=1,
         model={
             "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
             "vf_share_layers": False,
