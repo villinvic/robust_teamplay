@@ -1,4 +1,5 @@
 import itertools
+import time
 from collections import defaultdict
 from copy import copy
 from typing import Tuple, Optional
@@ -21,6 +22,8 @@ class RandomPOMDP(MultiAgentEnv):
             full_one_hot: bool = True,
             **kwargs
     ):
+
+        time.sleep(np.random.random()*5)
         if len(kwargs)> 0:
             print("non understood env args:", kwargs)
 
