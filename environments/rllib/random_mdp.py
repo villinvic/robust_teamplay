@@ -172,6 +172,7 @@ class RandomPOMDP(MultiAgentEnv):
         false_dict = {
             agent_id: False for agent_id in self._agent_ids
         }
+        false_dict["__all__"] = False
         dones["__all__"] = done
 
         state = self.get_state()
