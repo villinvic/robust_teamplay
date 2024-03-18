@@ -113,7 +113,7 @@ def main(
         lambda_=0.95,
         gamma=0.99,
         entropy_coeff=0.,
-        lr=1e-4,
+        lr=1e-3,
         use_critic=True,
         use_gae=True,
         #kl_coeff=0.,
@@ -125,9 +125,9 @@ def main(
         sgd_minibatch_size=rollout_fragment_length * num_workers * 32,
         num_sgd_iter=10,
         model={
-            "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
+            "fcnet_hiddens": [32, 32], # We learn a parameter for each state, simple softmax parametrization
             "vf_share_layers": False,
-            "fcnet_activation": "linear",
+            #"fcnet_activation": "linear",
         }
     ).rollouts(
         num_rollout_workers=num_workers,
