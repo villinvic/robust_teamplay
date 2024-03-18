@@ -61,15 +61,15 @@ def main(
     policies = {
         f"background_deterministic_{bg_policy_seed}":
             (
-            #RandomPolicy,
-            RLlibDeterministicPolicy,
+            RandomPolicy,
+            #RLlibDeterministicPolicy,
             dummy_env.observation_space[0],
             dummy_env.action_space[0],
-            dict(
-                config=env_config,
-                seed=bg_policy_seed,
-                _disable_preprocessor_api=True,
-            )
+            # dict(
+            #     config=env_config,
+            #     seed=bg_policy_seed,
+            #     _disable_preprocessor_api=True,
+            # )
 
 
         ) for i, bg_policy_seed in enumerate(bg_policies)
