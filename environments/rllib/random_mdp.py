@@ -96,7 +96,7 @@ class RandomPOMDP(MultiAgentEnv):
             i: [0 for _ in range(self.history_length)] for i in self._agent_ids
         }
         self.past_states = {
-            i: [0 for _ in range(self.history_length)] for i in self._agent_ids
+            i: [0 for _ in range(self.history_length+1)] for i in self._agent_ids
         }
 
     def update_history(self, actions):
@@ -111,8 +111,7 @@ class RandomPOMDP(MultiAgentEnv):
         last_offset = 1
         index = 0
         for v, offset in zip(self.past_actions[player_idx]
-                             + self.past_states[player_idx]
-                             + [self.player_states[player_idx]],
+                             + self.past_states[player_idx],
                              self.base_shape):
             index += v * last_offset
             last_offset *= offset
@@ -127,7 +126,7 @@ class RandomPOMDP(MultiAgentEnv):
 
         else:
             s = {
-                i: np.array(self.past_actions[i] + self.past_states[i] + [self.player_states[i]], dtype=np.int64)
+                i: np.array(self.past_actions[i] + self.past_states[i], dtype=np.int64)
                 for i in self._agent_ids
             }
 
@@ -175,8 +174,8 @@ class RandomPOMDP(MultiAgentEnv):
         false_dict["__all__"] = False
         dones["__all__"] = done
 
-        state = self.get_state()
         self.update_history(action_dict)
+        state = self.get_state()
 
         return state, rewards, false_dict, dones, {}
 
