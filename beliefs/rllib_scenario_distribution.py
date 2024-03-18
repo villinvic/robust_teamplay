@@ -55,15 +55,15 @@ class BackgroundFocalSGDA(DefaultCallbacks):
         """
 
         #content of original_batches changes when connectors are disbaled
-        focal_rewards = [
-            batch[SampleBatch.REWARDS] for agent_id, (_, batch) in original_batches.items()
-            if "background" not in episode._agent_to_policy[agent_id]
-        ]
-
         # focal_rewards = [
-        #     batch[SampleBatch.REWARDS] for agent_id, (policy_id, policy_cls, batch) in original_batches.items()
-        #     if "background" not in policy_id
+        #     batch[SampleBatch.REWARDS] for agent_id, (_, batch) in original_batches.items()
+        #     if "background" not in episode._agent_to_policy[agent_id]
         # ]
+
+        focal_rewards = [
+            batch[SampleBatch.REWARDS] for agent_id, (policy_id, policy_cls, batch) in original_batches.items()
+            if "background" not in policy_id
+        ]
 
         mean_focal_per_capita = sum(focal_rewards) / len(focal_rewards)
         postprocessed_batch[SampleBatch.REWARDS][:] = mean_focal_per_capita
