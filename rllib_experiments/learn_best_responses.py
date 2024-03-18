@@ -54,7 +54,7 @@ def main(
     register_env(env_name, env_maker)
 
 
-    rollout_fragment_length = episode_length
+    rollout_fragment_length = episode_length // 10
 
     dummy_env = RandomPOMDP(**env_config) #  env_maker_test(env_config)
 
@@ -111,7 +111,7 @@ def main(
         # entropy_coeff=1e-4,
         # lr=1e-4,
         lambda_=0.95,
-        gamma=1.,
+        gamma=0.999,
         entropy_coeff=0.,
         lr=1e-3,
         use_critic=True,
@@ -121,8 +121,8 @@ def main(
         #clip_param=10.,
         # #clip_param=0.2,
         grad_clip=100.,
-        train_batch_size=rollout_fragment_length*num_workers * 16,
-        sgd_minibatch_size=rollout_fragment_length * 4,
+        train_batch_size=rollout_fragment_length *num_workers * 256,
+        sgd_minibatch_size=rollout_fragment_length * num_workers * 32,
         num_sgd_iter=10,
         model={
             "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
@@ -135,7 +135,7 @@ def main(
         create_env_on_local_worker=False,
         num_envs_per_worker=1,
         rollout_fragment_length=rollout_fragment_length,
-        batch_mode="complete_episodes",
+        batch_mode="truncate_episodes",
         enable_connectors=True,
     ).environment(
         env=env_name,

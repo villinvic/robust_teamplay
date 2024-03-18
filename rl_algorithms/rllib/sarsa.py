@@ -90,7 +90,7 @@ class SARSA:
 
             obss_, rewards, dones, truncs, infos = self.env.step(actions)
 
-            done = dones["__all__"]
+            done = truncs["__all__"]
 
             for i, player in zip(self.env._agent_ids, players):
                 if player in (Scenario.MAIN_POLICY_COPY_ID, Scenario.MAIN_POLICY_ID):
@@ -144,9 +144,8 @@ if __name__ == '__main__':
 
     algo = SARSA(env)
 
-    s = Scenario(1, [opponent])
+    s = Scenario(2, [])
     # [1, 0] ~1.7
     # [1, 1] ~ 1.4 ?
     # [2, _] ~ 8.3?
-
     pi = algo.learn(scenario=s)
