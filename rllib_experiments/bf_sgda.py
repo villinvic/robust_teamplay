@@ -76,7 +76,7 @@ def main(
         policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
 
     config = make_bf_sgda_config(ImpalaConfig).training(
-        beta_lr=2e-1,
+        beta_lr=0., #2e-1,
         beta_smoothing=2000,
         use_utility=False,
         scenarios=scenarios,
