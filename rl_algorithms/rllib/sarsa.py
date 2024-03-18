@@ -131,20 +131,20 @@ if __name__ == '__main__':
         n_states=5,
         n_actions=3,
         num_players=2,
-        episode_length=64,
+        episode_length=100,
         history_length=2,
         full_one_hot=True
     )
 
     env = RandomPOMDP(**env_config)
 
-    opponent_4 = RLlibDeterministicPolicy(
-        env.observation_space[0], env.action_space[0], {}, seed=5
+    opponent = RLlibDeterministicPolicy(
+        env.observation_space[0], env.action_space[0], {}, seed=0
     )
 
     algo = SARSA(env)
 
-    s = Scenario(1, [opponent_4])
+    s = Scenario(1, [opponent])
     # [1, 0] ~1.7
     # [1, 1] ~ 1.4 ?
     # [2, _] ~ 8.3?
