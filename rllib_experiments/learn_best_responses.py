@@ -135,7 +135,7 @@ def main(
         num_envs_per_worker=1,
         rollout_fragment_length=rollout_fragment_length,
         batch_mode="truncate_episodes",
-        enable_connectors=False,
+        #enable_connectors=False,
     ).environment(
         env=env_name,
         env_config=env_config
