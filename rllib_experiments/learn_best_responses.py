@@ -131,7 +131,7 @@ def main(
     ).rollouts(
         num_rollout_workers=num_workers,
         sample_async=False,
-        create_env_on_local_worker=False,
+        create_env_on_local_worker=True,
         num_envs_per_worker=1,
         rollout_fragment_length=rollout_fragment_length,
         batch_mode="truncate_episodes",
