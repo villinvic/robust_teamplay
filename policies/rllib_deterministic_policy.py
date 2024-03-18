@@ -87,9 +87,10 @@ class RLlibDeterministicPolicy(Policy):
         **kwargs,
     ) -> Tuple[TensorType, List[TensorType], Dict[str, TensorType]]:
 
-        original_obs = restore_obs(obs_batch, self.observation_space)
-        actions = [self.policy[tuple(obs)] for obs in original_obs]
+        #original_obs = restore_obs(obs_batch, self.observation_space)
+        #actions = [self.policy[tuple(obs)] for obs in original_obs]
 
+        actions = self.policy[obs_batch]
         return actions, state_batches, {}
 
     # def get_initial_state(self) -> List[TensorType]:
