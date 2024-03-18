@@ -111,7 +111,7 @@ def main(
         # entropy_coeff=1e-4,
         # lr=1e-4,
         lambda_=0.95,
-        gamma=0.999,
+        gamma=0.99,
         entropy_coeff=0.,
         lr=1e-3,
         use_critic=True,

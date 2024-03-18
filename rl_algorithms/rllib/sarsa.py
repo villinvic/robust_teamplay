@@ -144,7 +144,7 @@ if __name__ == '__main__':
 
     algo = SARSA(env)
 
-    s = Scenario(2, [])
+    s = Scenario(1, [opponent])
     # [1, 0] ~1.7
     # [1, 1] ~ 1.4 ?
     # [2, _] ~ 8.3?
