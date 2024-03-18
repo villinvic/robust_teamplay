@@ -82,7 +82,7 @@ def main(
         background_population=background_population
     )
 
-    num_workers = 1 #(os.cpu_count() - 2) // len(scenarios)
+    num_workers = (os.cpu_count() - 2) // len(scenarios)
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (
@@ -120,9 +120,9 @@ def main(
         #clip_param=10.,
         # #clip_param=0.2,
         grad_clip=100.,
-        train_batch_size=rollout_fragment_length*num_workers * 8,
+        train_batch_size=rollout_fragment_length*num_workers * 256,
         sgd_minibatch_size=rollout_fragment_length*num_workers,
-        num_sgd_iter=4,
+        num_sgd_iter=8,
         model={
             "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
             "vf_share_layers": False,
@@ -156,7 +156,7 @@ def main(
 
     exp = tune.run(
         "PPO",
-        name="BF_SGDA_v0.3",
+        name="BF_SGDA_v0.4",
         config=config,
         checkpoint_at_end=False,
         checkpoint_freq=30,
