@@ -54,8 +54,6 @@ class BackgroundFocalSGDA(DefaultCallbacks):
         Swap rewards to mean focal per capita return
         """
 
-        print("WWWWWWWWWWWWWWWWWWW", original_batches)
-
         # content of original_batches changes when connectors are disbaled
         # focal_rewards = [
         #     batch[SampleBatch.REWARDS] for agent_id, (_, batch) in original_batches.items()

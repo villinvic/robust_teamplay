@@ -82,7 +82,7 @@ def main(
         background_population=background_population
     )
 
-    num_workers = 1 #(os.cpu_count() - 2) // len(scenarios)
+    num_workers = (os.cpu_count() - 2) // len(scenarios)
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (
@@ -97,7 +97,7 @@ def main(
         beta_lr=2e-2,
         beta_smoothing=2000,
         use_utility=False,
-        scenarios=scenarios,#tune.grid_search(scenarios.split()),
+        scenarios=tune.grid_search(scenarios.split()),
         copy_weights_freq=1,
 
         learn_best_responses_only=True,
@@ -160,7 +160,7 @@ def main(
         checkpoint_freq=30,
         keep_checkpoints_num=3,
         #resources_per_trial={"cpu": num_workers},
-        num_samples=1,#len(config.scenarios),
+        #num_samples=len(config.scenarios),
         stop={
             "timesteps_total": 1_000_000_000,
         },
