@@ -23,7 +23,6 @@ class RandomPOMDP(MultiAgentEnv):
             **kwargs
     ):
 
-        time.sleep(np.random.random()*5)
         if len(kwargs)> 0:
             print("non understood env args:", kwargs)
 
