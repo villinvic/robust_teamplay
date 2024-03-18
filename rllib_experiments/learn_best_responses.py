@@ -17,10 +17,10 @@ from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
 
 from ray.rllib.env.multi_agent_env import make_multi_agent
 
-# ma_cartpole_cls = make_multi_agent("Pendulum-v1")
-#
-# def env_maker_test(env_config):
-#     return ma_cartpole_cls({"num_agents": 2})
+ma_cartpole_cls = make_multi_agent("Pendulum-v1")
+
+def env_maker_test(env_config):
+    return ma_cartpole_cls({"num_agents": 2})
 
 
 def env_maker(env_config):
@@ -49,22 +49,22 @@ def main(
     )
 
     config_name = str(env_config).replace("'", "").replace(" ", "").replace(":", "_").replace(",", "_")[1:-1]
-    env_name = f"RandomMDP_{config_name}"
-    #env_name = "cartpole"
-    register_env(env_name, env_maker)
+    #env_name = f"RandomMDP_{config_name}"
+    env_name = "cartpole"
+    register_env(env_name, env_maker_test)
 
 
     rollout_fragment_length = episode_length
 
-    dummy_env = RandomPOMDP(**env_config)
+    dummy_env = env_maker_test(env_config)#RandomPOMDP(**env_config)
 
     policies = {
         f"background_deterministic_{bg_policy_seed}":
             (
             RandomPolicy,
             #RLlibDeterministicPolicy,
-            dummy_env.observation_space[0],
-            dummy_env.action_space[0],
+            dummy_env.observation_space,
+            dummy_env.action_space,
             {},
             # dict(
             #     config=env_config,
@@ -88,8 +88,8 @@ def main(
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (
             None,
-            dummy_env.observation_space[0],
-            dummy_env.action_space[0],
+            dummy_env.observation_space,
+            dummy_env.action_space,
             {}
         )
 
@@ -151,13 +151,11 @@ def main(
         ),
     ).experimental(
         _disable_preprocessor_api=False
-    ).fault_tolerance(
-        recreate_failed_workers=True
     )
 
     exp = tune.run(
         "PPO",
-        name="BF_SGDA_v0.4",
+        name="test", # "BF_SGDA_v0.4"
         config=config,
         checkpoint_at_end=False,
         checkpoint_freq=30,
