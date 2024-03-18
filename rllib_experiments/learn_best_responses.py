@@ -82,7 +82,7 @@ def main(
         background_population=background_population
     )
 
-    num_workers = 1 #(os.cpu_count() - 1) // len(scenarios)
+    num_workers = (os.cpu_count() - 1) // len(scenarios)
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (
@@ -144,10 +144,10 @@ def main(
     ).multi_agent(
         policies=policies,
         policies_to_train={Scenario.MAIN_POLICY_ID},
-        policy_mapping_fn= lambda *a, **k: np.random.choice(list(policies.keys()))
-        #policy_mapping_fn=ScenarioMapper(
-        #    scenarios=scenarios
-        #),
+        #policy_mapping_fn= lambda *a, **k: np.random.choice(list(policies.keys()))
+        policy_mapping_fn=ScenarioMapper(
+           scenarios=scenarios
+        ),
     ).experimental(
         _disable_preprocessor_api=False
     )
@@ -159,6 +159,7 @@ def main(
         checkpoint_at_end=False,
         checkpoint_freq=30,
         keep_checkpoints_num=3,
+        resources_per_trial={"cpu": num_workers},
         num_samples=len(config.scenarios),
         stop={
             "timesteps_total": 1_000_000_000,
