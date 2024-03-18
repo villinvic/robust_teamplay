@@ -17,17 +17,15 @@ from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
 
 from ray.rllib.env.multi_agent_env import make_multi_agent
 
-ma_cartpole_cls = make_multi_agent("Pendulum-v1")
-
-def env_maker_test(env_config):
-    return ma_cartpole_cls({"num_agents": 2})
+# ma_cartpole_cls = make_multi_agent("Pendulum-v1")
+#
+# def env_maker_test(env_config):
+#     return ma_cartpole_cls({"num_agents": 2})
 
 
 def env_maker(env_config):
 
     return RandomPOMDP(**env_config)
-
-num_workers = 1 #os.cpu_count() - 2
 
 
 def main(
@@ -50,30 +48,28 @@ def main(
         full_one_hot=full_one_hot
     )
 
-
     config_name = str(env_config).replace("'", "").replace(" ", "").replace(":", "_").replace(",", "_")[1:-1]
-    #env_name = f"RandomMDP_{config_name}"
-    env_name = "cartpole"
-    register_env(env_name, env_maker_test)
+    env_name = f"RandomMDP_{config_name}"
+    #env_name = "cartpole"
+    register_env(env_name, env_maker)
 
 
-    rollout_fragment_length = episode_length
+    rollout_fragment_length = episode_length // 4
 
-    dummy_env = env_maker_test(env_config) #RandomPOMDP(**env_config)
+    dummy_env = RandomPOMDP(**env_config)
 
     policies = {
         f"background_deterministic_{bg_policy_seed}":
             (
-            RandomPolicy,
-            #RLlibDeterministicPolicy,
-            dummy_env.observation_space,#[0],
-            dummy_env.action_space,#[0],
-            {}
-            # dict(
-            #     config=env_config,
-            #     seed=bg_policy_seed,
-            #     _disable_preprocessor_api=True,
-            # )
+            #RandomPolicy,
+            RLlibDeterministicPolicy,
+            dummy_env.observation_space[0],
+            dummy_env.action_space[0],
+            dict(
+                config=env_config,
+                seed=bg_policy_seed,
+                _disable_preprocessor_api=True,
+            )
 
 
         ) for i, bg_policy_seed in enumerate(bg_policies)
@@ -86,25 +82,26 @@ def main(
         background_population=background_population
     )
 
+    num_workers = (os.cpu_count() - 1) // len(scenarios)
+
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (
             None,
-            dummy_env.observation_space,#[0],
-            dummy_env.action_space,#[0],
+            dummy_env.observation_space[0],
+            dummy_env.action_space[0],
             {}
         )
 
-    config = PPOConfig().training(
-    #
-    # config = make_bf_sgda_config(PPOConfig).training(
-    #     beta_lr=2e-2,
-    #     beta_smoothing=2000,
-    #     use_utility=False,
-    #     scenarios=tune.grid_search(scenarios.split()),
-    #     copy_weights_freq=1,
-    #
-    #     learn_best_responses_only=True,
-    #     best_response_timesteps_max=10_000_000,
+    #config = PPOConfig().training(
+    config = make_bf_sgda_config(PPOConfig).training(
+        beta_lr=2e-2,
+        beta_smoothing=2000,
+        use_utility=False,
+        scenarios=tune.grid_search(scenarios.split()),
+        copy_weights_freq=1,
+
+        learn_best_responses_only=True,
+        best_response_timesteps_max=10_000_000,
 
 
         # PPO
@@ -123,9 +120,9 @@ def main(
         #clip_param=10.,
         # #clip_param=0.2,
         grad_clip=100.,
-        train_batch_size=64*num_workers*64,
+        train_batch_size=rollout_fragment_length*num_workers*64,
         sgd_minibatch_size=512,
-        num_sgd_iter=4,
+        num_sgd_iter=8,
         model={
             "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
             "vf_share_layers": False,
