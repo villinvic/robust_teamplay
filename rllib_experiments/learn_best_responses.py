@@ -3,7 +3,7 @@ import os
 import fire
 import numpy as np
 from ray.rllib.algorithms.ppo import PPOConfig
-from ray.rllib.algorithms.a2c import A2CConfig
+from ray.rllib.algorithms.impala import ImpalaConfig
 
 from ray import tune
 from ray.rllib.examples.policy.random_policy import RandomPolicy
@@ -94,7 +94,18 @@ def main(
         )
 
     #config = PPOConfig().training(
-    config = make_bf_sgda_config(PPOConfig).training(
+
+    # ImpalaConfig().training(
+    #     opt_type="rmsprop",
+    #     entropy_coeff=1e-4,
+    #     train_batch_size=rollout_fragment_length * 16,
+    #     momentum=0.,
+    #     epsilon=1e-5,
+    #     decay=0.99,
+    #
+    #     gamma=0.99,
+    # )
+    config = make_bf_sgda_config(ImpalaConfig).training(
         beta_lr=2e-2,
         beta_smoothing=2000,
         use_utility=False,
@@ -104,25 +115,36 @@ def main(
         learn_best_responses_only=True,
         best_response_timesteps_max=5_000_000,
 
+        # IMPALA
+        opt_type="rmsprop",
+        entropy_coeff=1e-4,
+        train_batch_size=rollout_fragment_length * 16,
+        momentum=0.,
+        epsilon=1e-5,
+        decay=0.99,
+        lr=1e-3,
+        grad_clip=None,
+
+        gamma=0.99,
 
         # PPO
         # lambda_=0.95,
         # gamma=0.99,
         # entropy_coeff=1e-4,
         # lr=1e-4,
-        lambda_=0.95,
-        gamma=0.999,
-        entropy_coeff=1e-3,
-        lr=1e-2,
-        use_critic=False,
-        use_gae=False,
-        kl_coeff=0.,
-        #kl_target=1e-2, #1e-2
-        clip_param=1000.,
-        grad_clip=None,
-        train_batch_size=rollout_fragment_length * num_workers * 16,
-        sgd_minibatch_size=rollout_fragment_length * num_workers * 16,
-        num_sgd_iter=1,
+        # lambda_=0.95,
+        # gamma=0.999,
+        # entropy_coeff=1e-3,
+        # lr=1e-2,
+        # use_critic=False,
+        # use_gae=False,
+        # kl_coeff=0.,
+        # #kl_target=1e-2, #1e-2
+        # clip_param=1000.,
+        # grad_clip=None,
+        # train_batch_size=rollout_fragment_length * num_workers * 16,
+        # sgd_minibatch_size=rollout_fragment_length * num_workers * 16,
+        # num_sgd_iter=1,
         model={
             "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
             "vf_share_layers": False,
@@ -153,7 +175,7 @@ def main(
     )
 
     exp = tune.run(
-        "PPO",
+        "IMPALA",
         name="with_critic", # "BF_SGDA_v0.4"
         config=config,
         checkpoint_at_end=False,
