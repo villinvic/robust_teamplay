@@ -397,7 +397,7 @@ class ScenarioDistribution:
 
     def copy_weights(self, reset=False):
         if reset:
-            self.weights_history = deque([self.weights_0 for _ in range(19)], maxlen=20)
+            self.weights_history = deque([self.weights_0 for _ in range(3)], maxlen=20)
             self.copy_iter = 0
         else:
             last_weights = self.algo.get_weights([Scenario.MAIN_POLICY_ID])[Scenario.MAIN_POLICY_ID]
