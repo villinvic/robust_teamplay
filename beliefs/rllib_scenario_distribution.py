@@ -212,6 +212,7 @@ def make_bf_sgda_config(cls):
             self.use_utility = False
             self.scenarios = None
             self.copy_weights_freq = 5
+            self.copy_history_len = 30
             self.beta_eps = 1e-2
 
             self.learn_best_responses_only = True
@@ -233,6 +234,8 @@ def make_bf_sgda_config(cls):
                 best_response_timesteps_max: Optional[int] = NotProvided,
                 best_response_utilities_path: Optional[str] = NotProvided,
                 learn_best_responses_only: Optional[bool] = NotProvided,
+                copy_history_len: Optional[int] = NotProvided,
+
                 beta_eps: Optional[float] = NotProvided,
                 scenarios: ScenarioSet = NotProvided,
                 **kwargs,
@@ -247,6 +250,8 @@ def make_bf_sgda_config(cls):
                 self.use_utility = use_utility
             if copy_weights_freq is not NotProvided:
                 self.copy_weights_freq = copy_weights_freq
+            if copy_history_len is not NotProvided:
+                self.copy_history_len = copy_history_len
             if learn_best_responses_only is not NotProvided:
                 self.learn_best_responses_only = learn_best_responses_only
             if best_response_utilities_path is not NotProvided:
