@@ -102,7 +102,7 @@ def main(
         copy_weights_freq=1,
 
         learn_best_responses_only=True,
-        best_response_timesteps_max=10_000_000,
+        best_response_timesteps_max=5_000_000,
 
 
         # PPO
@@ -114,16 +114,16 @@ def main(
         gamma=1.,
         entropy_coeff=0.,
         lr=1e-2,
-        use_critic=False,
-        use_gae=False,
+        use_critic=True,
+        use_gae=True,
         #kl_coeff=0.,
         #kl_target=1e-2, #1e-2
         #clip_param=10.,
         # #clip_param=0.2,
         grad_clip=100.,
         train_batch_size=rollout_fragment_length*num_workers * 16,
-        sgd_minibatch_size=rollout_fragment_length*num_workers,
-        num_sgd_iter=8,
+        sgd_minibatch_size=rollout_fragment_length * 4,
+        num_sgd_iter=10,
         model={
             "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
             "vf_share_layers": False,
