@@ -120,7 +120,7 @@ def main(
         #clip_param=10.,
         # #clip_param=0.2,
         grad_clip=100.,
-        train_batch_size=rollout_fragment_length*num_workers * 256,
+        train_batch_size=rollout_fragment_length*num_workers * 8,
         sgd_minibatch_size=rollout_fragment_length*num_workers,
         num_sgd_iter=8,
         model={
@@ -135,7 +135,7 @@ def main(
         num_envs_per_worker=1,
         rollout_fragment_length=rollout_fragment_length,
         batch_mode="complete_episodes",
-        #enable_connectors=False,
+        enable_connectors=False,
     ).environment(
         env=env_name,
         env_config=env_config
