@@ -134,11 +134,11 @@ class ScenarioSet:
 
         subsets = []
         for sublist in np.split(self.scenario_list, n):
+            print(subset)
             subset = copy(self)
             subset.scenario_list = list(sublist)
             subsets.append(subset)
 
-        print(subsets)
         return subsets
 
 
