@@ -123,7 +123,7 @@ def main(
         epsilon=1e-5,
         decay=0.99,
         lr=1e-3,
-        grad_clip=50,
+        grad_clip=50.,
 
         gamma=0.99,
 
