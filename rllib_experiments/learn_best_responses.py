@@ -49,22 +49,22 @@ def main(
     )
 
     config_name = str(env_config).replace("'", "").replace(" ", "").replace(":", "_").replace(",", "_")[1:-1]
-    #env_name = f"RandomMDP_{config_name}"
-    env_name = "cartpole"
+    env_name = f"RandomMDP_{config_name}"
+    #env_name = "cartpole"
     register_env(env_name, env_maker_test)
 
 
     rollout_fragment_length = episode_length
 
-    dummy_env = env_maker_test(env_config)#RandomPOMDP(**env_config)
+    dummy_env = RandomPOMDP(**env_config) #  env_maker_test(env_config)
 
     policies = {
         f"background_deterministic_{bg_policy_seed}":
             (
             RandomPolicy,
             #RLlibDeterministicPolicy,
-            dummy_env.observation_space,
-            dummy_env.action_space,
+            dummy_env.observation_space[0],
+            dummy_env.action_space[0],
             {},
             # dict(
             #     config=env_config,
@@ -88,8 +88,8 @@ def main(
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (
             None,
-            dummy_env.observation_space,
-            dummy_env.action_space,
+            dummy_env.observation_space[0],
+            dummy_env.action_space[0],
             {}
         )
 

@@ -169,12 +169,15 @@ class RandomPOMDP(MultiAgentEnv):
         dones = {
             agent_id: done for agent_id in self._agent_ids
         }
+        false_dict = {
+            agent_id: False for agent_id in self._agent_ids
+        }
         dones["__all__"] = done
 
         state = self.get_state()
         self.update_history(action_dict)
 
-        return state, rewards, dones, dones, {}
+        return state, rewards, false_dict, dones, {}
 
 
 
