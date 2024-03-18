@@ -97,7 +97,7 @@ def main(
         beta_lr=2e-2,
         beta_smoothing=2000,
         use_utility=False,
-        scenarios=tune.grid_search(scenarios.split()),
+        scenarios=scenarios,#tune.grid_search(scenarios.split()),
         copy_weights_freq=1,
 
         learn_best_responses_only=True,

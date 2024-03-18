@@ -54,6 +54,7 @@ class BackgroundFocalSGDA(DefaultCallbacks):
         Swap rewards to mean focal per capita return
         """
 
+        print("WWWWWWWWWWWWWWWWWWW", original_batches)
         focal_rewards = [
             batch[SampleBatch.REWARDS] for agent_id, (_, batch) in original_batches.items()
             if "background" not in episode._agent_to_policy[agent_id]
