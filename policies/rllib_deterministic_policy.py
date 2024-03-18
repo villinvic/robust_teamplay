@@ -8,7 +8,7 @@ from ray.rllib.utils.typing import TensorStructType, TensorType, ModelWeights
 
 
 def restore_obs(obs, space):
-    print(obs.shape)
+    print(obs.shape, space)
     if isinstance(space, MultiDiscrete):
         shape = space.nvec
         indices = np.transpose(np.where(obs == 1)[1])
