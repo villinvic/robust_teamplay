@@ -82,7 +82,7 @@ def main(
         background_population=background_population
     )
 
-    num_workers = (os.cpu_count() - 1) // len(scenarios)
+    num_workers = (os.cpu_count() - 2) // len(scenarios)
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (
