@@ -34,7 +34,7 @@ def main(
         n_states=5,
         n_actions=3,
         num_players=2,
-        episode_length=200,
+        episode_length=100,
         history_length=2,
         full_one_hot=True,
 ):
@@ -83,7 +83,7 @@ def main(
         background_population=background_population
     )
 
-    num_workers = (os.cpu_count() - 1) // len(scenarios)
+    num_workers = (os.cpu_count() - 1 -len(scenarios)) // len(scenarios)
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (
