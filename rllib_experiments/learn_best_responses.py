@@ -155,7 +155,7 @@ def main(
 
     exp = tune.run(
         "PPO",
-        name="test", # "BF_SGDA_v0.4"
+        name="with_critic", # "BF_SGDA_v0.4"
         config=config,
         checkpoint_at_end=False,
         checkpoint_freq=30,
