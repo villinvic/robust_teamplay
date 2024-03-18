@@ -1,6 +1,7 @@
 import os
 
 import fire
+from ray.rllib.algorithms.impala import ImpalaConfig
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.algorithms.a2c import A2CConfig
 
@@ -47,7 +48,7 @@ def main(
     register_env(env_name, env_maker)
 
 
-    rollout_fragment_length = episode_length
+    rollout_fragment_length = episode_length // 10
 
     dummy_env = RandomPOMDP(**env_config)
 
@@ -74,7 +75,7 @@ def main(
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
 
-    config = make_bf_sgda_config(PPOConfig).training(
+    config = make_bf_sgda_config(ImpalaConfig).training(
         beta_lr=1e-1,
         beta_smoothing=2000,
         use_utility=False,
@@ -84,29 +85,40 @@ def main(
 
         learn_best_responses_only=False,
 
+        # IMPALA
+        # opt_type="rmsprop",
+        entropy_coeff=1e-4,
+        train_batch_size=rollout_fragment_length,
+        momentum=0.,
+        epsilon=1e-5,
+        decay=0.99,
+        lr=1e-3,
+        grad_clip=50.,
+        gamma=0.995,
+
         # PPO
         # lambda_=0.95,
         # gamma=0.99,
         # entropy_coeff=1e-4,
         # lr=1e-4,
-        lambda_=1.0,
-        gamma=1.,
-        entropy_coeff=0.,
-        lr=1e-2,
-        use_critic=False,
-        use_gae=False,
-        #kl_coeff=0.,
-        #kl_target=1e-2, #1e-2
-        #clip_param=10.,
-        # #clip_param=0.2,
-        grad_clip=100.,
-        train_batch_size=64*num_workers*16,
-        sgd_minibatch_size=64*num_workers*2,
-        num_sgd_iter=16,
+        # lambda_=1.0,
+        # gamma=1.,
+        # entropy_coeff=0.,
+        # lr=1e-2,
+        # use_critic=False,
+        # use_gae=False,
+        # #kl_coeff=0.,
+        # #kl_target=1e-2, #1e-2
+        # #clip_param=10.,
+        # # #clip_param=0.2,
+        # grad_clip=100.,
+        # train_batch_size=64*num_workers*16,
+        # sgd_minibatch_size=64*num_workers*2,
+        # num_sgd_iter=16,
         model={
             "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
             "vf_share_layers": False,
-            "fcnet_activation": "linear",
+            #"fcnet_activation": "linear",
         }
     ).rollouts(
         num_rollout_workers=num_workers,
@@ -115,7 +127,7 @@ def main(
         num_envs_per_worker=1,
         rollout_fragment_length=rollout_fragment_length,
         batch_mode="complete_episodes",
-        enable_connectors=False,
+        enable_connectors=True,
     ).environment(
         env=env_name,
         env_config=env_config
@@ -132,8 +144,8 @@ def main(
     )
 
     exp = tune.run(
-        "PPO",
-        name="BF_SGDA_v0.3",
+        "IMPALA",
+        name="BF_SGDA_v0.5",
         config=config,
         checkpoint_at_end=False,
         checkpoint_freq=30,
