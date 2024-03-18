@@ -120,7 +120,7 @@ def main(
         #clip_param=10.,
         # #clip_param=0.2,
         grad_clip=100.,
-        train_batch_size=rollout_fragment_length*num_workers * 8,
+        train_batch_size=rollout_fragment_length*num_workers * 16,
         sgd_minibatch_size=rollout_fragment_length*num_workers,
         num_sgd_iter=8,
         model={
