@@ -54,7 +54,7 @@ def main(
     register_env(env_name, env_maker)
 
 
-    rollout_fragment_length = episode_length
+    rollout_fragment_length = episode_length // 10
 
     dummy_env = RandomPOMDP(**env_config) #  env_maker_test(env_config)
 
@@ -124,8 +124,7 @@ def main(
         decay=0.99,
         lr=1e-3,
         grad_clip=50.,
-
-        gamma=0.99,
+        gamma=0.995,
 
         # PPO
         # lambda_=0.95,
