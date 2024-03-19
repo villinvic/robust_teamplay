@@ -1,0 +1,13 @@
+# We should have the general fact that a test set has 5 scenarios
+
+scenarios:
+  - name: self_play
+    focal: 2
+    background: []
+
+  - name: deterministic0
+    policies:
+      - name: policy3
+        # Policy3 data...
+      - name: policy4
+        # Policy4 data...

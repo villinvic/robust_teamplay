@@ -8,6 +8,7 @@ from typing import Dict, Tuple, Union, Optional, List
 
 import numpy as np
 import ray
+import yaml
 from ray.rllib import Policy, SampleBatch, BaseEnv
 from ray.rllib.algorithms import Algorithm
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
@@ -103,7 +104,20 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
 
 class ScenarioSet:
-    def __init__(self, num_players, background_population):
+
+    TEST_SET_PATH = "data/test_sets/{env}/name"
+
+
+    def __init__(self, scenarios: Dict[str, "Scenario"] = None):
+        self.scenarios = {}
+        self.scenario_list = []
+
+        if scenarios is not None:
+            self.scenarios = scenarios
+            self.scenario_list = list(scenarios.keys())
+
+    def build_from_population(self, num_players, background_population):
+        del self.scenario_list
         self.scenarios = {}
 
         for num_copies in range(1, num_players + 1):
@@ -139,6 +153,21 @@ class ScenarioSet:
             subsets.append(subset)
 
         return subsets
+
+    @classmethod
+    def from_YAML(cls, path):
+        """
+        :param path: path of the yaml
+        :return: the list of scenarios contained in there
+        """
+
+        with open(path, 'r') as f:
+            scenarios = yaml.safe_load(f)["scenarios"]
+
+        return cls({
+            scenario["name"]: Scenario(scenario["focal"], scenario["background"])
+            for scenario in scenarios
+        })
 
 
 
@@ -293,6 +322,7 @@ class Scenario:
         num_copies = len(np.argwhere(main_policy_mask))
 
         return f"<c={num_copies}, b={tuple(sorted(np_policies[np.logical_not(main_policy_mask)]))}>"
+
 
 
 class ScenarioMapper:

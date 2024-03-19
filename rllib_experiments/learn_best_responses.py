@@ -38,7 +38,7 @@ def main(
         history_length=2,
         full_one_hot=True,
 ):
-    env_config = dict(
+    env_config = RandomMDPConfig(
         n_states=n_states,
         n_actions=n_actions,
         episode_length=episode_length,

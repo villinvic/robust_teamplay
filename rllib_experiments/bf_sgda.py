@@ -14,43 +14,29 @@ from beliefs.rllib_scenario_distribution import Scenario, PPOBFSGDAConfig, Scena
 from environments.rllib.random_mdp import RandomPOMDP
 from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
 
-
-def env_maker(env_config):
-
-    return RandomPOMDP(**env_config)
+from rllib_experiments.configs import get_env_config
 
 num_workers = os.cpu_count() - 2
 
 
 def main(
-        bg_policies=[0],
-        env_seed=0,
-        n_states=5,
-        n_actions=3,
-        num_players=2,
-        episode_length=100,
-        history_length=2,
-        full_one_hot=True
+        *,
+        background=(0,),
+        version="0.5",
+        env="RandomPOMDP",
+        **kwargs
 ):
-    env_config = dict(
-        n_states=n_states,
-        n_actions=n_actions,
-        episode_length=episode_length,
-        seed=env_seed,
-        num_players=num_players,
-        history_length=history_length,
-        full_one_hot=full_one_hot
-    )
+    env_config = get_env_config(
+        environment_name=env
+    )(**kwargs)
 
+    env_config_dict = env_config.as_dict()
+    env_id = env_config.get_env_id()
 
-    config_name = str(env_config).replace("'", "").replace(" ", "").replace(":", "_").replace(",", "_")[1:-1]
-    env_name = f"RandomMDP_{config_name}"
-    register_env(env_name, env_maker)
+    register_env(env_id, env_config.get_maker())
 
-
-    rollout_fragment_length = episode_length // 10
-
-    dummy_env = RandomPOMDP(**env_config)
+    rollout_fragment_length = env_config.episode_length // 10
+    dummy_env = env_config.get_maker()()
 
     policies = {
         f"background_deterministic_{bg_policy_seed}": (
@@ -58,17 +44,17 @@ def main(
             dummy_env.observation_space[0],
             dummy_env.action_space[0],
             dict(
-                config=env_config,
+                config=env_config_dict,
                 seed=bg_policy_seed,
                 _disable_preprocessor_api=True,
             )
 
 
-        ) for i, bg_policy_seed in enumerate(bg_policies)
+        ) for i, bg_policy_seed in enumerate(background)
     }
     background_population = list(policies.keys())
-    scenarios = ScenarioSet(
-        num_players=env_config["num_players"],
+    scenarios = ScenarioSet().build_from_population(
+        num_players=env_config.num_players,
         background_population=background_population
     )
 
@@ -130,8 +116,8 @@ def main(
         batch_mode="complete_episodes",
         enable_connectors=True,
     ).environment(
-        env=env_name,
-        env_config=env_config
+        env=env_id,
+        env_config=env_config_dict
     ).resources(num_gpus=0
     ).framework(framework="tf"
     ).multi_agent(
@@ -146,17 +132,14 @@ def main(
 
     exp = tune.run(
         "IMPALA",
-        name="BF_SGDA_v0.5",
+        name=f"BF_SGDA_v{version}",
         config=config,
-        checkpoint_at_end=False,
+        checkpoint_at_end=True,
         checkpoint_freq=30,
         keep_checkpoints_num=3,
         stop={
-            "timesteps_total": 1_000_000_000,
+            "timesteps_total": 100_000_000,
         },
-        #local_dir="rllib_runs",
-        # restore=""
-        # resume=True
     )
 
 

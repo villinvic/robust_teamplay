@@ -7,29 +7,27 @@
 #     bg = BackgroundPopulation(RepeatedPrisonersDilemmaEnv(2))
 #
 #     print(bg.build_randomly(4))
+import time
 
-import numpy as np
-
-def project_onto_simplex(v, z=1):
-    n_features = len(v)
-    u = np.sort(v)[::-1]
-    cssv = np.cumsum(u) - z
-    ind = np.arange(n_features) + 1
-    cond = u - cssv / ind > 0
-    rho = ind[cond][-1]
-    theta = cssv[cond][-1] / float(rho)
-    w = np.maximum(v - theta, 0)
-    return w
+from rich.progress import Progress
 
 
-x = np.ones(3) / 3
+progress = Progress()
 
-loss = np.array([1, 2, np.nan])
-loss -= np.nanmean(loss)
 
-loss[np.isnan(loss)] = np.nanmean(loss)
+class Job():
 
-next_x = x + loss * 0.1
+    def __init__(self):
+        pass
 
-x = project_onto_simplex(next_x)
-print(x, x.sum())
+
+    def __call__(self, *args, **kwargs):
+
+
+        task = progress.add_task("[red]Working...", total=100)
+        for i in range(100):
+            time.sleep(0.1)
+
+
+
+for i in range(10):
