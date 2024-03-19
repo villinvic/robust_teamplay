@@ -112,7 +112,7 @@ def main(
         copy_weights_freq=1,
 
         learn_best_responses_only=True,
-        best_response_timesteps_max=5_000_000,
+        best_response_timesteps_max=10_000_000,
 
         # IMPALA
         #opt_type="rmsprop",
@@ -121,7 +121,7 @@ def main(
         momentum=0.,
         epsilon=1e-5,
         decay=0.99,
-        lr=1e-3,
+        lr=2e-3,
         grad_clip=50.,
         gamma=0.995,
 
