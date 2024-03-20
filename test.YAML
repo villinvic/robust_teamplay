@@ -1,0 +1,8 @@
+- p1:
+    mean_score: 1.5
+    scenario1: 1.0
+    scenario2: 2.0
+- p2:
+    mean_score: 2.0
+    scenario1: 1.0
+    scenario2: 3.0

@@ -1,4 +1,5 @@
 # We should have the general fact that a test set has 5 scenarios
+# This should be updated by the bf_sgda algo after converging
 
 scenarios:
   - name: self_play
@@ -11,3 +12,6 @@ scenarios:
         # Policy3 data...
       - name: policy4
         # Policy4 data...
+
+eval_config:
+  - distribution = []

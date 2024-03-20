@@ -24,6 +24,7 @@ def main(
         background=(0,),
         version="0.5",
         env="RandomPOMDP",
+        use_utility=False,
         **kwargs
 ):
     env_config = get_env_config(
@@ -53,7 +54,9 @@ def main(
         ) for i, bg_policy_seed in enumerate(background)
     }
     background_population = list(policies.keys())
-    scenarios = ScenarioSet().build_from_population(
+    scenarios = ScenarioSet()
+
+    scenarios.build_from_population(
         num_players=env_config.num_players,
         background_population=background_population
     )
@@ -62,9 +65,9 @@ def main(
         policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
 
     config = make_bf_sgda_config(ImpalaConfig).training(
-        beta_lr=0., #2e-1,
+        beta_lr=2e-1, #2e-1,
         beta_smoothing=2000,
-        use_utility=False,
+        use_utility=use_utility,
         scenarios=scenarios,
         copy_weights_freq=1,
         copy_history_len=10,
@@ -138,9 +141,11 @@ def main(
         checkpoint_freq=30,
         keep_checkpoints_num=3,
         stop={
-            "timesteps_total": 100_000_000,
+            "timesteps_total": 1000,
         },
     )
+
+
 
 
 if __name__ == '__main__':

@@ -48,7 +48,6 @@ class RandomPOMDP(MultiAgentEnv):
         self.base_shape = (self.n_actions,) * self.history_length + (self.n_states,) * (self.history_length + 1)
         if full_one_hot:
             obs_space = spaces.Discrete(np.prod(self.base_shape))
-            print(obs_space)
         else:
             obs_space = spaces.MultiDiscrete(self.base_shape)
 

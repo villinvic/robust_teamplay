@@ -26,7 +26,7 @@ class RandomPOMDPConfig(EnvConfig):
 
     _env_name: str = "RandomPOMDP"
 
-    env_seed: int = 0
+    seed: int = 0
     n_states: int = 5
     n_actions: int = 3
     num_players: int = 2
@@ -35,7 +35,9 @@ class RandomPOMDPConfig(EnvConfig):
     full_one_hot: bool = True
 
     def as_dict(self):
-        return asdict(self)
+        d = asdict(self)
+        del d["_env_name"]
+        return d
 
     def get_env_id(self):
         config_name = (str(self.as_dict())
@@ -48,7 +50,7 @@ class RandomPOMDPConfig(EnvConfig):
 
 
     def get_maker(self):
-        def env_maker(config):
+        def env_maker(config=None):
             return RandomPOMDP(**self.as_dict())
 
         return env_maker

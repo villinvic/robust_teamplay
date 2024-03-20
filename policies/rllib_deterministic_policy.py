@@ -8,7 +8,6 @@ from ray.rllib.utils.typing import TensorStructType, TensorType, ModelWeights
 
 
 def restore_obs(obs, space):
-    print(obs.shape, space)
     if isinstance(space, MultiDiscrete):
         shape = space.nvec
         indices = np.transpose(np.where(obs == 1)[1])
@@ -55,24 +54,24 @@ class RLlibDeterministicPolicy(Policy):
     def get_action(self, obs):
         return self.policy[obs]
 
-    def compute_single_action(
-        self,
-        obs: Optional[TensorStructType] = None,
-        state: Optional[List[TensorType]] = None,
-        *,
-        prev_action: Optional[TensorStructType] = None,
-        prev_reward: Optional[TensorStructType] = None,
-        info: dict = None,
-        input_dict: Optional[SampleBatch] = None,
-        episode: Optional["Episode"] = None,
-        explore: Optional[bool] = None,
-        timestep: Optional[int] = None,
-        **kwargs,
-    ) -> Tuple[TensorStructType, List[TensorType], Dict[str, TensorType]]:
-
-        action = self.policy[restore_original_dimensions(obs, self.observation_space)]
-
-        return action, state, {}
+    # def compute_single_action(
+    #     self,
+    #     obs: Optional[TensorStructType] = None,
+    #     state: Optional[List[TensorType]] = None,
+    #     *,
+    #     prev_action: Optional[TensorStructType] = None,
+    #     prev_reward: Optional[TensorStructType] = None,
+    #     info: dict = None,
+    #     input_dict: Optional[SampleBatch] = None,
+    #     episode: Optional["Episode"] = None,
+    #     explore: Optional[bool] = None,
+    #     timestep: Optional[int] = None,
+    #     **kwargs,
+    # ) -> Tuple[TensorStructType, List[TensorType], Dict[str, TensorType]]:
+    #
+    #     action = self.policy[restore_original_dimensions(obs[np.newaxis], self.observation_space)]
+    #
+    #     return action, state, {}
 
     def compute_actions(
         self,
@@ -87,10 +86,9 @@ class RLlibDeterministicPolicy(Policy):
         **kwargs,
     ) -> Tuple[TensorType, List[TensorType], Dict[str, TensorType]]:
 
-        # original_obs = restore_obs(obs_batch, self.observation_space)
-        # actions = [self.policy[tuple(obs)] for obs in original_obs]
+        original_obs = restore_obs(obs_batch, self.observation_space)
+        actions = [self.policy[tuple(obs)] for obs in original_obs]
 
-        actions = self.policy[obs_batch]
         return actions, state_batches, {}
 
     # def get_initial_state(self) -> List[TensorType]:

@@ -39,6 +39,39 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
         self.beta = ScenarioDistribution(algorithm)
 
+        algo_stop = algorithm.stop
+
+        def on_algorithm_stop():
+
+            # Dump learned distribution as test_set
+            test_set_name = ""
+            if self.beta.config.beta_lr == 0.:
+                test_set_name = "train_set_uniform"
+            elif self.beta.config.use_utility:
+                test_set_name = "train_set_maximin_utility_distribution"
+            else:
+                test_set_name = "train_set_minimax_regret_distribution"
+
+            dump_path = ScenarioSet.TEST_SET_PATH.format(
+                env=self.beta.config.env,
+                set_name=test_set_name,
+            )
+
+            self.beta.scenarios.to_YAML(
+                dump_path,
+                eval_config={
+                    "distribution": [
+                        float(p) for p in self.beta.beta_logits
+                    ]
+                }
+            )
+            algo_stop()
+
+        algorithm.stop = on_algorithm_stop.__get__(algorithm, type(algorithm))
+
+
+
+
     def on_postprocess_trajectory(
             self,
             *,
@@ -103,18 +136,24 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
 
 
+
 class ScenarioSet:
 
-    TEST_SET_PATH = "data/test_sets/{env}/name"
+    TEST_SET_PATH = "data/test_sets/{env}/{set_name}.YAML"
 
 
-    def __init__(self, scenarios: Dict[str, "Scenario"] = None):
+    def __init__(self, scenarios: Dict[str, "Scenario"] = None, eval_config=None):
         self.scenarios = {}
         self.scenario_list = []
+
+        self.eval_config = {}
 
         if scenarios is not None:
             self.scenarios = scenarios
             self.scenario_list = list(scenarios.keys())
+
+        if eval_config is not None:
+            self.eval_config.update(**eval_config)
 
     def build_from_population(self, num_players, background_population):
         del self.scenario_list
@@ -162,12 +201,39 @@ class ScenarioSet:
         """
 
         with open(path, 'r') as f:
-            scenarios = yaml.safe_load(f)["scenarios"]
+            d = yaml.safe_load(f)
 
-        return cls({
+        scenarios = d["scenarios"]
+        eval_config = d.get("eval_config", {})
+
+        scenarios = {
             scenario["name"]: Scenario(scenario["focal"], scenario["background"])
             for scenario in scenarios
-        })
+        }
+        return cls(scenarios=scenarios, eval_config=eval_config)
+
+    def to_YAML(self, path: str, eval_config: Dict):
+
+        scenario_set = [
+
+        {"scenarios":{
+            {
+                "name": scenario_name,
+                "focal": scenario.num_copies,
+                "background": list(scenario.background_policies)
+            }
+        } for scenario_name, scenario in self.scenarios.items()
+        },
+
+        {"eval_config": eval_config}
+
+        ]
+        parent_path = os.sep.join(path.split(os.sep)[:-1])
+        if not os.path.exists(parent_path) :
+            print("Created directory:", parent_path)
+        os.makedirs(parent_path, exist_ok=True)
+        with open(path, "r") as f:
+            yaml.safe_dump(scenario_set, f)
 
 
 
@@ -365,9 +431,9 @@ class ScenarioDistribution:
 
         self.best_response_utilities = {}
 
-        self.scenarios = self.config.scenarios
+        self.scenarios: ScenarioSet = self.config.scenarios
         self.beta_logits = np.ones(len(self.scenarios), dtype=np.float32) / len(self.scenarios)
-        self.past_priors = list()
+        self.past_priors = deque([], maxlen=self.config.beta_smoothing)
         self.weights_history = None
         self.copy_iter = 0
         self.prev_timesteps = 0
@@ -590,12 +656,3 @@ class ScenarioDistribution:
         del result["sampler_results"]["custom_metrics"]
 
         return result
-
-
-if __name__ == '__main__':
-
-    scenario_set = ScenarioSet(2, ["background_bob", "background_luc"])
-    print()
-    l = scenario_set.split(len(scenario_set.scenario_list))
-    for subset in l:
-        print(subset.scenario_list)
