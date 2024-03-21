@@ -242,7 +242,7 @@ class Evaluation:
         scores =  np.array([result["focal_per_capita_mean"] for result in res.values()])
 
         if "distribution" in self.test_set.eval_config:
-            expected_utility = np.sum(np.array(self.test_set.eval_config["distribution"]) * scores)
+            expected_utility = float(np.sum(np.array(self.test_set.eval_config["distribution"]) * scores))
         else:
             expected_utility = float(np.mean(scores))
 
