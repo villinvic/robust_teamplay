@@ -52,27 +52,28 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
                 # Dump learned distribution as test_set
                 test_set_name = ""
-                if self.beta.config.beta_lr == 0.:
-                    test_set_name = "train_set_uniform"
-                elif self.beta.config.use_utility:
-                    test_set_name = "train_set_maximin_utility_distribution"
-                else:
-                    test_set_name = "train_set_minimax_regret_distribution"
+                if not self.beta.config.self_play:
+                    if self.beta.config.beta_lr == 0.:
+                        test_set_name = "train_set_uniform"
+                    elif self.beta.config.use_utility:
+                        test_set_name = "train_set_maximin_utility_distribution"
+                    else:
+                        test_set_name = "train_set_minimax_regret_distribution"
 
-                dump_path = ScenarioSet.TEST_SET_PATH.format(
-                    env=self.beta.config.env,
-                    set_name=test_set_name,
-                )
+                    dump_path = ScenarioSet.TEST_SET_PATH.format(
+                        env=self.beta.config.env,
+                        set_name=test_set_name,
+                    )
 
-                self.beta.scenarios.to_YAML(
-                    dump_path,
-                    eval_config={
-                        "distribution": [
-                            float(np.mean(p)) for p in np.stack(list(self.beta.past_betas), axis=1)
-                        ],
-                        "num_episodes": 100
-                    }
-                )
+                    self.beta.scenarios.to_YAML(
+                        dump_path,
+                        eval_config={
+                            "distribution": [
+                                float(np.mean(p)) for p in np.stack(list(self.beta.past_betas), axis=1)
+                            ],
+                            "num_episodes": 100
+                        }
+                    )
                 algo.base_cleanup()
 
             algorithm.cleanup = on_algorithm_save.__get__(algorithm, type(algorithm))
