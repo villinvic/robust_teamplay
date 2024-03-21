@@ -22,7 +22,7 @@ num_workers = os.cpu_count() - 2
 def main(
         *,
         background=(0,),
-        version="0.5",
+        version="0.6",
         env="RandomPOMDP",
         use_utility=False,
         **kwargs
