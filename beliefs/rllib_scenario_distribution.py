@@ -138,7 +138,6 @@ class BackgroundFocalSGDA(DefaultCallbacks):
     ) -> None:
         self.beta.update(result)
 
-
 class ScenarioSet:
     TEST_SET_PATH = str(pathlib.Path(__file__).parent.resolve()) + "/../data/test_sets/{env}/{set_name}.YAML"
 
