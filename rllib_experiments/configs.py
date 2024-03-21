@@ -8,11 +8,15 @@ from environments.rllib.random_mdp import RandomPOMDP
 @dataclass
 class EnvConfig:
 
+    episode_length: int
+
     _env_name: str = "undefined"
 
 
     def as_dict(self):
-        return asdict(self)
+        d = asdict(self)
+        del d["_env_name"]
+        return d
 
     def get_env_id(self):
         pass
@@ -33,11 +37,6 @@ class RandomPOMDPConfig(EnvConfig):
     episode_length: int = 100
     history_length: int = 2
     full_one_hot: bool = True
-
-    def as_dict(self):
-        d = asdict(self)
-        del d["_env_name"]
-        return d
 
     def get_env_id(self):
         config_name = (str(self.as_dict())
@@ -68,4 +67,4 @@ def get_env_config(environment_name) -> Type[EnvConfig]:
     env = ENVS.get(environment_name, None)
     if env is None:
         raise ValueError(f"Environment '{environment_name}' could not be found, available environments: {list(ENVS.keys())}")
-    return ENVS.get(environment_name, None)
+    return env
