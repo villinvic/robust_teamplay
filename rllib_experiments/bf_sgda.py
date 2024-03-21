@@ -65,11 +65,6 @@ def main(
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
 
-    ImpalaConfig.reporting(
-        min_time_s_per_iteration=0,
-        min_train_timesteps_per_iteration=1,
-        min_sample_timesteps_per_iteration=0,
-    )
     config = make_bf_sgda_config(ImpalaConfig).training(
         beta_lr=beta_lr, #2e-1,
         beta_smoothing=75,
@@ -136,6 +131,10 @@ def main(
         ),
     ).experimental(
         _disable_preprocessor_api=False
+    ).reporting(
+        min_time_s_per_iteration=0,
+        min_train_timesteps_per_iteration=1,
+        min_sample_timesteps_per_iteration=0,
     )
 
     exp = tune.run(
