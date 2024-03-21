@@ -334,7 +334,7 @@ def make_bf_sgda_config(cls) -> "BFSGDAConfig":
             self.self_play = False
             self.learn_best_responses_only = True
 
-            self.best_response_utilities_path = os.getcwd() + "/data/best_response_utilities/{env_name}.pkl"
+            self.best_response_utilities_path = os.getcwd() + "/data/best_response_utilities/{env_name}.YAML"
 
             # TODO if we have deep learning bg policies:
             self.background_population_path = None
@@ -555,8 +555,9 @@ class ScenarioDistribution:
         path = self.config.best_response_utilities_path.format(env_name=self.config.env)
 
         if os.path.exists(path):
-            with open(path, "rb") as f:
-                best_response_utilities = pickle.load(f)
+            with open(path, "r") as f:
+                best_response_utilities = yaml.safe_load(f)
+
             for scenario_name in self.scenarios.scenario_list:
                 if scenario_name in best_response_utilities:
                     self.best_response_utilities[scenario_name] = best_response_utilities[scenario_name]
@@ -568,14 +569,14 @@ class ScenarioDistribution:
 
         to_save = {}
         if os.path.exists(path):
-            with open(path, "rb") as f:
-                best_response_utilities = pickle.load(f)
+            with open(path, "r") as f:
+                best_response_utilities = yaml.safe_load(f)
                 to_save.update(best_response_utilities)
 
         to_save.update(**self.best_response_utilities)
 
-        with open(path, "wb+") as f:
-            pickle.dump(to_save, f)
+        with open(path, "w") as f:
+            yaml.safe_dump(to_save, f)
 
     def beta_gradients(self, loss):
         if self.config.self_play or self.config.beta_lr == 0.:
@@ -602,7 +603,6 @@ class ScenarioDistribution:
         # Test if we are done learning some best responses
         if (not self.config.use_utility) and (self.current_best_response_scenario is not None):
 
-
             expected_utility = iter_data.get(f"{self.current_best_response_scenario}_utility_mean", 0.)
             if self.current_best_response_scenario not in self.best_response_utilities:
                 self.current_best_response_utility.set(expected_utility)
@@ -610,10 +610,10 @@ class ScenarioDistribution:
             else:
                 self.current_best_response_utility.update(expected_utility)
 
-                self.best_response_utilities[self.current_best_response_scenario] = np.maximum(
+                self.best_response_utilities[self.current_best_response_scenario] = float(np.maximum(
                     self.current_best_response_utility.get(),
                     self.best_response_utilities[self.current_best_response_scenario]
-                )
+                ))
 
             self.best_response_timesteps[self.current_best_response_scenario] += time_steps - self.prev_timesteps
             if self.best_response_timesteps[
