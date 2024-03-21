@@ -10,7 +10,7 @@ from ray.rllib.examples.policy.random_policy import RandomPolicy
 from ray.rllib.policy.policy import PolicySpec
 from ray.tune import register_env
 
-from beliefs.rllib_scenario_distribution import Scenario, PPOBFSGDAConfig, ScenarioMapper, ScenarioSet, \
+from beliefs.rllib_scenario_distribution import Scenario, ScenarioMapper, ScenarioSet, \
     make_bf_sgda_config
 from environments.rllib.random_mdp import RandomPOMDP
 from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
