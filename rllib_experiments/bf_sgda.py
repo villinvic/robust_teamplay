@@ -65,9 +65,14 @@ def main(
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
 
+    ImpalaConfig.reporting(
+        min_time_s_per_iteration=0,
+        min_train_timesteps_per_iteration=1,
+        min_sample_timesteps_per_iteration=0,
+    )
     config = make_bf_sgda_config(ImpalaConfig).training(
         beta_lr=beta_lr, #2e-1,
-        beta_smoothing=1000,
+        beta_smoothing=75,
         use_utility=use_utility,
         scenarios=scenarios,
         copy_weights_freq=1,
@@ -78,7 +83,7 @@ def main(
         # IMPALA
         # opt_type="rmsprop",
         entropy_coeff=3e-3,
-        train_batch_size=rollout_fragment_length * num_workers,
+        train_batch_size=env_config.episode_length * num_workers,
         momentum=0.,
         epsilon=1e-5,
         decay=0.99,

@@ -437,14 +437,7 @@ class ScenarioMapper:
 class ScenarioDistribution:
 
     def __init__(self, algo: Algorithm, learn_best_responses=False):
-        # The background population should already be loaded in the multiagent config of the algorithm
-        # TODO : this needs information on
-        # Which scenario do we need to optimize on ? -> All that can be constructed from the bg population !
-        # What if we want to learn against one scenario specifically ?
-        # Save a file that stores best response utility depending on the scenario
-        # -> a dict bru[f"{env_name}_{env_seed}_{scenario_n_copies}_{background_policy_1_path}_..._{background_policy_m_path}"] = bru
-        # TODO : write a way to load a background population, and compute all bru needed -> dump into file.
-        # -> Focus iteratively on each scenario with a new initialized policy, dump after t timesteps, repeat (skip if entry already in file)
+
         self.algo: Algorithm = algo
         self.config: "PPOBFSGDAConfig" = algo.config
         self.learn_best_responses = learn_best_responses
@@ -484,7 +477,7 @@ class ScenarioDistribution:
 
         _base_compile_iteration_results = algo._compile_iteration_results
 
-        def _compile_iteration_results(
+        def _compile_iteration_results_with_scenario_counts(
                 _, *, episodes_this_iter, step_ctx, iteration_results=None
         ):
             r = _base_compile_iteration_results(episodes_this_iter=episodes_this_iter, step_ctx=step_ctx,
@@ -500,7 +493,7 @@ class ScenarioDistribution:
 
             return r
 
-        self.algo._compile_iteration_results = _compile_iteration_results.__get__(self.algo, type(self.algo))
+        self.algo._compile_iteration_results = _compile_iteration_results_with_scenario_counts.__get__(self.algo, type(self.algo))
 
     def set_matchmaking(self):
 
@@ -521,7 +514,7 @@ class ScenarioDistribution:
 
     def copy_weights(self, reset=False):
         if reset:
-            self.weights_history = [self.weights_0, self.weights_0, self.weights_0]
+            self.weights_history = [self.weights_0 for _ in range(3)]
             self.copy_iter = 0
         else:
             last_weights = self.algo.get_weights([Scenario.MAIN_POLICY_ID])[Scenario.MAIN_POLICY_ID]
