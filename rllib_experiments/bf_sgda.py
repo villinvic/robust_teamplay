@@ -25,6 +25,7 @@ def main(
         version="0.6",
         env="RandomPOMDP",
         use_utility=False,
+        beta_lr=2e-1,
         **kwargs
 ):
     env_config = get_env_config(
@@ -65,7 +66,7 @@ def main(
         policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
 
     config = make_bf_sgda_config(ImpalaConfig).training(
-        beta_lr=2e-1, #2e-1,
+        beta_lr=beta_lr, #2e-1,
         beta_smoothing=1000,
         use_utility=use_utility,
         scenarios=scenarios,

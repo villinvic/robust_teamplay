@@ -255,20 +255,24 @@ class PPOBFSGDAConfig(PPOConfig):
         super().__init__(algo_class=algo_class)
 
         self.beta_lr = 5e-2
-        self.beta_smoothing = 1000
-        self.use_utility = False
-        self.scenarios = None
-        self.copy_weights_freq = 5
         self.beta_eps = 1e-2
 
-        self.learn_best_responses_only = True
+        self.beta_smoothing = 1000
+        self.copy_weights_freq = 5
         self.best_response_timesteps_max = 1_000_000
+
+        self.use_utility = False
+        self.self_play = False
+        self.learn_best_responses_only = True
+
         self.best_response_utilities_path = os.getcwd() +  "/data/best_response_utilities/{env_name}.pkl"
 
         # TODO if we have deep learning bg policies:
+        # Use our PolicyCkpt class
         self.background_population_path = None
 
         self.callbacks_class = BackgroundFocalSGDA
+        self.scenarios = None
 
     def training(
             self,
@@ -276,6 +280,7 @@ class PPOBFSGDAConfig(PPOConfig):
             beta_lr: Optional[float] = NotProvided,
             beta_smoothing: Optional[float] = NotProvided,
             use_utility: Optional[bool] = NotProvided,
+            self_play: Optional[bool] = NotProvided,
             copy_weights_freq: Optional[int] = NotProvided,
             best_response_timesteps_max: Optional[int] = NotProvided,
             best_response_utilities_path: Optional[str] = NotProvided,
@@ -292,6 +297,8 @@ class PPOBFSGDAConfig(PPOConfig):
             self.beta_smoothing = beta_smoothing
         if use_utility is not NotProvided:
             self.use_utility = use_utility
+        if self_play is not NotProvided:
+            self.self_play = self_play
         if copy_weights_freq is not NotProvided:
             self.copy_weights_freq = copy_weights_freq
         if learn_best_responses_only is not NotProvided:
@@ -446,6 +453,12 @@ class ScenarioDistribution:
 
         self.scenarios: ScenarioSet = self.config.scenarios
         self.beta_logits = np.ones(len(self.scenarios), dtype=np.float32) / len(self.scenarios)
+        if self.config.self_play:
+            self.beta_logits[:] = [
+                float(len(self.scenarios[scenario].background_policies) == 0)
+                for scenario in self.scenarios.scenario_list
+            ]
+
         self.past_betas = deque([], maxlen=self.config.beta_smoothing)
         self.weights_history = None
         self.copy_iter = 0
@@ -557,6 +570,9 @@ class ScenarioDistribution:
             pickle.dump(to_save, f)
 
     def beta_gradients(self, loss):
+        if self.config.self_play or self.config.beta_lr == 0.:
+            return
+
         self.beta_logits[:] = project_onto_simplex(self.beta_logits + loss * self.config.beta_lr)
 
         # Allow any scenario to be sampled with beta_eps prob
