@@ -1,3 +1,4 @@
+import pathlib
 from typing import List, Dict
 
 import fire
@@ -15,8 +16,12 @@ import os
 import numpy as np
 
 from rllib_experiments.configs import get_env_config
+import ray
+import logging
 
-NUM_CPU = os.cpu_count() - 1
+ray.logger.setLevel(logging.ERROR)
+
+NUM_CPU = os.cpu_count() - 2
 
 def shuffle_dict(input_dict):
     # Convert the dictionary into a list of key-value pairs
@@ -89,11 +94,12 @@ class PolicyCkpt:
     Can either be a deterministic policy,
     or a named policy
     """
+    NAMED_POLICY_PATH = str(pathlib.Path(__file__).parent.resolve()) + "/../data/policies/{env}/{name}"
 
-    NAMED_POLICY_PATH = "data/policies/{name}"
-    def __init__(self, name):
+    def __init__(self, name, env_name=""):
 
         self.name = name
+        self.env_name = env_name
 
         if "deterministic" in name:
             _, policy_seed = name.split("_")
@@ -117,7 +123,7 @@ class PolicyCkpt:
 
         else:
             def make(environment):
-                return Policy.from_checkpoint(self.NAMED_POLICY_PATH.format(name=name))
+                return Policy.from_checkpoint(PolicyCkpt.NAMED_POLICY_PATH.format(name=name, env=env_name))
 
         self.make = make
 
@@ -129,18 +135,18 @@ def eval_policy_on_scenario(
     (scenario_name,
     policy_name,
     test_set,
-    env_config,
-    eval_config) = packed_args
+    env_config) = packed_args
 
     scenario = test_set[scenario_name]
     environment = env_config.get_maker()()
-    focal_policy = PolicyCkpt(policy_name).make(environment)
+    env_id = env_config.get_env_id()
+    focal_policy = PolicyCkpt(policy_name, env_id).make(environment)
     focal_policies = {
         f"{policy_name}_{i}": focal_policy
         for i in range(scenario.num_copies)
     }
     background_policies = {
-        f"background_{bg_policy_name}": PolicyCkpt(bg_policy_name).make(environment)
+        f"background_{bg_policy_name}": PolicyCkpt(bg_policy_name, env_id).make(environment)
         for bg_policy_name in scenario.background_policies
     }
 
@@ -148,7 +154,7 @@ def eval_policy_on_scenario(
         **focal_policies,
         **background_policies
     }
-    return {scenario_name: run_episode(policies, environment, n_episodes=eval_config["n_episodes"])}
+    return {scenario_name: run_episode(policies, environment, n_episodes=test_set.eval_config["num_episodes"])}
 
 
 
@@ -183,10 +189,9 @@ class Evaluation:
     feed env and name of the test set
     loads required policies
     """
-    EVAL_PATH = "data/evaluation/{env}/{set_name}.YAML"
+    EVAL_PATH = str(pathlib.Path(__file__).parent.resolve()) + "/../data/evaluation/{env}/{set_name}.YAML"
 
-    def __init__(self, test_set: str, env: str, env_config: Dict,
-                 eval_config: Dict):
+    def __init__(self, test_set: str, env: str, env_config: Dict):
 
         self.test_set_name = test_set
         self.env_name = env,
@@ -196,8 +201,6 @@ class Evaluation:
         self.test_set = ScenarioSet.from_YAML(
             ScenarioSet.TEST_SET_PATH.format(env=self.env_config.get_env_id(), set_name=test_set)
         )
-
-        self.eval_config = eval_config
 
     def eval_policy_on_scenario(self, policy_name, scenario_name):
 
@@ -223,7 +226,7 @@ class Evaluation:
     def evaluate_policy(self, policy_name):
 
         jobs = [
-            (scenario_name, policy_name, self.test_set, self.env_config, self.eval_config)
+            (scenario_name, policy_name, self.test_set, self.env_config)
             for scenario_name in self.test_set.scenario_list
         ]
 
@@ -270,9 +273,9 @@ class Evaluation:
             with open(path, 'r') as f:
                 evaluation = yaml.safe_load(f)
             if evaluation is None:
-                evaluation = []
+                evaluation = {}
         else:
-            evaluation = []
+            evaluation = {}
             parent_path = os.sep.join(path.split(os.sep)[:-1])
             os.makedirs(parent_path, exist_ok=True)
             print("Created directory:", parent_path)
@@ -295,28 +298,23 @@ def run(
         policies=["deterministic_0", "deterministic_1", "random"],
         sets=["deterministic_set_0"],
         env="RandomPOMDP",
-
-        eval_n_episodes=100,
         **env_config
 ):
-    eval_config = {
-        "n_episodes": eval_n_episodes
-    }
 
     # TODO : for each set, save the stats in data/
     for test_set in sets:
-        evaluation = Evaluation(test_set, env, env_config=env_config, eval_config=eval_config)
+        evaluation = Evaluation(test_set, env, env_config=env_config)
         set_eval = evaluation.load()
 
-        past_evaluations = []
-        for policy_eval in set_eval:
-            past_evaluations.extend(list(policy_eval.keys()))
+        past_evaluations = list(set_eval.keys())
+        
+        
         for policy in policies:
             # We do not want to remove existing scores, probably
 
             if policy not in past_evaluations:
-                set_eval.append(
-                    evaluation.evaluate_policy(policy)
+                set_eval.update(
+                    **evaluation.evaluate_policy(policy)
                 )
                 evaluation.save(set_eval)
 

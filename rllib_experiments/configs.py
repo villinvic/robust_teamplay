@@ -65,4 +65,7 @@ def get_env_config(environment_name) -> Type[EnvConfig]:
     :param environment_name: base name of the env
     :return: helper function to build config, env maker, and env_id as a function its config
     """
+    env = ENVS.get(environment_name, None)
+    if env is None:
+        raise ValueError(f"Environment '{environment_name}' could not be found, available environments: {list(ENVS.keys())}")
     return ENVS.get(environment_name, None)

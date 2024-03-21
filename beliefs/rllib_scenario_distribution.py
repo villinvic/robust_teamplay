@@ -1,8 +1,9 @@
 import itertools
 import os.path
+import pathlib
 import pickle
 import queue
-from collections import deque, defaultdict
+from collections import deque, defaultdict, ChainMap
 from copy import copy, deepcopy
 from typing import Dict, Tuple, Union, Optional, List
 
@@ -39,37 +40,38 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
         self.beta = ScenarioDistribution(algorithm)
 
-        algo_stop = algorithm.stop
+        if not self.beta.config.learn_best_responses_only:
 
-        def on_algorithm_stop():
+            setattr(algorithm, "base_cleanup", algorithm.cleanup)
 
-            # Dump learned distribution as test_set
-            test_set_name = ""
-            if self.beta.config.beta_lr == 0.:
-                test_set_name = "train_set_uniform"
-            elif self.beta.config.use_utility:
-                test_set_name = "train_set_maximin_utility_distribution"
-            else:
-                test_set_name = "train_set_minimax_regret_distribution"
+            def on_algorithm_save(algo):
 
-            dump_path = ScenarioSet.TEST_SET_PATH.format(
-                env=self.beta.config.env,
-                set_name=test_set_name,
-            )
+                # Dump learned distribution as test_set
+                test_set_name = ""
+                if self.beta.config.beta_lr == 0.:
+                    test_set_name = "train_set_uniform"
+                elif self.beta.config.use_utility:
+                    test_set_name = "train_set_maximin_utility_distribution"
+                else:
+                    test_set_name = "train_set_minimax_regret_distribution"
 
-            self.beta.scenarios.to_YAML(
-                dump_path,
-                eval_config={
-                    "distribution": [
-                        float(p) for p in self.beta.beta_logits
-                    ]
-                }
-            )
-            algo_stop()
+                dump_path = ScenarioSet.TEST_SET_PATH.format(
+                    env=self.beta.config.env,
+                    set_name=test_set_name,
+                )
 
-        algorithm.stop = on_algorithm_stop.__get__(algorithm, type(algorithm))
+                self.beta.scenarios.to_YAML(
+                    dump_path,
+                    eval_config={
+                        "distribution": [
+                            float(np.mean(p)) for p in np.stack(list(self.beta.past_betas), axis=1)
+                        ],
+                        "num_episodes": 100
+                    }
+                )
+                algo.base_cleanup()
 
-
+            algorithm.cleanup = on_algorithm_save.__get__(algorithm, type(algorithm))
 
 
     def on_postprocess_trajectory(
@@ -139,7 +141,7 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
 class ScenarioSet:
 
-    TEST_SET_PATH = "data/test_sets/{env}/{set_name}.YAML"
+    TEST_SET_PATH = str(pathlib.Path(__file__).parent.resolve()) + "/../data/test_sets/{env}/{set_name}.YAML"
 
 
     def __init__(self, scenarios: Dict[str, "Scenario"] = None, eval_config=None):
@@ -203,37 +205,44 @@ class ScenarioSet:
         with open(path, 'r') as f:
             d = yaml.safe_load(f)
 
-        scenarios = d["scenarios"]
-        eval_config = d.get("eval_config", {})
+        eval_config = d.get("eval_config", {"num_episodes": 100})
 
         scenarios = {
-            scenario["name"]: Scenario(scenario["focal"], scenario["background"])
-            for scenario in scenarios
+            scenario_name: Scenario(scenario_config["focal"], scenario_config["background"])
+            for scenario_name, scenario_config in d["scenarios"].items()
         }
         return cls(scenarios=scenarios, eval_config=eval_config)
 
-    def to_YAML(self, path: str, eval_config: Dict):
+    def to_YAML(self, path: str, eval_config: Dict = None):
 
-        scenario_set = [
+        if eval_config is not None:
+            eval_config.update(**self.eval_config)
+        else:
+            eval_config = self.eval_config
 
-        {"scenarios":{
-            {
-                "name": scenario_name,
+        scenario_set = {
+            "scenarios": {
+
+                scenario_name : {
                 "focal": scenario.num_copies,
                 "background": list(scenario.background_policies)
             }
-        } for scenario_name, scenario in self.scenarios.items()
-        },
+            for scenario_name, scenario in self.scenarios.items()
+        } ,
 
-        {"eval_config": eval_config}
+            "eval_config": eval_config
+        }
 
-        ]
         parent_path = os.sep.join(path.split(os.sep)[:-1])
         if not os.path.exists(parent_path) :
             print("Created directory:", parent_path)
-        os.makedirs(parent_path, exist_ok=True)
-        with open(path, "r") as f:
-            yaml.safe_dump(scenario_set, f)
+            os.makedirs(parent_path, exist_ok=True)
+        with open(path, "w") as f:
+            yaml.safe_dump(scenario_set, f,
+                           default_flow_style=None,
+                           width=50, indent=4
+                           )
+
 
 
 
@@ -433,7 +442,7 @@ class ScenarioDistribution:
 
         self.scenarios: ScenarioSet = self.config.scenarios
         self.beta_logits = np.ones(len(self.scenarios), dtype=np.float32) / len(self.scenarios)
-        self.past_priors = deque([], maxlen=self.config.beta_smoothing)
+        self.past_betas = deque([], maxlen=self.config.beta_smoothing)
         self.weights_history = None
         self.copy_iter = 0
         self.prev_timesteps = 0
@@ -549,7 +558,7 @@ class ScenarioDistribution:
         # Allow any scenario to be sampled with beta_eps prob
         self.beta_logits[:] = self.beta_logits * (1-self.config.beta_eps) + self.config.beta_eps / len(self.beta_logits)
 
-        self.past_priors.append(self.beta_logits.copy())
+        self.past_betas.append(self.beta_logits.copy())
 
     def update(self, result: ResultDict):
         """
@@ -656,3 +665,10 @@ class ScenarioDistribution:
         del result["sampler_results"]["custom_metrics"]
 
         return result
+
+
+if __name__ == '__main__':
+
+    p = "data/test_sets/RandomPOMDP_seed_0_n_states_5_n_actions_3_num_players_2_episode_length_100_history_length_2_full_one_hot_True/deterministic_set_tmp.YAML"
+    test_set = ScenarioSet.from_YAML("data/test_sets/RandomPOMDP_seed_0_n_states_5_n_actions_3_num_players_2_episode_length_100_history_length_2_full_one_hot_True/deterministic_set_0.YAML")
+    test_set.to_YAML(p, eval_config={"test_OK": [0,1,2,3]})

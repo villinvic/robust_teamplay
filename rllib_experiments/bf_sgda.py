@@ -47,7 +47,7 @@ def main(
             dict(
                 config=env_config_dict,
                 seed=bg_policy_seed,
-                _disable_preprocessor_api=True,
+                #_disable_preprocessor_api=True,
             )
 
 

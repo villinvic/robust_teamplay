@@ -1,24 +1,27 @@
 # We should have the general fact that a test set has 5 scenarios
 scenarios:
-  - name: self_play
-    focal: 2
-    background: []
-  - name: deterministic_0
-    focal: 1
-    background: [ deterministic_0 ]
+  self_play:
+      focal: 2
+      background: []
+  deterministic_0:
+      focal: 1
+      background: [ deterministic_0 ]
 
-  - name: deterministic_1
-    focal: 1
-    background: [ deterministic_1 ]
+  deterministic_1:
+      focal: 1
+      background: [ deterministic_1 ]
 
-  - name: deterministic_2
-    focal: 1
-    background: [ deterministic_2 ]
+  deterministic_2:
+      focal: 1
+      background: [ deterministic_2 ]
 
-  - name: deterministic_3
-    focal: 1
-    background: [ deterministic_3 ]
+  deterministic_3:
+      focal: 1
+      background: [ deterministic_3 ]
 
-  - name: deterministic_4
-    focal: 1
-    background: [ deterministic_4 ]
+  deterministic_4:
+      focal: 1
+      background: [ deterministic_4 ]
+
+eval_config:
+  num_episodes: 100
