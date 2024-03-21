@@ -72,13 +72,12 @@ def main(
         scenarios=scenarios,
         copy_weights_freq=1,
         copy_history_len=10,
-        beta_eps=len(scenarios)*1e-2,
-
+        beta_eps=1e-2,
         learn_best_responses_only=False,
 
         # IMPALA
         # opt_type="rmsprop",
-        entropy_coeff=1e-3,
+        entropy_coeff=3e-3,
         train_batch_size=rollout_fragment_length * num_workers,
         momentum=0.,
         epsilon=1e-5,

@@ -573,21 +573,26 @@ class ScenarioDistribution:
                 best_response_utilities = yaml.safe_load(f)
                 to_save.update(best_response_utilities)
 
-        to_save.update(**self.best_response_utilities)
+        # Update the best responses with the better ones found here.
+        for new_value, scenario in self.best_response_utilities.items():
+            if to_save.get(scenario, -np.inf) < new_value:
+                to_save[scenario] = new_value
 
         with open(path, "w") as f:
             yaml.safe_dump(to_save, f)
 
     def beta_gradients(self, loss):
         if self.config.self_play or self.config.beta_lr == 0.:
+            self.past_betas.append(self.beta_logits.copy())
             return
 
         self.beta_logits[:] = project_onto_simplex(self.beta_logits + loss * self.config.beta_lr)
 
+        self.past_betas.append(self.beta_logits.copy())
+
         # Allow any scenario to be sampled with beta_eps prob
         self.beta_logits[:] = self.beta_logits * (1-self.config.beta_eps) + self.config.beta_eps / len(self.beta_logits)
 
-        self.past_betas.append(self.beta_logits.copy())
 
     def update(self, result: ResultDict):
         """
@@ -644,24 +649,32 @@ class ScenarioDistribution:
                 self.algo.stop()
             # Compute lossweight=iter_data["scenario_counts"][scenario]
 
+            utilities = np.array([
+                self.scenario_utilities[scenario].update(iter_data.get(f"{scenario}_utility_mean", np.nan),
+                                                         weight=iter_data["scenario_counts"][scenario])
+                for scenario in self.scenarios.scenario_list
+            ])
+
             if self.config.use_utility:
-                beta_losses = np.array([
-                    self.scenario_utilities[scenario].update(iter_data.get(f"{scenario}_utility_mean", np.nan),
-                                                             weight=iter_data["scenario_counts"][scenario])
-                    for scenario in self.scenarios.scenario_list
-                ])
+                beta_losses = utilities
                 beta_losses = np.max(beta_losses) - beta_losses + np.min(beta_losses)
             else:
-                beta_losses = np.array([
-                    self.best_response_utilities[scenario] - self.scenario_utilities[scenario].update(iter_data.get(f"{scenario}_utility_mean", np.nan),
-                                                                                                      weight=iter_data["scenario_counts"][scenario])
+                regrets = np.array([
+                    self.best_response_utilities[scenario] - self.scenario_utilities[scenario].get()
                     for scenario in self.scenarios.scenario_list
                 ])
+                beta_losses = regrets
                 for scenario in self.scenarios.scenario_list:
-                    iter_data[f"{scenario}_regret_mean"] =  self.best_response_utilities[scenario] - self.scenario_utilities[scenario].get()
-                iter_data[f"worst_case_regret"] = np.max(beta_losses)
-                iter_data[f"uniform_regret"] = np.mean(beta_losses)
-                iter_data[f"curr_distrib_regret"] = np.sum(beta_losses * self.beta_logits)
+                    iter_data[f"{scenario}_regret_mean"] = (self.best_response_utilities[scenario]
+                                                            - self.scenario_utilities[scenario].get())
+                iter_data[f"worst_case_regret"] = np.max(regrets)
+                iter_data[f"uniform_regret"] = np.mean(regrets)
+                iter_data[f"curr_distrib_regret"] = np.sum(regrets * self.beta_logits)
+
+            iter_data[f"worst_case_utility"] = np.min(utilities)
+            iter_data[f"uniform_utility"] = np.mean(utilities)
+            iter_data[f"curr_distrib_utility"] = np.sum(utilities * self.beta_logits)
+
 
             # # Todo : is this fine ? We shouldn't make this  happen with large batch sizes
             # beta_losses[np.isnan(beta_losses)] = np.nanmean(beta_losses)

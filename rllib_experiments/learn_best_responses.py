@@ -17,72 +17,61 @@ from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
 
 from ray.rllib.env.multi_agent_env import make_multi_agent
 
+from rllib_experiments.configs import get_env_config
+
 ma_cartpole_cls = make_multi_agent("Pendulum-v1")
+
 
 def env_maker_test(env_config):
     return ma_cartpole_cls({"num_agents": 2})
 
 
-def env_maker(env_config):
-
-    return RandomPOMDP(**env_config)
-
-
 def main(
-        bg_policies=[0],
-        env_seed=0,
-        n_states=5,
-        n_actions=3,
-        num_players=2,
-        episode_length=100,
-        history_length=2,
-        full_one_hot=True,
+        *,
+        background=(0,),
+        version="0.6",
+        env="RandomPOMDP",
+        use_utility=False,
+        beta_lr=2e-1,
+        **kwargs
 ):
-    env_config = RandomMDPConfig(
-        n_states=n_states,
-        n_actions=n_actions,
-        episode_length=episode_length,
-        seed=env_seed,
-        num_players=num_players,
-        history_length=history_length,
-        full_one_hot=full_one_hot
-    )
+    env_config = get_env_config(
+        environment_name=env
+    )(**kwargs)
 
-    config_name = str(env_config).replace("'", "").replace(" ", "").replace(":", "_").replace(",", "_")[1:-1]
-    env_name = f"RandomMDP_{config_name}"
-    #env_name = "cartpole"
-    register_env(env_name, env_maker)
+    env_config_dict = env_config.as_dict()
+    env_id = env_config.get_env_id()
 
+    register_env(env_id, env_config.get_maker())
 
-    rollout_fragment_length = episode_length // 10
-
-    dummy_env = RandomPOMDP(**env_config) #  env_maker_test(env_config)
+    rollout_fragment_length = env_config.episode_length // 10
+    dummy_env = env_config.get_maker()()
 
     policies = {
         f"background_deterministic_{bg_policy_seed}":
             (
-            #RandomPolicy,
-            RLlibDeterministicPolicy,
-            dummy_env.observation_space[0],
-            dummy_env.action_space[0],
-            dict(
-                config=env_config,
-                seed=bg_policy_seed,
-                _disable_preprocessor_api=True,
-            )
+                # RandomPolicy,
+                RLlibDeterministicPolicy,
+                dummy_env.observation_space[0],
+                dummy_env.action_space[0],
+                dict(
+                    config=env_config,
+                    seed=bg_policy_seed,
+                    # _disable_preprocessor_api=True,
+                )
 
-
-        ) for i, bg_policy_seed in enumerate(bg_policies)
+            ) for i, bg_policy_seed in enumerate(background)
     }
 
     background_population = list(policies.keys())
+    scenarios = ScenarioSet()
 
-    scenarios = ScenarioSet(
-        num_players=env_config["num_players"],
+    scenarios.build_from_population(
+        num_players=env_config.num_players,
         background_population=background_population
     )
 
-    num_workers = (os.cpu_count() - 1 -len(scenarios)) // len(scenarios)
+    num_workers = (os.cpu_count() - 1 - len(scenarios)) // len(scenarios)
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (
@@ -92,7 +81,7 @@ def main(
             {}
         )
 
-    #config = PPOConfig().training(
+    # config = PPOConfig().training(
 
     # ImpalaConfig().training(
     #     opt_type="rmsprop",
@@ -105,19 +94,17 @@ def main(
     #     gamma=0.99,
     # )
     config = make_bf_sgda_config(ImpalaConfig).training(
-        beta_lr=2e-2,
-        beta_smoothing=2000,
-        use_utility=False,
-        scenarios=tune.grid_search(scenarios.split()),
-        copy_weights_freq=1,
-
         learn_best_responses_only=True,
+        scenarios=tune.grid_search(scenarios.split()),
+
+        copy_weights_freq=1,
+        copy_history_len=30,
         best_response_timesteps_max=10_000_000,
 
         # IMPALA
-        #opt_type="rmsprop",
-        entropy_coeff=1e-4,
-        train_batch_size=rollout_fragment_length,
+        # opt_type="rmsprop",
+        entropy_coeff=3e-3,
+        train_batch_size=rollout_fragment_length * num_workers,
         momentum=0.,
         epsilon=1e-5,
         decay=0.99,
@@ -144,9 +131,9 @@ def main(
         # sgd_minibatch_size=rollout_fragment_length * num_workers * 16,
         # num_sgd_iter=1,
         model={
-            "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
+            "fcnet_hiddens": [],  # We learn a parameter for each state, simple softmax parametrization
             "vf_share_layers": False,
-            #"fcnet_activation": "linear",
+            # "fcnet_activation": "linear",
         }
     ).rollouts(
         num_rollout_workers=num_workers,
@@ -157,16 +144,15 @@ def main(
         batch_mode="complete_episodes",
         enable_connectors=True,
     ).environment(
-        env=env_name,
-        env_config=env_config
+        env=env_id,
+        env_config=env_config_dict
     ).resources(num_gpus=0
-    ).framework(framework="tf"
-    ).multi_agent(
+                ).framework(framework="tf"
+                            ).multi_agent(
         policies=policies,
         policies_to_train={Scenario.MAIN_POLICY_ID},
-        #policy_mapping_fn= lambda *a, **k: np.random.choice(list(policies.keys()))
         policy_mapping_fn=ScenarioMapper(
-           scenarios=scenarios
+            scenarios=scenarios
         ),
     ).experimental(
         _disable_preprocessor_api=False
@@ -174,19 +160,12 @@ def main(
 
     exp = tune.run(
         "IMPALA",
-        name="with_critic", # "BF_SGDA_v0.4"
+        name="best_responses_learning",
         config=config,
-        checkpoint_at_end=False,
+        checkpoint_at_end=True,
         checkpoint_freq=30,
         keep_checkpoints_num=3,
-        #resources_per_trial={"cpu": num_workers},
         num_samples=len(config.scenarios),
-        stop={
-            "timesteps_total": 1_000_000_000,
-        },
-        #local_dir="rllib_runs",
-        # restore=""
-        # resume=True
     )
 
 
