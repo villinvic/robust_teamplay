@@ -202,7 +202,7 @@ class ScenarioSet:
         with open(path, 'r') as f:
             d = yaml.safe_load(f)
 
-        eval_config = d.get("eval_config", {"num_episodes": 100})
+        eval_config = d.get("eval_config", {"num_episodes": 1000})
 
         scenarios = {
             scenario_name: Scenario(scenario_config["focal"], scenario_config["background"])

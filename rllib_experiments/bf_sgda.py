@@ -67,7 +67,7 @@ def main(
 
     config = make_bf_sgda_config(ImpalaConfig).training(
         beta_lr=beta_lr, #2e-1,
-        beta_smoothing=1000,
+        beta_smoothing=2000,
         use_utility=use_utility,
         scenarios=scenarios,
         copy_weights_freq=1,
@@ -77,8 +77,8 @@ def main(
 
         # IMPALA
         # opt_type="rmsprop",
-        entropy_coeff=3e-3,
-        train_batch_size=env_config.episode_length * num_workers * 8,
+        entropy_coeff=4e-3,
+        train_batch_size=env_config.episode_length * num_workers ,
         momentum=0.,
         epsilon=1e-5,
         decay=0.99,
