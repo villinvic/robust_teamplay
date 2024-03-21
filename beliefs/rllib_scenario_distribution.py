@@ -25,8 +25,8 @@ from utils import SmoothMetric
 
 
 def distribution_to_hist(distrib, precision=10000):
+    return np.random.choice(len(distrib), size=(precision,), p=distrib)
 
-    return np.random.choice(len(distrib), size=(precision,), p=distrib )
 
 class BackgroundFocalSGDA(DefaultCallbacks):
 
@@ -78,7 +78,6 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
             algorithm.cleanup = on_algorithm_save.__get__(algorithm, type(algorithm))
 
-
     def on_postprocess_trajectory(
             self,
             *,
@@ -95,7 +94,7 @@ class BackgroundFocalSGDA(DefaultCallbacks):
         Swap rewards to mean focal per capita return
         """
 
-        #content of original_batches changes when connectors are disbaled
+        # content of original_batches changes when connectors are disbaled
         # focal_rewards = [
         #     batch[SampleBatch.REWARDS] for agent_id, (_, batch) in original_batches.items()
         #     if "background" not in episode._agent_to_policy[agent_id]
@@ -130,7 +129,6 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
         episode.custom_metrics[f"{scenario_name}_utility"] = episodic_mean_focal_per_capita
 
-
     def on_train_result(
             self,
             *,
@@ -141,13 +139,8 @@ class BackgroundFocalSGDA(DefaultCallbacks):
         self.beta.update(result)
 
 
-
-
-
 class ScenarioSet:
-
     TEST_SET_PATH = str(pathlib.Path(__file__).parent.resolve()) + "/../data/test_sets/{env}/{set_name}.YAML"
-
 
     def __init__(self, scenarios: Dict[str, "Scenario"] = None, eval_config=None):
         self.scenarios = {}
@@ -228,18 +221,18 @@ class ScenarioSet:
         scenario_set = {
             "scenarios": {
 
-                scenario_name : {
-                "focal": scenario.num_copies,
-                "background": list(scenario.background_policies)
-            }
-            for scenario_name, scenario in self.scenarios.items()
-        } ,
+                scenario_name: {
+                    "focal": scenario.num_copies,
+                    "background": [policy_id.lstrip("background_") for policy_id in scenario.background_policies]
+                }
+                for scenario_name, scenario in self.scenarios.items()
+            },
 
             "eval_config": eval_config
         }
 
         parent_path = os.sep.join(path.split(os.sep)[:-1])
-        if not os.path.exists(parent_path) :
+        if not os.path.exists(parent_path):
             print("Created directory:", parent_path)
             os.makedirs(parent_path, exist_ok=True)
         with open(path, "w") as f:
@@ -247,7 +240,6 @@ class ScenarioSet:
                            default_flow_style=None,
                            width=50, indent=4
                            )
-
 
 
 #
@@ -342,7 +334,6 @@ def make_bf_sgda_config(cls) -> "BFSGDAConfig":
 
             self.callbacks_class = BackgroundFocalSGDA
 
-
             # Must be specified in the training config.
             self.scenarios = None
 
@@ -395,7 +386,6 @@ def make_bf_sgda_config(cls) -> "BFSGDAConfig":
     return BFSGDAConfig()
 
 
-
 class Scenario:
     MAIN_POLICY_ID = "MAIN_POLICY"
     MAIN_POLICY_COPY_ID = "MAIN_POLICY_COPY"  # An older version of the main policy
@@ -405,7 +395,8 @@ class Scenario:
         self.background_policies = background_policies
 
     def get_policies(self):
-        policies = [Scenario.MAIN_POLICY_ID] + [Scenario.MAIN_POLICY_COPY_ID] * (self.num_copies-1) + self.background_policies
+        policies = [Scenario.MAIN_POLICY_ID] + [Scenario.MAIN_POLICY_COPY_ID] * (
+                    self.num_copies - 1) + self.background_policies
 
         # We suppose the order of players does not matter, but we shuffle it in cases s0 is different for each player.
         np.random.shuffle(policies)
@@ -418,7 +409,6 @@ class Scenario:
         num_copies = len(np.argwhere(main_policy_mask))
 
         return f"<c={num_copies}, b={tuple(sorted(np_policies[np.logical_not(main_policy_mask)]))}>"
-
 
 
 class ScenarioMapper:
@@ -498,7 +488,7 @@ class ScenarioDistribution:
                 _, *, episodes_this_iter, step_ctx, iteration_results=None
         ):
             r = _base_compile_iteration_results(episodes_this_iter=episodes_this_iter, step_ctx=step_ctx,
-                                                     iteration_results=iteration_results)
+                                                iteration_results=iteration_results)
 
             scenario_counts = defaultdict(int)
             for episode in episodes_this_iter:
@@ -511,8 +501,6 @@ class ScenarioDistribution:
             return r
 
         self.algo._compile_iteration_results = _compile_iteration_results.__get__(self.algo, type(self.algo))
-
-
 
     def set_matchmaking(self):
 
@@ -592,15 +580,14 @@ class ScenarioDistribution:
         self.past_betas.append(self.beta_logits.copy())
 
         # Allow any scenario to be sampled with beta_eps prob
-        self.beta_logits[:] = self.beta_logits * (1-self.config.beta_eps) + self.config.beta_eps / len(self.beta_logits)
-
+        self.beta_logits[:] = self.beta_logits * (1 - self.config.beta_eps) + self.config.beta_eps / len(
+            self.beta_logits)
 
     def update(self, result: ResultDict):
         """
         We should get the regret/utility and update the distribution
         Update the policy mapping function after
         """
-
 
         time_steps = result["timesteps_total"]
         iter_data = result["custom_metrics"]
@@ -612,7 +599,8 @@ class ScenarioDistribution:
             expected_utility = iter_data.get(f"{self.current_best_response_scenario}_utility_mean", 0.)
             if self.current_best_response_scenario not in self.best_response_utilities:
                 self.current_best_response_utility.set(expected_utility)
-                self.best_response_utilities[self.current_best_response_scenario] = self.current_best_response_utility.get()
+                self.best_response_utilities[
+                    self.current_best_response_scenario] = self.current_best_response_utility.get()
             else:
                 self.current_best_response_utility.update(expected_utility)
 
@@ -623,10 +611,10 @@ class ScenarioDistribution:
 
             self.best_response_timesteps[self.current_best_response_scenario] += time_steps - self.prev_timesteps
             if self.best_response_timesteps[
-                    self.current_best_response_scenario] >= self.config.best_response_timesteps_max:
+                self.current_best_response_scenario] >= self.config.best_response_timesteps_max:
 
-                #expected_utility = iter_data[f"{self.current_best_response_scenario}_utility_mean"]
-                #self.best_response_utilities[self.current_best_response_scenario] = expected_utility
+                # expected_utility = iter_data[f"{self.current_best_response_scenario}_utility_mean"]
+                # self.best_response_utilities[self.current_best_response_scenario] = expected_utility
 
                 self.save_best_response_utilities()
                 if len(self.missing_best_responses) > 0:
@@ -676,7 +664,6 @@ class ScenarioDistribution:
             iter_data[f"uniform_utility"] = np.mean(utilities)
             iter_data[f"curr_distrib_utility"] = np.sum(utilities * self.beta_logits)
 
-
             # # Todo : is this fine ? We shouldn't make this  happen with large batch sizes
             # beta_losses[np.isnan(beta_losses)] = np.nanmean(beta_losses)
             self.beta_gradients(beta_losses)
@@ -688,14 +675,14 @@ class ScenarioDistribution:
 
         self.prev_timesteps = time_steps
 
-
         if not self.config.use_utility:
             result["custom_metrics"]["missing_best_response_utilities"] = len(self.missing_best_responses)
             if self.current_best_response_scenario is None:
                 result["custom_metrics"]["best_response_timesteps"] = 0
 
             else:
-                result["custom_metrics"]["best_response_timesteps"] = self.best_response_timesteps[self.current_best_response_scenario]
+                result["custom_metrics"]["best_response_timesteps"] = self.best_response_timesteps[
+                    self.current_best_response_scenario]
 
         result["hist_stats"]["scenario_distribution"] = distribution_to_hist(self.beta_logits)
         for scenario, prob in zip(self.scenarios.scenario_list, self.beta_logits):
@@ -708,7 +695,7 @@ class ScenarioDistribution:
 
 
 if __name__ == '__main__':
-
     p = "data/test_sets/RandomPOMDP_seed_0_n_states_5_n_actions_3_num_players_2_episode_length_100_history_length_2_full_one_hot_True/deterministic_set_tmp.YAML"
-    test_set = ScenarioSet.from_YAML("data/test_sets/RandomPOMDP_seed_0_n_states_5_n_actions_3_num_players_2_episode_length_100_history_length_2_full_one_hot_True/deterministic_set_0.YAML")
-    test_set.to_YAML(p, eval_config={"test_OK": [0,1,2,3]})
+    test_set = ScenarioSet.from_YAML(
+        "data/test_sets/RandomPOMDP_seed_0_n_states_5_n_actions_3_num_players_2_episode_length_100_history_length_2_full_one_hot_True/deterministic_set_0.YAML")
+    test_set.to_YAML(p, eval_config={"test_OK": [0, 1, 2, 3]})

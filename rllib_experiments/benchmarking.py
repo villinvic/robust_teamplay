@@ -102,7 +102,10 @@ class PolicyCkpt:
         self.env_name = env_name
 
         if "deterministic" in name:
-            _, policy_seed = name.split("_")
+            try:
+                _, policy_seed = name.split("_")
+            except ValueError as e:
+                raise ValueError(f"Malformed policy name: {name}.") from e
 
             def make(environment):
 
