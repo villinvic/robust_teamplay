@@ -453,6 +453,7 @@ class ScenarioDistribution:
 
         self.scenarios: ScenarioSet = self.config.scenarios
         self.beta_logits = np.ones(len(self.scenarios), dtype=np.float32) / len(self.scenarios)
+        print(self.config.beta_lr)
         if self.config.self_play:
             self.beta_logits[:] = [
                 float(len(self.scenarios[scenario].background_policies) == 0)
@@ -483,6 +484,7 @@ class ScenarioDistribution:
             self.set_matchmaking()
 
         _base_compile_iteration_results = algo._compile_iteration_results
+
         def _compile_iteration_results(
                 _, *, episodes_this_iter, step_ctx, iteration_results=None
         ):
@@ -499,8 +501,6 @@ class ScenarioDistribution:
 
             return r
 
-
-        #setattr(self.algo, "_base_compile_iteration_results", self.algo._compile_iteration_results)
         self.algo._compile_iteration_results = _compile_iteration_results.__get__(self.algo, type(self.algo))
 
 
