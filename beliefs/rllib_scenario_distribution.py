@@ -24,6 +24,10 @@ from beliefs.prior import project_onto_simplex
 from utils import SmoothMetric
 
 
+def distribution_to_hist(distrib, precision=10000):
+
+    return np.random.choice(len(distrib), size=(precision,), p=distrib )
+
 class BackgroundFocalSGDA(DefaultCallbacks):
 
     def __init__(self):
@@ -453,7 +457,7 @@ class ScenarioDistribution:
         self.missing_best_responses: list = []
         self.current_best_response_scenario = None
         self.current_best_response_utility = SmoothMetric(lr=0.98)
-        self.scenario_utilities = defaultdict(lambda : SmoothMetric(lr=0.99))
+        self.scenario_utilities = defaultdict(lambda: SmoothMetric(lr=0.95))
 
         if not self.config.use_utility:
 
@@ -655,9 +659,7 @@ class ScenarioDistribution:
             else:
                 result["custom_metrics"]["best_response_timesteps"] = self.best_response_timesteps[self.current_best_response_scenario]
 
-
-
-        result["hist_stats"]["scenario_distribution"] = self.beta_logits.copy()
+        result["hist_stats"]["scenario_distribution"] = distribution_to_hist(self.beta_logits)
         for scenario, prob in zip(self.scenarios.scenario_list, self.beta_logits):
             result["custom_metrics"][f"{scenario}_probability"] = prob
 
