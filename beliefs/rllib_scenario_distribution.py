@@ -249,89 +249,91 @@ class ScenarioSet:
 
 
 
+#
+# class PPOBFSGDAConfig(PPOConfig):
+#     def __init__(self, algo_class=None):
+#         super().__init__(algo_class=algo_class)
+#
+#         self.beta_lr = 5e-2
+#         self.beta_eps = 1e-2
+#
+#         self.beta_smoothing = 1000
+#         self.copy_weights_freq = 5
+#         self.best_response_timesteps_max = 1_000_000
+#
+#         self.use_utility = False
+#         self.self_play = False
+#         self.learn_best_responses_only = True
+#
+#         self.best_response_utilities_path = os.getcwd() +  "/data/best_response_utilities/{env_name}.pkl"
+#
+#         # TODO if we have deep learning bg policies:
+#         # Use our PolicyCkpt class
+#         self.background_population_path = None
+#
+#         self.callbacks_class = BackgroundFocalSGDA
+#         self.scenarios = None
+#
+#     def training(
+#             self,
+#             *,
+#             beta_lr: Optional[float] = NotProvided,
+#             beta_smoothing: Optional[float] = NotProvided,
+#             use_utility: Optional[bool] = NotProvided,
+#             self_play: Optional[bool] = NotProvided,
+#             copy_weights_freq: Optional[int] = NotProvided,
+#             best_response_timesteps_max: Optional[int] = NotProvided,
+#             best_response_utilities_path: Optional[str] = NotProvided,
+#             learn_best_responses_only: Optional[bool] = NotProvided,
+#             beta_eps: Optional[float] = NotProvided,
+#             scenarios: ScenarioSet = NotProvided,
+#             **kwargs,
+#     ) -> "PPOConfig":
+#
+#         super().training(**kwargs)
+#         if beta_lr is not NotProvided:
+#             self.beta_lr = beta_lr
+#         if beta_smoothing is not NotProvided:
+#             self.beta_smoothing = beta_smoothing
+#         if use_utility is not NotProvided:
+#             self.use_utility = use_utility
+#         if self_play is not NotProvided:
+#             self.self_play = self_play
+#         if copy_weights_freq is not NotProvided:
+#             self.copy_weights_freq = copy_weights_freq
+#         if learn_best_responses_only is not NotProvided:
+#             self.learn_best_responses_only = learn_best_responses_only
+#         if best_response_utilities_path is not NotProvided:
+#             self.best_response_utilities_path = best_response_utilities_path
+#         if beta_eps is not NotProvided:
+#             self.beta_eps = beta_eps
+#
+#         if best_response_timesteps_max is not NotProvided:
+#             self.best_response_timesteps_max = best_response_timesteps_max
+#
+#         assert scenarios is not NotProvided, "You must provide an initial scenario set."
+#         self.scenarios = scenarios
+#
+#         return self
 
-class PPOBFSGDAConfig(PPOConfig):
-    def __init__(self, algo_class=None):
-        super().__init__(algo_class=algo_class)
 
-        self.beta_lr = 5e-2
-        self.beta_eps = 1e-2
-
-        self.beta_smoothing = 1000
-        self.copy_weights_freq = 5
-        self.best_response_timesteps_max = 1_000_000
-
-        self.use_utility = False
-        self.self_play = False
-        self.learn_best_responses_only = True
-
-        self.best_response_utilities_path = os.getcwd() +  "/data/best_response_utilities/{env_name}.pkl"
-
-        # TODO if we have deep learning bg policies:
-        # Use our PolicyCkpt class
-        self.background_population_path = None
-
-        self.callbacks_class = BackgroundFocalSGDA
-        self.scenarios = None
-
-    def training(
-            self,
-            *,
-            beta_lr: Optional[float] = NotProvided,
-            beta_smoothing: Optional[float] = NotProvided,
-            use_utility: Optional[bool] = NotProvided,
-            self_play: Optional[bool] = NotProvided,
-            copy_weights_freq: Optional[int] = NotProvided,
-            best_response_timesteps_max: Optional[int] = NotProvided,
-            best_response_utilities_path: Optional[str] = NotProvided,
-            learn_best_responses_only: Optional[bool] = NotProvided,
-            beta_eps: Optional[float] = NotProvided,
-            scenarios: ScenarioSet = NotProvided,
-            **kwargs,
-    ) -> "PPOConfig":
-
-        super().training(**kwargs)
-        if beta_lr is not NotProvided:
-            self.beta_lr = beta_lr
-        if beta_smoothing is not NotProvided:
-            self.beta_smoothing = beta_smoothing
-        if use_utility is not NotProvided:
-            self.use_utility = use_utility
-        if self_play is not NotProvided:
-            self.self_play = self_play
-        if copy_weights_freq is not NotProvided:
-            self.copy_weights_freq = copy_weights_freq
-        if learn_best_responses_only is not NotProvided:
-            self.learn_best_responses_only = learn_best_responses_only
-        if best_response_utilities_path is not NotProvided:
-            self.best_response_utilities_path = best_response_utilities_path
-        if beta_eps is not NotProvided:
-            self.beta_eps = beta_eps
-
-        if best_response_timesteps_max is not NotProvided:
-            self.best_response_timesteps_max = best_response_timesteps_max
-
-        assert scenarios is not NotProvided, "You must provide an initial scenario set."
-        self.scenarios = scenarios
-
-        return self
-
-
-def make_bf_sgda_config(cls):
+def make_bf_sgda_config(cls) -> "BFSGDAConfig":
     class BFSGDAConfig(cls):
         def __init__(self):
             super().__init__()
 
             self.beta_lr = 5e-2
-            self.beta_smoothing = 1000
-            self.use_utility = False
-            self.scenarios = None
-            self.copy_weights_freq = 5
-            self.copy_history_len = 30
             self.beta_eps = 1e-2
 
-            self.learn_best_responses_only = True
+            self.beta_smoothing = 1000
+            self.copy_weights_freq = 5
+            self.copy_history_len = 30
             self.best_response_timesteps_max = 1_000_000
+
+            self.use_utility = False
+            self.self_play = False
+            self.learn_best_responses_only = True
+
             self.best_response_utilities_path = os.getcwd() + "/data/best_response_utilities/{env_name}.pkl"
 
             # TODO if we have deep learning bg policies:
@@ -339,12 +341,17 @@ def make_bf_sgda_config(cls):
 
             self.callbacks_class = BackgroundFocalSGDA
 
+
+            # Must be specified in the training config.
+            self.scenarios = None
+
         def training(
                 self,
                 *,
                 beta_lr: Optional[float] = NotProvided,
                 beta_smoothing: Optional[float] = NotProvided,
                 use_utility: Optional[bool] = NotProvided,
+                self_play: Optional[bool] = NotProvided,
                 copy_weights_freq: Optional[int] = NotProvided,
                 best_response_timesteps_max: Optional[int] = NotProvided,
                 best_response_utilities_path: Optional[str] = NotProvided,
@@ -363,6 +370,8 @@ def make_bf_sgda_config(cls):
                 self.beta_smoothing = beta_smoothing
             if use_utility is not NotProvided:
                 self.use_utility = use_utility
+            if self_play is not NotProvided:
+                self.self_play = self_play
             if copy_weights_freq is not NotProvided:
                 self.copy_weights_freq = copy_weights_freq
             if copy_history_len is not NotProvided:
@@ -446,14 +455,13 @@ class ScenarioDistribution:
         # TODO : write a way to load a background population, and compute all bru needed -> dump into file.
         # -> Focus iteratively on each scenario with a new initialized policy, dump after t timesteps, repeat (skip if entry already in file)
         self.algo: Algorithm = algo
-        self.config: PPOBFSGDAConfig = algo.config
+        self.config: "PPOBFSGDAConfig" = algo.config
         self.learn_best_responses = learn_best_responses
 
         self.best_response_utilities = {}
 
         self.scenarios: ScenarioSet = self.config.scenarios
         self.beta_logits = np.ones(len(self.scenarios), dtype=np.float32) / len(self.scenarios)
-        print(self.config.beta_lr)
         if self.config.self_play:
             self.beta_logits[:] = [
                 float(len(self.scenarios[scenario].background_policies) == 0)
