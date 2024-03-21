@@ -88,7 +88,7 @@ def run_episode(policies: Dict[str, Policy], env, n_episodes = 10):
 
     return {
         "focal_per_capita_mean": float(np.mean(episodic_focal_per_capita)),
-        "focal_per_capita_mean_ste": float(np.std(episodic_focal_per_capita) / np.sqrt(n_episodes))
+        "focal_per_capita_ste": float(np.std(episodic_focal_per_capita) / np.sqrt(n_episodes))
     }
 
 
