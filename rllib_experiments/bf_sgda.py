@@ -67,7 +67,7 @@ def main(
 
     config = make_bf_sgda_config(ImpalaConfig).training(
         beta_lr=beta_lr, #2e-1,
-        beta_smoothing=75,
+        beta_smoothing=1000,
         use_utility=use_utility,
         scenarios=scenarios,
         copy_weights_freq=1,
@@ -78,7 +78,7 @@ def main(
         # IMPALA
         # opt_type="rmsprop",
         entropy_coeff=3e-3,
-        train_batch_size=env_config.episode_length * num_workers,
+        train_batch_size=env_config.episode_length * num_workers * 8,
         momentum=0.,
         epsilon=1e-5,
         decay=0.99,
@@ -142,7 +142,7 @@ def main(
         name=f"BF_SGDA_v{version}",
         config=config,
         checkpoint_at_end=True,
-        checkpoint_freq=30,
+        checkpoint_freq=300,
         keep_checkpoints_num=3,
         stop={
             "timesteps_total": 50_000_000,
