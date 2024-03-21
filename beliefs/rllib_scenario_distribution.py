@@ -470,7 +470,7 @@ class ScenarioDistribution:
         self.missing_best_responses: list = []
         self.current_best_response_scenario = None
         self.current_best_response_utility = SmoothMetric(lr=0.98)
-        self.scenario_utilities = defaultdict(lambda: SmoothMetric(lr=0.9))
+        self.scenario_utilities = defaultdict(lambda: SmoothMetric(lr=0.8))
 
         if not self.config.use_utility:
 

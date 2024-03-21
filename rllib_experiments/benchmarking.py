@@ -43,7 +43,7 @@ def run_episode(policies: Dict[str, Policy], env, n_episodes = 10):
         env.observation_space[0]
     )
 
-    per_capita_focal_mean = 0
+    episodic_focal_per_capita = []
 
     for i in range(n_episodes):
         policies = shuffle_dict(policies)
@@ -57,6 +57,7 @@ def run_episode(policies: Dict[str, Policy], env, n_episodes = 10):
 
         done = False
         obs, _ = env.reset()
+        focal_per_capita = 0
         while not done:
             actions = {}
             for agent_id in env._agent_ids:
@@ -81,11 +82,13 @@ def run_episode(policies: Dict[str, Policy], env, n_episodes = 10):
             timestep_focal_rewards = [
                 r for agent_id, r in rewards.items() if not "background" in agent_to_policy[agent_id]
             ]
-            per_capita_focal_mean += sum(timestep_focal_rewards) / n_focal
+            focal_per_capita += sum(timestep_focal_rewards) / n_focal
+        episodic_focal_per_capita.append(focal_per_capita)
 
 
     return {
-        "focal_per_capita_mean" : float(per_capita_focal_mean / n_episodes)
+        "focal_per_capita_mean": float(np.mean(episodic_focal_per_capita)),
+        "focal_per_capita_mean_ste": float(np.std(episodic_focal_per_capita) / np.sqrt(n_episodes))
     }
 
 
@@ -242,16 +245,20 @@ class Evaluation:
                     res.update(**out)
                     progress.update(task, advance=1)
 
-        scores =  np.array([result["focal_per_capita_mean"] for result in res.values()])
+        scores = np.array([result["focal_per_capita_mean"] for result in res.values()])
+        score_stes = np.array([result["focal_per_capita_ste"] for result in res.values()])
 
         if "distribution" in self.test_set.eval_config:
             expected_utility = float(np.sum(np.array(self.test_set.eval_config["distribution"]) * scores))
+            overall_ste = float(np.sum(np.array(self.test_set.eval_config["distribution"]) * score_stes))
         else:
             expected_utility = float(np.mean(scores))
+            overall_ste = float(np.mean(score_stes))
 
         out_dict = {
             "overall_score": expected_utility,
-            "per_scenario_score": res
+            "overall_standard_error": overall_ste,
+            "per_scenario": res
         }
         return {
             policy_name: out_dict
