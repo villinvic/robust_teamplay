@@ -51,6 +51,10 @@ class MultiValueSoftmax(TFModelV2):
 
     def forward(self, input_dict, state, seq_lens):
 
+        print(input_dict)
+
+        exit()
+
         obs_input = input_dict[SampleBatch.OBS]
         scenario_mask = input_dict[SampleBatch.INFOS]
 
