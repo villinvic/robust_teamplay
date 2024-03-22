@@ -7,6 +7,7 @@ from ray.rllib.models import ModelV2
 from ray.rllib.models.tf import TFModelV2
 from ray.rllib.policy.view_requirement import ViewRequirement
 from ray.rllib.utils import override, try_import_tf
+from ray.rllib.utils.typing import TensorType
 
 tf1, tf, tfv = try_import_tf()
 
@@ -68,3 +69,10 @@ class MultiValueSoftmax(TFModelV2):
         return tf.reshape(
             tf.reduce_sum(self.scenario_mask * self._values_out, axis=-1)
             , [-1])
+
+
+    def metrics(self):
+
+        return {
+            "scenarios": tf.reduce_mean(tf.math.argmax(self.scenario_mask))
+        }

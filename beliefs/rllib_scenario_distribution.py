@@ -147,12 +147,6 @@ class BackgroundFocalSGDA(DefaultCallbacks):
     ) -> None:
         self.beta.update(result)
 
-
-    def on_learn_on_batch(
-        self, *, policy: Policy, train_batch: SampleBatch, result: dict, **kwargs
-    ) -> None:
-        print("INFOS :", train_batch.get(SampleBatch.INFOS, None))
-
 class ScenarioSet:
     TEST_SET_PATH = str(pathlib.Path(__file__).parent.resolve()) + "/../data/test_sets/{env}/{set_name}.YAML"
 
