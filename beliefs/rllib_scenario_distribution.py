@@ -109,8 +109,14 @@ class BackgroundFocalSGDA(DefaultCallbacks):
         postprocessed_batch[SampleBatch.REWARDS][:] = mean_focal_per_capita
 
         scenario_name = Scenario.get_scenario_name([ policy_id for agent_id, policy_id in episode.agent_rewards])
+        if self.beta is None:
+            print("??????????????")
+            scenario_id = 0
+        else:
+            scenario_id = self.beta.scenarios.scenario_to_id[scenario_name]
+
         postprocessed_batch[SampleBatch.INFOS][:] = {
-            "scenario": self.beta.scenarios.scenario_to_id[scenario_name]
+            "scenario": scenario_id
         }
 
         print(postprocessed_batch[SampleBatch.INFOS])
