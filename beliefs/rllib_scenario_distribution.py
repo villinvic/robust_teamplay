@@ -118,7 +118,7 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
         scenario_name = Scenario.get_scenario_name([ policy_id for agent_id, policy_id in episode.agent_rewards])
 
-        print(postprocessed_batch)
+        print("WWWW", postprocessed_batch)
 
         postprocessed_batch[SampleBatch.INFOS][:] = {
             "scenario": self.scenarios.scenario_to_id[scenario_name]
