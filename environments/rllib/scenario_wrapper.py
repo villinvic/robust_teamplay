@@ -23,8 +23,8 @@ def InfoWrapper(env_cls: Type[MultiAgentEnv]) -> Type[MultiAgentEnv]:
             super().__init__(*args, **kwargs)
             self.build_info_dict()
 
-        def step(self, action):
-            observations, rewards, dones, truncs, _ = self.step(action)
+        def step(self, actions):
+            observations, rewards, dones, truncs, _ = super().step(actions)
 
             return observations, rewards, dones, truncs, self.infos.copy()
 
