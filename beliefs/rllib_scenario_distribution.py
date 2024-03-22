@@ -31,7 +31,7 @@ def distribution_to_hist(distrib, precision=10000):
 class BackgroundFocalSGDA(DefaultCallbacks):
 
     def __init__(self, scenarios):
-        super().__init__(scenarios)
+        super().__init__()
 
         self.beta: ScenarioDistribution = None
         self.scenarios = scenarios
@@ -354,7 +354,6 @@ def make_bf_sgda_config(cls) -> "BFSGDAConfig":
 
             # Must be specified in the training config.
             self.scenarios = None
-            self.callbacks_class = None
 
         def training(
                 self,
