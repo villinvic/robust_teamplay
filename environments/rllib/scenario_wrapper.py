@@ -29,7 +29,7 @@ def InfoWrapper(env_cls: Type[MultiAgentEnv]) -> Type[MultiAgentEnv]:
             return observations, rewards, dones, truncs, self.infos.copy()
 
         def reset(self, *args, **kwargs):
-            return self.env.reset(*args, **kwargs), self.infos.copy()
+            return self.reset(*args, **kwargs), self.infos.copy()
 
     InfoWrapper.__name__ = env_cls.__name__
     InfoWrapper.__qualname__ =  env_cls.__name__
