@@ -111,7 +111,9 @@ def main(
             # #"fcnet_activation": "linear",
 
             "custom_model": "models.softmax.multi_values.MultiValueSoftmax",
-            "n_scenarios"  : len(scenarios),
+            "custom_model_config": {
+                "n_scenarios": len(scenarios),
+            }
         }
     ).rollouts(
         num_rollout_workers=num_workers,
