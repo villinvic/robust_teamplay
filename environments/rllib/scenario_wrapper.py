@@ -3,7 +3,7 @@ from typing import Type
 from ray.rllib import MultiAgentEnv
 
 
-def InfoWrapper(env_cls) -> Type[MultiAgentEnv]:
+def InfoWrapper(env_cls: Type[MultiAgentEnv]) -> Type[MultiAgentEnv]:
     """
     Multi agent env wrapper
     """
