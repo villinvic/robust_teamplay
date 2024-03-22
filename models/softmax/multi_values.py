@@ -1,9 +1,11 @@
 from typing import List
 
 import numpy as np
+from gymnasium.spaces import Dict, Discrete
 from ray.rllib import SampleBatch
 from ray.rllib.models import ModelV2
 from ray.rllib.models.tf import TFModelV2
+from ray.rllib.policy.view_requirement import ViewRequirement
 from ray.rllib.utils import override, try_import_tf
 
 tf1, tf, tfv = try_import_tf()
@@ -18,6 +20,14 @@ class MultiValueSoftmax(TFModelV2):
 
         super().__init__(
             obs_space, action_space, self.num_outputs, model_config, name
+        )
+
+        self.view_requirements[SampleBatch.INFOS] = ViewRequirement(
+            SampleBatch.INFOS, shift=0, space=Dict(
+                {
+                    "scenario": Discrete(self.n_scenarios)
+                }
+            ), used_for_training=True, used_for_compute_actions=False
         )
 
         obs_input = tf.keras.layers.Input(shape=obs_space.shape, name="obs_input", dtype=tf.float32)
