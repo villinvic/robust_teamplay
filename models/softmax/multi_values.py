@@ -27,7 +27,7 @@ class MultiValueSoftmax(TFModelV2):
                 {
                     "scenario": Discrete(self.n_scenarios)
                 }
-            ), used_for_training=True, used_for_compute_actions=False
+            ), used_for_training=True, used_for_compute_actions=True
         )
 
         obs_input = tf.keras.layers.Input(shape=obs_space.shape, name="obs_input", dtype=tf.float32)
@@ -50,10 +50,6 @@ class MultiValueSoftmax(TFModelV2):
             [action_logits, value_out])
 
     def forward(self, input_dict, state, seq_lens):
-
-        print(input_dict)
-
-        exit()
 
         obs_input = input_dict[SampleBatch.OBS]
         scenario_mask = input_dict[SampleBatch.INFOS]
