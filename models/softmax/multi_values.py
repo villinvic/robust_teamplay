@@ -23,7 +23,7 @@ class MultiValueSoftmax(TFModelV2):
         obs_input = tf.keras.layers.Input(shape=obs_space.shape, name="obs_input", dtype=tf.float32)
         scenario_mask = tf.keras.layers.Input(shape=(self.n_scenarios,), name="scenario_mask", dtype=tf.float32)
 
-        action_out = tf.keras.layers.Dense(
+        action_logits = tf.keras.layers.Dense(
             self.num_outputs,
             name="action_logits",
             activation="linear"
@@ -31,13 +31,13 @@ class MultiValueSoftmax(TFModelV2):
 
         value_out = tf.reduce_sum(tf.keras.layers.Dense(
             self.n_scenarios,
-            name="action_logits",
+            name="values_out",
             activation="linear"
         )(obs_input) * scenario_mask, axis=-1)
 
         self.base_model = tf.keras.Model(
             [obs_input],
-            [action_out, value_out])
+            [action_logits, value_out])
 
     def forward(self, input_dict, state, seq_lens):
 
