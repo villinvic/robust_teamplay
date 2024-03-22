@@ -4,7 +4,9 @@ import numpy as np
 from ray.rllib import SampleBatch
 from ray.rllib.models import ModelV2
 from ray.rllib.models.tf import TFModelV2
-from ray.rllib.utils import override
+from ray.rllib.utils import override, try_import_tf
+
+tf1, tf, tfv = try_import_tf()
 
 class MultiValueSoftmax(TFModelV2):
 
@@ -14,7 +16,7 @@ class MultiValueSoftmax(TFModelV2):
         self.num_outputs = action_space.n
         self.n_scenarios = model_config["n_scenarios"]
 
-        super(TFModelV2, self).__init__(
+        super().__init__(
             obs_space, action_space, self.num_outputs, model_config, name
         )
 
