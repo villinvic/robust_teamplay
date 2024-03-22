@@ -52,13 +52,10 @@ class MultiValueSoftmax(TFModelV2):
     def forward(self, input_dict, state, seq_lens):
 
         obs_input = input_dict[SampleBatch.OBS]
-        print(
-            input_dict[SampleBatch.NEXT_OBS],
-            input_dict[SampleBatch.OBS],
-            input_dict[SampleBatch.INFOS]
 
-        )
-        self.scenario_mask = input_dict[SampleBatch.INFOS]
+        self.scenario_mask = input_dict.get(SampleBatch.INFOS,
+                                            tf.one_hot([[0]], indices=self.n_scenarios)
+                                            )
 
         context, self._values_out = self.base_model(
             [obs_input, self.scenario_mask]
