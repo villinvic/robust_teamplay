@@ -36,7 +36,7 @@ class MultiValueSoftmax(TFModelV2):
         )(obs_input) * scenario_mask, axis=-1)
 
         self.base_model = tf.keras.Model(
-            [obs_input],
+            [obs_input, scenario_mask],
             [action_logits, value_out])
 
     def forward(self, input_dict, state, seq_lens):
