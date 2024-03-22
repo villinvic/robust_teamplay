@@ -351,10 +351,10 @@ def make_bf_sgda_config(cls) -> "BFSGDAConfig":
             # TODO if we have deep learning bg policies:
             self.background_population_path = None
 
-            self.callbacks_class = BackgroundFocalSGDA
 
             # Must be specified in the training config.
             self.scenarios = None
+            self.callbacks_class = None
 
         def training(
                 self,
@@ -399,6 +399,7 @@ def make_bf_sgda_config(cls) -> "BFSGDAConfig":
 
             assert scenarios is not NotProvided, "You must provide an initial scenario set."
             self.scenarios = scenarios
+            self.callbacks_class = BackgroundFocalSGDA(scenarios=scenarios)
 
             return self
 
