@@ -108,6 +108,13 @@ class BackgroundFocalSGDA(DefaultCallbacks):
         mean_focal_per_capita = sum(focal_rewards) / len(focal_rewards)
         postprocessed_batch[SampleBatch.REWARDS][:] = mean_focal_per_capita
 
+        scenario_name = Scenario.get_scenario_name([ policy_id for agent_id, policy_id in episode.agent_rewards])
+        postprocessed_batch[SampleBatch.INFOS][:] = {
+            "scenario": self.beta.scenarios.scenario_to_id[scenario_name]
+        }
+
+        print(postprocessed_batch[SampleBatch.INFOS])
+
     def on_episode_end(
             self,
             *,
@@ -144,12 +151,15 @@ class ScenarioSet:
     def __init__(self, scenarios: Dict[str, "Scenario"] = None, eval_config=None):
         self.scenarios = {}
         self.scenario_list = []
-
         self.eval_config = {}
+        self.scenario_to_id = {}
 
         if scenarios is not None:
             self.scenarios = scenarios
             self.scenario_list = list(scenarios.keys())
+            self.scenario_to_id = {
+                scenario_name: i for i, scenario_name in enumerate(self.scenario_list)
+            }
 
         if eval_config is not None:
             self.eval_config.update(**eval_config)
@@ -170,6 +180,9 @@ class ScenarioSet:
                 self.scenarios[scenario_name] = Scenario(num_copies, list(background_policies))
 
         self.scenario_list = np.array(list(self.scenarios.keys()))
+        self.scenario_to_id = {
+            scenario_name: i for i, scenario_name in enumerate(self.scenario_list)
+        }
 
     def sample_scenario(self, distribution):
         return np.random.choice(self.scenario_list, p=distribution)

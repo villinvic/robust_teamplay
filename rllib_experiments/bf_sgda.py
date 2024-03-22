@@ -106,9 +106,12 @@ def main(
         # sgd_minibatch_size=64*num_workers*2,
         # num_sgd_iter=16,
         model={
-            "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
-            "vf_share_layers": False,
-            #"fcnet_activation": "linear",
+            # "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
+            # "vf_share_layers": False,
+            # #"fcnet_activation": "linear",
+
+            "custom_model": "models.softmax.multi_values.MultiValueSoftmax",
+            "n_scenarios"  : len(scenarios),
         }
     ).rollouts(
         num_rollout_workers=num_workers,
