@@ -54,7 +54,9 @@ class MultiValueSoftmax(TFModelV2):
         obs_input = input_dict[SampleBatch.OBS]
         print(
             input_dict[SampleBatch.NEXT_OBS],
-            input_dict[SampleBatch.OBS]
+            input_dict[SampleBatch.OBS],
+            input_dict[SampleBatch.INFOS]
+
         )
         self.scenario_mask = input_dict[SampleBatch.INFOS]
 
