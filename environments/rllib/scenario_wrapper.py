@@ -16,7 +16,7 @@ def InfoWrapper(env_cls) -> Type[MultiAgentEnv]:
 
         def build_info_dict(self):
             self.infos = {
-                agent_id: InfoWrapper.info_placeholder for agent_id in self.env._agent_ids
+                agent_id: InfoWrapper.info_placeholder for agent_id in self._agent_ids
             }
 
         def __init__(self, *args, **kwargs):
