@@ -30,10 +30,11 @@ def distribution_to_hist(distrib, precision=10000):
 
 class BackgroundFocalSGDA(DefaultCallbacks):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, scenarios):
+        super().__init__(scenarios)
 
         self.beta: ScenarioDistribution = None
+        self.scenarios = scenarios
 
     def on_algorithm_init(
             self,
@@ -43,6 +44,7 @@ class BackgroundFocalSGDA(DefaultCallbacks):
     ) -> None:
 
         self.beta = ScenarioDistribution(algorithm)
+        del self.scenarios
 
         if not self.beta.config.learn_best_responses_only:
 
@@ -109,17 +111,10 @@ class BackgroundFocalSGDA(DefaultCallbacks):
         postprocessed_batch[SampleBatch.REWARDS][:] = mean_focal_per_capita
 
         scenario_name = Scenario.get_scenario_name([ policy_id for agent_id, policy_id in episode.agent_rewards])
-        if self.beta is None:
-            print("??????????????")
-            scenario_id = 0
-        else:
-            scenario_id = self.beta.scenarios.scenario_to_id[scenario_name]
 
         postprocessed_batch[SampleBatch.INFOS][:] = {
-            "scenario": scenario_id
+            "scenario": self.scenarios.scenario_to_id[scenario_name]
         }
-
-        print(postprocessed_batch[SampleBatch.INFOS])
 
     def on_episode_end(
             self,
@@ -150,6 +145,12 @@ class BackgroundFocalSGDA(DefaultCallbacks):
             **kwargs,
     ) -> None:
         self.beta.update(result)
+
+
+    def on_learn_on_batch(
+        self, *, policy: Policy, train_batch: SampleBatch, result: dict, **kwargs
+    ) -> None:
+        print("INFOS :", train_batch.get(SampleBatch.INFOS, None))
 
 class ScenarioSet:
     TEST_SET_PATH = str(pathlib.Path(__file__).parent.resolve()) + "/../data/test_sets/{env}/{set_name}.YAML"
