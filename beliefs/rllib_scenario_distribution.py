@@ -81,6 +81,11 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
             algorithm.cleanup = on_algorithm_save.__get__(algorithm, type(algorithm))
 
+    def on_sample_end(
+        self, *, worker: "RolloutWorker", samples: SampleBatch, **kwargs
+    ) -> None:
+        print(samples.keys())
+
     def on_postprocess_trajectory(
             self,
             *,
