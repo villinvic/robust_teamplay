@@ -8,9 +8,9 @@ from ray.rllib.utils import override
 
 class MultiValueSoftmax(TFModelV2):
 
-    def __init__(self, obs_space, action_space, num_outputs, model_config, name):
+    def __init__(self, obs_space, action_space, num_outputs, model_config, name, **kwargs):
         # learns to play as one character, against many characters
-
+        print(kwargs)
         self.num_outputs = action_space.n
         self.n_scenarios = model_config["n_scenarios"]
 
