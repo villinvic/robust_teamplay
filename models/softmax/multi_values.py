@@ -53,9 +53,10 @@ class MultiValueSoftmax(TFModelV2):
 
         obs_input = input_dict[SampleBatch.OBS]
 
-        self.scenario_mask = input_dict.get(SampleBatch.INFOS,
-                                            tf.one_hot([[0]], indices=self.n_scenarios)
-                                            )
+        if SampleBatch.INFOS not in input_dict:
+            self.scenario_mask = tf.one_hot([[0]], depth=self.n_scenarios)
+        else:
+            self.scenario_mask = input_dict[SampleBatch.INFOS]
 
         context, self._values_out = self.base_model(
             [obs_input, self.scenario_mask]
