@@ -5,6 +5,7 @@ import pickle
 import queue
 from collections import deque, defaultdict, ChainMap
 from copy import copy, deepcopy
+from functools import partial
 from typing import Dict, Tuple, Union, Optional, List
 
 import numpy as np
@@ -398,7 +399,7 @@ def make_bf_sgda_config(cls) -> "BFSGDAConfig":
 
             assert scenarios is not NotProvided, "You must provide an initial scenario set."
             self.scenarios = scenarios
-            self.callbacks_class = BackgroundFocalSGDA(scenarios=scenarios)
+            self.callbacks_class = partial(BackgroundFocalSGDA, scenarios=scenarios)
 
             return self
 
