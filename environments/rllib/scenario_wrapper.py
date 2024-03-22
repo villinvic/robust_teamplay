@@ -1,29 +1,37 @@
-from gymnasium import Wrapper
+from typing import Type
+
 from ray.rllib import MultiAgentEnv
 
 
-class InfoWrapper(Wrapper):
+def InfoWrapper(env_cls) -> Type[MultiAgentEnv]:
     """
     Multi agent env wrapper
     """
 
-    def __init__(self, env: MultiAgentEnv):
-        super().__init__(env)
-        self.env : MultiAgentEnv
-        self.info_placeholder = {
+    class InfoWrapper(env_cls):
+
+        info_placeholder = {
             "scenario": 0
         }
 
-    def step(self, action):
-        observations, rewards, dones, truncs, infos = self.env.step(action)
+        def build_info_dict(self):
+            self.infos = {
+                agent_id: InfoWrapper.info_placeholder for agent_id in self.env._agent_ids
+            }
 
-        # Add custom information to the info dictionary
-        infos = {
-            agent_id: self.info_placeholder for agent_id in self.env._agent_ids
-        }
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.build_info_dict()
 
-        return observations, rewards, dones, truncs, infos
+        def step(self, action):
+            observations, rewards, dones, truncs, _ = self.env.step(action)
 
-    def reset(self, **kwargs):
-        self.custom_info = {}  # Reset custom info on environment reset
-        return self.env.reset(**kwargs)
+            return observations, rewards, dones, truncs, self.infos.copy()
+
+        def reset(self, *args, **kwargs):
+            return self.env.reset(*args, **kwargs), self.infos.copy()
+
+    InfoWrapper.__name__ = env_cls.__name__
+    InfoWrapper.__qualname__ =  env_cls.__name__
+
+    return InfoWrapper

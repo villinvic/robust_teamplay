@@ -50,7 +50,7 @@ class RandomPOMDPConfig(EnvConfig):
 
     def get_maker(self):
         def env_maker(config=None):
-            return InfoWrapper(RandomPOMDP(**self.as_dict()))
+            return InfoWrapper(RandomPOMDP)(**self.as_dict())
 
         return env_maker
 
