@@ -67,7 +67,7 @@ def run_episode(policies: Dict[str, Policy], env, n_episodes = 10):
                 input_dict = {
                     SampleBatch.OBS:# [[obs[agent_id]]]
                         {
-                        name: tf.tensor([feature]) for name, feature in obs[agent_id].items()
+                        name: tf.Tensor([feature]) for name, feature in obs[agent_id].items()
                     },
                 }
                 for i, s in enumerate(states[agent_id]):
