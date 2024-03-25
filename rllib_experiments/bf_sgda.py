@@ -68,8 +68,8 @@ def main(
         def _init_view_requirements(self):
             super()._init_view_requirements()
 
-            self.view_requirements.update(** self.model.view_requirements)
-
+            self.model.view_requirements[SampleBatch.INFOS].used_for_training = True
+            self.view_requirements[SampleBatch.INFOS].used_for_training = True
             print("oki?", self.view_requirements, self.model.view_requirements)
 
 
