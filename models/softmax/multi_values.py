@@ -30,7 +30,7 @@ class MultiValueSoftmax(TFModelV2):
             dtype= tf.int32
 
             obs_raw = tf.keras.layers.Input(shape=shape, name="obs_raw", dtype=dtype)
-            obs_input = tf.one_hot(obs_raw, depth=shape[0], name="obs_input")
+            obs_input = tf.one_hot(obs_raw, depth=shape[0], name="obs_input")[:, 0]
         #scenario_mask = tf.keras.layers.Input(shape=(self.n_scenarios,), name="scenario_mask", dtype=tf.float32)
 
         action_logits = tf.keras.layers.Dense(
@@ -58,7 +58,7 @@ class MultiValueSoftmax(TFModelV2):
         #     self.scenario_mask = [0]
         # else:
         #     print(input_dict)
-        self.scenario_mask = tf.one_hot(obs["scenario"], depth=self.n_scenarios)
+        self.scenario_mask = tf.one_hot(obs["scenario"], depth=self.n_scenarios)[: , 0]
 
         context, self._values_out = self.base_model(
             [obs_raw]
