@@ -66,9 +66,9 @@ def run_episode(policies: Dict[str, Policy], env, n_episodes = 10):
 
                 input_dict = {
                     SampleBatch.OBS:# [[obs[agent_id]]]
-                        {
+                        np.array({
                         name: np.array([feature]) for name, feature in obs[agent_id].items()
-                    },
+                    }),
                 }
                 for i, s in enumerate(states[agent_id]):
                     input_dict[f"state_in_{i}"] = s
