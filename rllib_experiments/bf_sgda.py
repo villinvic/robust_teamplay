@@ -23,7 +23,7 @@ num_workers = os.cpu_count() - 2
 def main(
         *,
         background=(0,),
-        version="0.6",
+        version="0.7",
         env="RandomPOMDP",
         use_utility=False,
         beta_lr=2e-1,
@@ -97,17 +97,17 @@ def main(
         scenarios=scenarios,
         copy_weights_freq=1,
         copy_history_len=10,
-        beta_eps=1e-2,
+        beta_eps=2e-2,
         learn_best_responses_only=False,
 
         # IMPALA
         # opt_type="rmsprop",
-        entropy_coeff=4e-3,
-        train_batch_size=env_config.episode_length * num_workers ,
+        entropy_coeff=1e-4,
+        train_batch_size=env_config.episode_length * num_workers * 2 ,
         momentum=0.,
         epsilon=1e-5,
         decay=0.99,
-        lr=2e-3,
+        lr=5e-3,
         grad_clip=50.,
         gamma=0.995,
 
