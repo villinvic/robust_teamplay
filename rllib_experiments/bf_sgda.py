@@ -66,12 +66,20 @@ def main(
     class InfoPolicy(ImpalaTF1Policy):
 
         def _init_view_requirements(self):
-            super()._init_view_requirements()
+            # If ViewRequirements are explicitly specified.
+            if getattr(self, "view_requirements", None):
+                return
 
-            self.model.view_requirements[SampleBatch.INFOS].used_for_training = True
-            self.view_requirements[SampleBatch.INFOS].used_for_training = True
+            # Use default settings.
+            # Add NEXT_OBS, STATE_IN_0.., and others.
+            self.view_requirements = self._get_default_view_requirements()
+            # Combine view_requirements for Model and Policy.
+            # TODO(jungong) : models will not carry view_requirements once they
+            # are migrated to be organic Keras models.
+            self.view_requirements.update(self.model.view_requirements)
+        def _get_default_view_requirements(self):
 
-            print("WWWWWW", self.model.view_requirements, self.view_requirements)
+            return self.model.view_requirements
 
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
