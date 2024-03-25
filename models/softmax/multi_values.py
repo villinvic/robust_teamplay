@@ -22,7 +22,6 @@ class MultiValueSoftmax(TFModelV2):
         super().__init__(
             obs_space, action_space, self.num_outputs, model_config, name
         )
-
         self.view_requirements[SampleBatch.INFOS] = ViewRequirement(
             SampleBatch.INFOS, shift=0, space=Dict(
                 {
@@ -49,6 +48,7 @@ class MultiValueSoftmax(TFModelV2):
         self.base_model = tf.keras.Model(
             [obs_input, scenario_mask],
             [action_logits, values_out])
+
 
     def forward(self, input_dict, state, seq_lens):
 

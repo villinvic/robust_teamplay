@@ -1,7 +1,8 @@
 import os
 
 import fire
-from ray.rllib.algorithms.impala import ImpalaConfig
+from ray.rllib import SampleBatch
+from ray.rllib.algorithms.impala import ImpalaConfig, ImpalaTF1Policy
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.algorithms.a2c import A2CConfig
 
@@ -62,8 +63,16 @@ def main(
         background_population=background_population
     )
 
+    class InfoPolicy(ImpalaTF1Policy):
+        def _get_default_view_requirements(self):
+            view_reqs = super()._get_default_view_requirements()
+            view_reqs.update(** self.model.view_requirements)
+            print("ok", view_reqs)
+            return view_reqs
+
+
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
-        policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
+        policies[policy_id] = (InfoPolicy, dummy_env.observation_space[0], dummy_env.action_space[0], {})
 
     config = make_bf_sgda_config(ImpalaConfig).training(
         beta_lr=beta_lr, #2e-1,
