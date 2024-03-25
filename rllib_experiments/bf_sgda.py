@@ -70,8 +70,6 @@ def main(
 
             self.model.view_requirements[SampleBatch.INFOS].used_for_training = True
             self.view_requirements[SampleBatch.INFOS].used_for_training = True
-            print("oki?", self.view_requirements, self.model.view_requirements)
-
 
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
