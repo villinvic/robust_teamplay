@@ -22,20 +22,10 @@ class MultiValueSoftmax(TFModelV2):
         super().__init__(
             obs_space, action_space, self.num_outputs, model_config, name
         )
-        self.view_requirements[SampleBatch.INFOS] = ViewRequirement(
-            SampleBatch.INFOS, shift=0,
-            space=Dict(
-                {
-                    "scenario": Discrete(self.n_scenarios)
-                }
-            ),
-            used_for_training=True, used_for_compute_actions=True
-        )
 
         base_obs_space = obs_space[SampleBatch.OBS]
-
         if isinstance(base_obs_space, Discrete):
-            shape = base_obs_space.shape
+            shape = (base_obs_space.n,)
             dtype= tf.int32
 
             obs_input = tf.keras.layers.Input(shape=shape, name="obs_input", dtype=dtype)
