@@ -46,8 +46,10 @@ def ScenarioWrapper(env_cls: Type[MultiAgentEnv]) -> Type[MultiAgentEnv]:
             return updated_observations, rewards, dones, truncs, infos
 
         def reset(self, *args, **kwargs):
-            observations, _ = super().reset(*args, **kwargs)
-            return self.update_observations(observations), {}
+            observations, infos = super().reset(*args, **kwargs)
+            ret = self.update_observations(observations), infos
+            print(ret)
+            return ret
 
     ScenarioWrapper.__name__ = env_cls.__name__
     ScenarioWrapper.__qualname__ =  env_cls.__name__
