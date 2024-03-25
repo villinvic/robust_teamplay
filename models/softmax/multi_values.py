@@ -60,6 +60,7 @@ class MultiValueSoftmax(TFModelV2):
         #     self.scenario_mask = [0]
         # else:
         #     print(input_dict)
+        print(self.view_requirements)
         self.scenario_mask = tf.cast(input_dict[SampleBatch.INFOS], dtype=tf.int32)
 
         context, self._values_out = self.base_model(
