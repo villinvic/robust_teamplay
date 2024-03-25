@@ -74,7 +74,7 @@ class BackgroundFocalSGDA(DefaultCallbacks):
                             "distribution": [
                                 float(np.mean(p)) for p in np.stack(list(self.beta.past_betas), axis=1)
                             ],
-                            "num_episodes": 100
+                            "num_episodes": 1000
                         }
                     )
                 algo.base_cleanup()
@@ -253,7 +253,7 @@ class ScenarioSet:
 
                 scenario_name: {
                     "focal": scenario.num_copies,
-                    "background": [policy_id.lstrip("background_") for policy_id in scenario.background_policies]
+                    "background": [policy_id.removeprefix("background_") for policy_id in scenario.background_policies]
                 }
                 for scenario_name, scenario in self.scenarios.items()
             },
