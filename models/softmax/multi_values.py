@@ -25,7 +25,8 @@ class MultiValueSoftmax(TFModelV2):
 
         base_obs_space = obs_space[SampleBatch.OBS]
         if isinstance(base_obs_space, Discrete):
-            shape = (base_obs_space.n,)
+            shape = (1,)
+            depth = base_obs_space.n
             dtype= tf.int32
 
             obs_raw = tf.keras.layers.Input(shape=shape, name="obs_raw", dtype=dtype)
