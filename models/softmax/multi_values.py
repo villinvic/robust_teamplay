@@ -59,8 +59,8 @@ class MultiValueSoftmax(TFModelV2):
         if SampleBatch.INFOS not in input_dict:
             self.scenario_mask = [0]
         else:
-            print( input_dict)
-            self.scenario_mask = input_dict[SampleBatch.INFOS]
+            print(input_dict)
+            self.scenario_mask = tf.cast(input_dict[SampleBatch.INFOS], dtype=tf.int32)
 
         context, self._values_out = self.base_model(
             [obs_input]
