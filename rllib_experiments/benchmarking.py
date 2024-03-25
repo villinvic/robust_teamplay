@@ -34,6 +34,7 @@ def shuffle_dict(input_dict):
 
 
 def run_episode(policies: Dict[str, Policy], env, n_episodes = 10):
+    import tensorflow as tf
 
     n_focal = len([
         1 for policy_id in policies if "background" not in policy_id
@@ -66,7 +67,7 @@ def run_episode(policies: Dict[str, Policy], env, n_episodes = 10):
                 input_dict = {
                     SampleBatch.OBS:# [[obs[agent_id]]]
                         {
-                        name: [feature] for name, feature in obs[agent_id].items()
+                        name: tf.tensor([feature]) for name, feature in obs[agent_id].items()
                     },
                 }
                 for i, s in enumerate(states[agent_id]):
