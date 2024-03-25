@@ -71,6 +71,8 @@ def main(
             self.model.view_requirements[SampleBatch.INFOS].used_for_training = True
             self.view_requirements[SampleBatch.INFOS].used_for_training = True
 
+            print(self.model.view_requirements, self.view_requirements)
+
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (InfoPolicy, dummy_env.observation_space[0], dummy_env.action_space[0], {})
