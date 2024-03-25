@@ -23,11 +23,13 @@ class MultiValueSoftmax(TFModelV2):
             obs_space, action_space, self.num_outputs, model_config, name
         )
         self.view_requirements[SampleBatch.INFOS] = ViewRequirement(
-            SampleBatch.INFOS, shift=0, space=Dict(
-                {
-                    "scenario": Discrete(self.n_scenarios)
-                }
-            ), used_for_training=True, used_for_compute_actions=True
+            SampleBatch.INFOS, shift=0,
+            # space=Dict(
+            #     {
+            #         "scenario": Discrete(self.n_scenarios)
+            #     }
+            # ),
+            used_for_training=True, used_for_compute_actions=True
         )
 
         obs_input = tf.keras.layers.Input(shape=obs_space.shape, name="obs_input", dtype=tf.float32)
