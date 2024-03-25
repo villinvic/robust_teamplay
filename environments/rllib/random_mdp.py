@@ -129,7 +129,6 @@ class RandomPOMDP(MultiAgentEnv):
                 for i in self._agent_ids
             }
 
-        assert self.observation_space.contains(s), s
         return s
 
     def reset(

@@ -10,10 +10,6 @@ def ScenarioWrapper(env_cls: Type[MultiAgentEnv]) -> Type[MultiAgentEnv]:
 
     class ScenarioWrapper(env_cls):
 
-        info_placeholder = {
-            "scenario": 0.
-        }
-
         def __init__(self, *args, num_scenarios=1, **kwargs):
             super().__init__(*args, **kwargs)
 
