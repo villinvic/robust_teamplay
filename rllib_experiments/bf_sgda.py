@@ -66,9 +66,7 @@ def main(
     class InfoPolicy(ImpalaTF1Policy):
         def _get_default_view_requirements(self):
             view_reqs = super()._get_default_view_requirements()
-            print("model->", self.model.view_requirements)
             view_reqs.update(** self.model.view_requirements)
-            print("ok", view_reqs)
             return view_reqs
 
 
