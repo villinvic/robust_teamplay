@@ -66,6 +66,7 @@ class MultiValueSoftmax(TFModelV2):
         return tf.reshape(context, [-1, self.num_outputs]), state
 
     def value_function(self):
+        print(self.scenario_mask, self._values_out)
         return tf.reshape(
             tf.reduce_sum(self.scenario_mask * self._values_out, axis=-1)
             , [-1])
