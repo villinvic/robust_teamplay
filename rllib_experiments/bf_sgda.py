@@ -64,10 +64,14 @@ def main(
     )
 
     class InfoPolicy(ImpalaTF1Policy):
-        def _get_default_view_requirements(self):
-            view_reqs = super()._get_default_view_requirements()
-            view_reqs.update(** self.model.view_requirements)
-            return view_reqs
+
+        def _init_view_requirements(self):
+            super()._init_view_requirements()
+
+            self.view_requirements.update(** self.model.view_requirements)
+
+            print("oki?", self.view_requirements)
+
 
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
