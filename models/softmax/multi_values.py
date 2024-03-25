@@ -24,11 +24,11 @@ class MultiValueSoftmax(TFModelV2):
         )
         self.view_requirements[SampleBatch.INFOS] = ViewRequirement(
             SampleBatch.INFOS, shift=0,
-            # space=Dict(
-            #     {
-            #         "scenario": Discrete(self.n_scenarios)
-            #     }
-            # ),
+            space=Dict(
+                {
+                    "scenario": Discrete(self.n_scenarios)
+                }
+            ),
             used_for_training=True, used_for_compute_actions=True
         )
 

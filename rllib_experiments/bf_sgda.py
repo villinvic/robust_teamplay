@@ -65,8 +65,8 @@ def main(
 
     class InfoPolicy(ImpalaTF1Policy):
 
-        def _init_view_requirements(self):
-            super()._init_view_requirements()
+        def __init__(self, *agrs, **kwargs):
+            super().__init__(*agrs, **kwargs)
 
             self.model.view_requirements[SampleBatch.INFOS].used_for_training = True
             self.view_requirements[SampleBatch.INFOS].used_for_training = True
