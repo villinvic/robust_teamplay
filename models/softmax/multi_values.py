@@ -66,7 +66,7 @@ class MultiValueSoftmax(TFModelV2):
 
     def value_function(self):
         return tf.reshape(
-            tf.reduce_sum(tf.one_hot(self.scenario_mask, depth=self.n_scenarios) * self._values_out, axis=-1)
+            tf.reduce_sum(self.scenario_mask * self._values_out, axis=-1)
             , [-1])
 
     def metrics(self):
