@@ -40,9 +40,9 @@ def run_episode(policies: Dict[str, Policy], env, n_episodes = 10):
         1 for policy_id in policies if "background" not in policy_id
     ])
 
-    preprocessor = get_preprocessor(env.observation_space[0])(
-        env.observation_space[0]
-    )
+    # preprocessor = get_preprocessor(env.observation_space[0])(
+    #     env.observation_space[0]
+    # )
 
     episodic_focal_per_capita = []
 
