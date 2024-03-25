@@ -11,7 +11,7 @@ def InfoWrapper(env_cls: Type[MultiAgentEnv]) -> Type[MultiAgentEnv]:
     class InfoWrapper(env_cls):
 
         info_placeholder = {
-            "scenario": 0
+            "scenario": 0.
         }
 
         def build_info_dict(self):
