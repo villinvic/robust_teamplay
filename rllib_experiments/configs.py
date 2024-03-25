@@ -2,7 +2,7 @@ from dataclasses import dataclass, asdict
 from typing import Type
 
 from environments.rllib.random_mdp import RandomPOMDP
-from environments.rllib.scenario_wrapper import InfoWrapper
+from environments.rllib.scenario_wrapper import ScenarioWrapper
 
 
 @dataclass
@@ -21,7 +21,7 @@ class EnvConfig:
     def get_env_id(self):
         pass
 
-    def get_maker(self):
+    def get_maker(self, num_scenarios=1):
         pass
 
 
@@ -48,9 +48,9 @@ class RandomPOMDPConfig(EnvConfig):
         return f"{RandomPOMDPConfig._env_name}_{config_name}"
 
 
-    def get_maker(self):
+    def get_maker(self, num_scenarios=1):
         def env_maker(config=None):
-            return InfoWrapper(RandomPOMDP)(**self.as_dict())
+            return ScenarioWrapper(RandomPOMDP)(**self.as_dict(), num_scenarios=num_scenarios)
 
         return env_maker
 

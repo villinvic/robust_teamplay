@@ -32,7 +32,14 @@ class MultiValueSoftmax(TFModelV2):
             used_for_training=True, used_for_compute_actions=True
         )
 
-        obs_input = tf.keras.layers.Input(shape=obs_space.shape, name="obs_input", dtype=tf.float32)
+        base_obs_space = obs_space[SampleBatch.OBS]
+
+        if isinstance(base_obs_space, Discrete):
+            shape = base_obs_space.shape
+            dtype= tf.int32
+
+            obs_input = tf.keras.layers.Input(shape=shape, name="obs_input", dtype=dtype)
+            obs_input = tf.one_hot(obs_input, depth=shape[0])[:, 0]
         #scenario_mask = tf.keras.layers.Input(shape=(self.n_scenarios,), name="scenario_mask", dtype=tf.float32)
 
         action_logits = tf.keras.layers.Dense(
@@ -53,15 +60,14 @@ class MultiValueSoftmax(TFModelV2):
 
 
     def forward(self, input_dict, state, seq_lens):
-
-        obs_input = input_dict[SampleBatch.OBS]
+        obs = input_dict[SampleBatch.OBS]
+        obs_input = obs[SampleBatch.OBS]
 
         # if SampleBatch.INFOS not in input_dict:
         #     self.scenario_mask = [0]
         # else:
         #     print(input_dict)
-        print(self.view_requirements)
-        self.scenario_mask = tf.cast(input_dict[SampleBatch.INFOS], dtype=tf.int32)
+        self.scenario_mask = tf.one_hot(obs["scenario"], depth=self.n_scenarios)[:, 0]
 
         context, self._values_out = self.base_model(
             [obs_input]
@@ -69,14 +75,14 @@ class MultiValueSoftmax(TFModelV2):
         return tf.reshape(context, [-1, self.num_outputs]), state
 
     def value_function(self):
-        print(self.scenario_mask)
         return tf.reshape(
             tf.reduce_sum(tf.one_hot(self.scenario_mask, depth=self.n_scenarios) * self._values_out, axis=-1)
             , [-1])
-
 
     def metrics(self):
 
         return {
             "scenarios": tf.reduce_mean(tf.math.argmax(self.scenario_mask))
         }
+
+

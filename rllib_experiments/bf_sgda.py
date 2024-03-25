@@ -36,10 +36,21 @@ def main(
     env_config_dict = env_config.as_dict()
     env_id = env_config.get_env_id()
 
-    register_env(env_id, env_config.get_maker())
+    background_population = [
+        f"background_deterministic_{bg_policy_seed}"
+        for bg_policy_seed in background
+    ]
+    scenarios = ScenarioSet()
+
+    scenarios.build_from_population(
+        num_players=env_config.num_players,
+        background_population=background_population
+    )
+
+    register_env(env_id, env_config.get_maker(len(scenarios)))
 
     rollout_fragment_length = env_config.episode_length // 10
-    dummy_env = env_config.get_maker()()
+    dummy_env = env_config.get_maker(len(scenarios))()
 
     policies = {
         f"background_deterministic_{bg_policy_seed}": (
@@ -55,36 +66,29 @@ def main(
 
         ) for i, bg_policy_seed in enumerate(background)
     }
-    background_population = list(policies.keys())
-    scenarios = ScenarioSet()
 
-    scenarios.build_from_population(
-        num_players=env_config.num_players,
-        background_population=background_population
-    )
-
-    class InfoPolicy(ImpalaTF1Policy):
-
-        def _init_view_requirements(self):
-            # If ViewRequirements are explicitly specified.
-            if getattr(self, "view_requirements", None):
-                return
-
-            # Use default settings.
-            # Add NEXT_OBS, STATE_IN_0.., and others.
-            self.view_requirements = self._get_default_view_requirements()
-            # Combine view_requirements for Model and Policy.
-            # TODO(jungong) : models will not carry view_requirements once they
-            # are migrated to be organic Keras models.
-            self.view_requirements.update(**self.model.view_requirements)
-        def _get_default_view_requirements(self):
-            view_reqs = super()._get_default_view_requirements()
-            view_reqs.update(**self.model.view_requirements)
-            return view_reqs
+    # class InfoPolicy(ImpalaTF1Policy):
+    #
+    #     def _init_view_requirements(self):
+    #         # If ViewRequirements are explicitly specified.
+    #         if getattr(self, "view_requirements", None):
+    #             return
+    #
+    #         # Use default settings.
+    #         # Add NEXT_OBS, STATE_IN_0.., and others.
+    #         self.view_requirements = self._get_default_view_requirements()
+    #         # Combine view_requirements for Model and Policy.
+    #         # TODO(jungong) : models will not carry view_requirements once they
+    #         # are migrated to be organic Keras models.
+    #         self.view_requirements.update(**self.model.view_requirements)
+    #     def _get_default_view_requirements(self):
+    #         view_reqs = super()._get_default_view_requirements()
+    #         view_reqs.update(**self.model.view_requirements)
+    #         return view_reqs
 
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
-        policies[policy_id] = (InfoPolicy, dummy_env.observation_space[0], dummy_env.action_space[0], {})
+        policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
 
     config = make_bf_sgda_config(ImpalaConfig).training(
         beta_lr=beta_lr, #2e-1,
@@ -156,7 +160,7 @@ def main(
             scenarios=scenarios
         ),
     ).experimental(
-        _disable_preprocessor_api=False
+        _disable_preprocessor_api=True
     ).reporting(
         min_time_s_per_iteration=0,
         min_train_timesteps_per_iteration=1,

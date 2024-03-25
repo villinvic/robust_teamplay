@@ -1,38 +1,55 @@
 from typing import Type
 
-from ray.rllib import MultiAgentEnv
+from ray.rllib import MultiAgentEnv, SampleBatch
+from gymnasium.spaces import Dict, Discrete
 
-
-def InfoWrapper(env_cls: Type[MultiAgentEnv]) -> Type[MultiAgentEnv]:
+def ScenarioWrapper(env_cls: Type[MultiAgentEnv]) -> Type[MultiAgentEnv]:
     """
     Multi agent env wrapper
     """
 
-    class InfoWrapper(env_cls):
+    class ScenarioWrapper(env_cls):
 
         info_placeholder = {
             "scenario": 0.
         }
 
-        def build_info_dict(self):
-            self.infos = {
-                agent_id: InfoWrapper.info_placeholder for agent_id in self._agent_ids
+        def __init__(self, *args, num_scenarios=1, **kwargs):
+            super().__init__(*args, **kwargs)
+
+            base = self.observation_space[0]
+            self.observation_space = Dict({
+                agent_id : Dict({
+                    SampleBatch.OBS: base,
+                    "scenario": Discrete(num_scenarios)
+                })
+                for agent_id in self._agent_ids
+            })
+            self.current_scenario_id = 0
+
+
+        def update_observations(self, observations):
+            return {
+                agent_id: {
+                    SampleBatch.OBS: observations[agent_id],
+                    "scenario": self.current_scenario_id
+                }
+                for agent_id in self._agent_ids
             }
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.build_info_dict()
-
         def step(self, actions):
-            observations, rewards, dones, truncs, _ = super().step(actions)
+            observations, rewards, dones, truncs, infos = super().step(actions)
 
-            return observations, rewards, dones, truncs, self.infos.copy()
+            updated_observations = self.update_observations(observations)
+
+
+            return updated_observations, rewards, dones, truncs, infos
 
         def reset(self, *args, **kwargs):
             observations, _ = super().reset(*args, **kwargs)
-            return observations, self.infos.copy()
+            return self.update_observations(observations), {}
 
-    InfoWrapper.__name__ = env_cls.__name__
-    InfoWrapper.__qualname__ =  env_cls.__name__
+    ScenarioWrapper.__name__ = env_cls.__name__
+    ScenarioWrapper.__qualname__ =  env_cls.__name__
 
-    return InfoWrapper
+    return ScenarioWrapper

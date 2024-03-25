@@ -81,11 +81,6 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
             algorithm.cleanup = on_algorithm_save.__get__(algorithm, type(algorithm))
 
-    def on_sample_end(
-        self, *, worker: "RolloutWorker", samples: SampleBatch, **kwargs
-    ) -> None:
-        print(samples)
-
     def on_postprocess_trajectory(
             self,
             *,
@@ -116,11 +111,30 @@ class BackgroundFocalSGDA(DefaultCallbacks):
         mean_focal_per_capita = sum(focal_rewards) / len(focal_rewards)
         postprocessed_batch[SampleBatch.REWARDS][:] = mean_focal_per_capita
 
-        scenario_name = Scenario.get_scenario_name([ policy_id for agent_id, policy_id in episode.agent_rewards])
 
-        postprocessed_batch[SampleBatch.INFOS][:] = {
-            "scenario": np.float32(self.scenarios.scenario_to_id[scenario_name])
-        }
+    def on_episode_created(
+        self,
+        *,
+        worker: "RolloutWorker",
+        base_env: BaseEnv,
+        policies: Dict[PolicyID, Policy],
+        env_index: int,
+        episode: Union[Episode, EpisodeV2],
+        **kwargs,
+    ) -> None:
+
+        # Force policies to be selected through the mapping function now
+        for agent_id in base_env.get_agent_ids():
+            episode.policy_for(agent_id)
+
+        sub_env = base_env.get_sub_environments(as_dict=True)[env_index]
+
+        policies = list(episode._agent_to_policy.values())
+        scenario_name = Scenario.get_scenario_name(policies)
+        scenario_id = self.scenarios.scenario_to_id[scenario_name]
+        setattr(episode, "policies", policies)
+        setattr(episode, "scenario", scenario_name)
+        setattr(sub_env, "current_scenario_id", scenario_id)
 
     def on_episode_end(
             self,
@@ -138,10 +152,7 @@ class BackgroundFocalSGDA(DefaultCallbacks):
         ]
         episodic_mean_focal_per_capita = sum(focal_rewards) / len(focal_rewards)
 
-        policies = episode._agent_to_policy.values()
-        scenario_name = Scenario.get_scenario_name(list(policies))
-
-        episode.custom_metrics[f"{scenario_name}_utility"] = episodic_mean_focal_per_capita
+        episode.custom_metrics[f"{episode.scenario}_utility"] = episodic_mean_focal_per_capita
 
     def on_train_result(
             self,
