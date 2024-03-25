@@ -97,17 +97,20 @@ def main(
         scenarios=scenarios,
         copy_weights_freq=1,
         copy_history_len=10,
-        beta_eps=2e-2,
+        beta_eps=4e-2,
         learn_best_responses_only=False,
 
         # IMPALA
         # opt_type="rmsprop",
-        entropy_coeff=1e-4,
-        train_batch_size=env_config.episode_length * num_workers * 2 ,
+        entropy_coeff=tune.grid_search([0., 1e-4]),
+        train_batch_size=tune.grid_search([
+            rollout_fragment_length * num_workers,
+            env_config.episode_length * num_workers, env_config.episode_length * num_workers * 4
+        ]) ,
         momentum=0.,
         epsilon=1e-5,
         decay=0.99,
-        lr=5e-3,
+        lr=tune.grid_search([1e-2, 2e-3, 1e-3]),
         grad_clip=50.,
         gamma=0.995,
 
