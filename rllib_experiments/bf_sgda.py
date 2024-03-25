@@ -76,10 +76,11 @@ def main(
             # Combine view_requirements for Model and Policy.
             # TODO(jungong) : models will not carry view_requirements once they
             # are migrated to be organic Keras models.
-            self.view_requirements.update(self.model.view_requirements)
+            self.view_requirements.update(**self.model.view_requirements)
         def _get_default_view_requirements(self):
-
-            return self.model.view_requirements
+            view_reqs = super()._get_default_view_requirements()
+            view_reqs.update(**self.model.view_requirements)
+            return view_reqs
 
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
