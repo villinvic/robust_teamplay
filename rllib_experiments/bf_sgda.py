@@ -49,7 +49,7 @@ def main(
 
     register_env(env_id, env_config.get_maker(len(scenarios)))
 
-    rollout_fragment_length = env_config.episode_length // 10
+    rollout_fragment_length = env_config.episode_length
     dummy_env = env_config.get_maker(len(scenarios))()
 
     policies = {

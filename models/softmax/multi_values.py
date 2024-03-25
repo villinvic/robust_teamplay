@@ -19,6 +19,8 @@ class MultiValueSoftmax(TFModelV2):
         self.num_outputs = action_space.n
         self.n_scenarios = model_config["n_scenarios"]
 
+        self.multi_values = model_config.get("multi_values", True)
+
         super().__init__(
             obs_space, action_space, self.num_outputs, model_config, name
         )
@@ -40,7 +42,7 @@ class MultiValueSoftmax(TFModelV2):
         )(obs_input)
 
         values_out = tf.keras.layers.Dense(
-            self.n_scenarios,
+            self.n_scenarios if self.multi_values else 1,
             name="values_out",
             activation="linear"
         )(obs_input)
@@ -66,10 +68,14 @@ class MultiValueSoftmax(TFModelV2):
         return tf.reshape(context, [-1, self.num_outputs]), state
 
     def value_function(self):
-        print(self.scenario_mask, self._values_out)
-        return tf.reshape(
-            tf.reduce_sum(self.scenario_mask * self._values_out, axis=-1)
-            , [-1])
+        if self.multi_values:
+            return tf.reshape(
+                tf.reduce_sum(self.scenario_mask * self._values_out, axis=-1)
+                , [-1])
+        else:
+            return tf.reshape(
+                self._values_out
+                , [-1])
 
     def metrics(self):
 
