@@ -73,10 +73,8 @@ class RLlibDeterministicPolicy(Policy):
         **kwargs,
     ) -> Tuple[TensorType, List[TensorType], Dict_t[str, TensorType]]:
         if self.dict_obs:
-            print("???", obs_batch)
-            actions = [
-                self.policy[obs[SampleBatch.OBS]] for obs in obs_batch
-            ]
+            actions = self.policy[obs_batch[SampleBatch.OBS]]
+
         else:
             original_obs = restore_obs(obs_batch, self.observation_space)
             actions = [self.policy[tuple(obs)] for obs in original_obs]
