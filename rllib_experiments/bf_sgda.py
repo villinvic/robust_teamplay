@@ -70,7 +70,7 @@ def main(
 
             self.view_requirements.update(** self.model.view_requirements)
 
-            print("oki?", self.view_requirements)
+            print("oki?", self.view_requirements, self.model.view_requirements)
 
 
 
