@@ -58,7 +58,7 @@ class MultiValueSoftmax(TFModelV2):
         #     self.scenario_mask = [0]
         # else:
         #     print(input_dict)
-        self.scenario_mask = tf.one_hot(obs["scenario"], depth=self.n_scenarios)[:, 0]
+        self.scenario_mask = tf.one_hot(obs["scenario"], depth=self.n_scenarios)
 
         context, self._values_out = self.base_model(
             [obs_raw]
