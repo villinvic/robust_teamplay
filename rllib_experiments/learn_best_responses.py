@@ -102,7 +102,7 @@ def main(
 
         copy_weights_freq=1,
         copy_history_len=10,
-        best_response_timesteps_max=10_000_000,
+        best_response_timesteps_max=5_000_000,
 
         # IMPALA
         # opt_type="rmsprop",
