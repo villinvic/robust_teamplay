@@ -90,7 +90,7 @@ def main(
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
 
-    batch_size = rollout_fragment_length * num_workers * 2
+    batch_size = rollout_fragment_length * num_workers
     max_samples = 50_000_000
     num_iters = max_samples // batch_size
     config = make_bf_sgda_config(PPOConfig).training(
@@ -101,7 +101,7 @@ def main(
         copy_weights_freq=1,
         copy_history_len=10,
         warmup_steps=int(num_iters * 0.02),
-        beta_eps=2e-2,
+        beta_eps=5e-2,
         learn_best_responses_only=False,
 
         # IMPALA
@@ -127,8 +127,8 @@ def main(
         #clip_param=10.,
         # #clip_param=0.2,
         grad_clip=100.,
-        train_batch_size=rollout_fragment_length*num_workers*2,
-        sgd_minibatch_size=rollout_fragment_length*num_workers*2,
+        train_batch_size=batch_size,
+        sgd_minibatch_size=batch_size,
         num_sgd_iter=1,
         model={
             # "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
