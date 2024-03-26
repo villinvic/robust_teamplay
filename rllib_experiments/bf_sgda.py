@@ -102,15 +102,14 @@ def main(
 
         # IMPALA
         # opt_type="rmsprop",
-        entropy_coeff=tune.grid_search([0., 1e-4]),
+        entropy_coeff=1e-4,
         train_batch_size=tune.grid_search([
             rollout_fragment_length * num_workers,
-            env_config.episode_length * num_workers, env_config.episode_length * num_workers * 4
         ]) ,
         momentum=0.,
         epsilon=1e-5,
         decay=0.99,
-        lr=tune.grid_search([1e-2, 2e-3, 1e-3]),
+        lr=2e-3,
         grad_clip=50.,
         gamma=0.995,
 
