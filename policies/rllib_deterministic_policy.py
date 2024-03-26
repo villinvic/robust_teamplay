@@ -56,7 +56,6 @@ class RLlibDeterministicPolicy(Policy):
         assert seed is not None, "Seed was not set for deterministic policy !"
         random = np.random.default_rng(seed=seed)
         self.policy[:] = random.integers(0, self.n_actions, self.policy.shape)
-        print(seed)
 
 
     def get_action(self, obs):
