@@ -83,9 +83,7 @@ class BackgroundFocalSGDA(DefaultCallbacks):
                     self.beta.scenarios.to_YAML(
                         dump_path,
                         eval_config={
-                            "distribution": [
-                                float(np.mean(p)) for p in np.stack(list(self.beta.past_betas), axis=1)
-                            ],
+                            "distribution": list(self.beta.smoothed_beta.get()),
                             "num_episodes": 1000
                         }
                     )
@@ -361,7 +359,7 @@ def make_bf_sgda_config(cls) -> "BFSGDAConfig":
             self.beta_lr = 5e-2
             self.beta_eps = 1e-2
 
-            self.beta_smoothing = 1000
+            self.beta_smoothing = 0.99
             self.copy_weights_freq = 5
             self.copy_history_len = 30
             self.best_response_timesteps_max = 1_000_000
@@ -498,7 +496,7 @@ class ScenarioDistribution:
                 for scenario in self.scenarios.scenario_list
             ]
 
-        self.past_betas = deque([], maxlen=self.config.beta_smoothing)
+        self.smoothed_beta = SmoothMetric(self.beta_logits.copy(), lr=self.config.beta_smoothing)
         self.weights_history = None
         self.copy_iter = 0
         self.iter = 0
@@ -600,6 +598,8 @@ class ScenarioDistribution:
         if os.path.exists(path):
             with open(path, "r") as f:
                 best_response_utilities = yaml.safe_load(f)
+                if best_response_utilities is None:
+                    best_response_utilities = {}
                 to_save.update(best_response_utilities)
 
         # Update the best responses with the better ones found here.
@@ -612,12 +612,11 @@ class ScenarioDistribution:
 
     def beta_gradients(self, loss):
         if self.config.self_play or self.config.beta_lr == 0.:
-            self.past_betas.append(self.beta_logits.copy())
             return
 
         self.beta_logits[:] = project_onto_simplex(self.beta_logits + loss * self.config.beta_lr)
 
-        self.past_betas.append(self.beta_logits.copy())
+        self.smoothed_beta.update(self.beta_logits)
 
         # Allow any scenario to be sampled with beta_eps prob
         self.beta_logits[:] = self.beta_logits * (1 - self.config.beta_eps) + self.config.beta_eps / len(
