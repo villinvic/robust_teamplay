@@ -149,7 +149,7 @@ def eval_policy_on_scenario(
     scenario = test_set[scenario_name]
     environment = env_config.get_maker()()
 
-    print(environment)
+    print(env_config)
 
     env_id = env_config.get_env_id()
     focal_policy = PolicyCkpt(policy_name, env_id).make(environment)
