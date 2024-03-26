@@ -90,7 +90,7 @@ def main(
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
 
-    batch_size = rollout_fragment_length * num_workers
+    batch_size = rollout_fragment_length * num_workers * 2
     max_samples = 50_000_000
     num_iters = max_samples // batch_size
     config = make_bf_sgda_config(ImpalaConfig).training(
@@ -100,8 +100,8 @@ def main(
         scenarios=scenarios,
         copy_weights_freq=1,
         copy_history_len=10,
-        warmup_steps=20,
-        beta_eps=4e-2,
+        warmup_steps=100,
+        beta_eps=2e-2,
         learn_best_responses_only=False,
 
         # IMPALA
