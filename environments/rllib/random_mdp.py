@@ -9,7 +9,6 @@ from ray.rllib import MultiAgentEnv
 import numpy as np
 from ray.rllib.utils.typing import MultiAgentDict
 
-
 class RandomPOMDP(MultiAgentEnv):
     def __init__(
             self,
@@ -185,42 +184,55 @@ class RandomPOMDP(MultiAgentEnv):
 
 if __name__ == '__main__':
 
-    np.random.seed(0)
-    n_states = 5
-    n_actions = 3
-    p1 = np.random.random((n_states, n_actions))
-    p2 = np.random.random((n_states, n_actions))
-    p3 = np.random.random((n_states, n_actions))
+    # np.random.seed(0)
+    # n_states = 5
+    # n_actions = 3
+    # p1 = np.random.random((n_states, n_actions))
+    # p2 = np.random.random((n_states, n_actions))
+    # p3 = np.random.random((n_states, n_actions))
+    #
+    # players = [p2, p3]
+    #
+    # for p in players:
+    #     p[:] = p / p.sum(axis=1, keepdims=True)
+    #
+    # env = RandomPOMDP(
+    #     history_length=2,
+    #     n_states=n_states, n_actions=n_actions, num_players=len(players), episode_length=64, seed=0)
+    #
+    # rewards = defaultdict(int)
+    #
+    # obs, _ = env.reset()
+    # done = {"__all__": False}
+    # states = []
+    # while not done["__all__"]:
+    #     # print({
+    #     #     p_id: #np.random.choice(n_actions, p=p[obs[p_id]]) for p_id, p in enumerate(players)
+    #     #         np.argmax(p[obs[p_id]]) for p_id, p in enumerate(players)
+    #     # })
+    #     obs, step_rewards, done, trunc, info = env.step({
+    #         p_id: #np.random.choice(n_actions, p=p[obs[p_id]]) for p_id, p in enumerate(players)
+    #             np.argmax(p[obs[p_id]]) for p_id, p in enumerate(players)
+    #     })
+    #
+    #     states.append(list(obs.values()))
+    #
+    #     for p_id, r in step_rewards.items():
+    #         rewards[p_id] += r
+    #
+    # print(rewards)
+    from rllib_experiments.configs import get_env_config
 
-    players = [p2, p3]
-
-    for p in players:
-        p[:] = p / p.sum(axis=1, keepdims=True)
-
-    env = RandomPOMDP(
+    env = get_env_config("RandomPOMDP")(
         history_length=2,
-        n_states=n_states, n_actions=n_actions, num_players=len(players), episode_length=64, seed=0)
+    )
 
-    rewards = defaultdict(int)
+    env_inst = env.get_maker()()
 
-    obs, _ = env.reset()
-    done = {"__all__": False}
-    states = []
-    while not done["__all__"]:
-        # print({
-        #     p_id: #np.random.choice(n_actions, p=p[obs[p_id]]) for p_id, p in enumerate(players)
-        #         np.argmax(p[obs[p_id]]) for p_id, p in enumerate(players)
-        # })
-        obs, step_rewards, done, trunc, info = env.step({
-            p_id: #np.random.choice(n_actions, p=p[obs[p_id]]) for p_id, p in enumerate(players)
-                np.argmax(p[obs[p_id]]) for p_id, p in enumerate(players)
-        })
+    for k, v in env_inst.reward_function.items():
+        if v != 0.0:
+            print(k, v)
 
-        states.append(list(obs.values()))
 
-        for p_id, r in step_rewards.items():
-            rewards[p_id] += r
-
-    print(rewards)
 
 

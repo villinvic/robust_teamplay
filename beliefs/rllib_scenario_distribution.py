@@ -599,7 +599,7 @@ class ScenarioDistribution:
                 to_save.update(best_response_utilities)
 
         # Update the best responses with the better ones found here.
-        for new_value, scenario in self.best_response_utilities.items():
+        for scenario, new_value in self.best_response_utilities.items():
             if to_save.get(scenario, -np.inf) < new_value:
                 to_save[scenario] = new_value
 
