@@ -34,7 +34,6 @@ def shuffle_dict(input_dict):
 
 
 def run_episode(policies: Dict[str, Policy], env, n_episodes = 10):
-    import tensorflow as tf
 
     n_focal = len([
         1 for policy_id in policies if "background" not in policy_id
@@ -338,5 +337,8 @@ def run(
 
 
 if __name__ == '__main__':
+    #fire.Fire(run)
 
-    fire.Fire(run)
+    policy = PolicyCkpt("regret", get_env_config("RandomPOMDP")(history_length=0).get_env_id())
+
+    print(policy.model.get_weights())
