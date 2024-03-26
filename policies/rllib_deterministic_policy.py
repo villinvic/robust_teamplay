@@ -28,11 +28,13 @@ def restore_obs(obs, space):
 
 class RLlibDeterministicPolicy(Policy):
 
-    def __init__(self, observation_space, action_space, config, seed=None):
+    def __init__(self, observation_space, action_space, config):
 
         super().__init__(observation_space, action_space, config)
 
         self.n_actions = action_space.n
+
+        print(config)
         self.observation_space = observation_space if not hasattr(observation_space, "original_space")\
             else observation_space.original_space
 
