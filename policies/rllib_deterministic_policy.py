@@ -34,7 +34,6 @@ class RLlibDeterministicPolicy(Policy):
 
         self.n_actions = action_space.n
 
-        print(config)
         self.observation_space = observation_space if not hasattr(observation_space, "original_space")\
             else observation_space.original_space
 
@@ -51,7 +50,7 @@ class RLlibDeterministicPolicy(Policy):
 
         self.policy = np.empty(self.state_shape, dtype=np.int8)
 
-        self.initialize(seed=seed)
+        self.initialize(seed=config["seed"])
 
     def initialize(self, seed=None):
         random = np.random.default_rng(seed=seed)
