@@ -1,0 +1,43 @@
+# We should have the general fact that a test set has 5 scenarios
+scenarios:
+  deterministic_111:
+      focal: 1
+      background: [ deterministic_111 ]
+
+  deterministic_222:
+      focal: 1
+      background: [ deterministic_222 ]
+
+  deterministic_333:
+      focal: 1
+      background: [ deterministic_333 ]
+
+  deterministic_444:
+      focal: 1
+      background: [ deterministic_444 ]
+
+  deterministic_555:
+      focal: 1
+      background: [ deterministic_555 ]
+  deterministic_666:
+    focal: 1
+    background: [ deterministic_666 ]
+
+  deterministic_777:
+    focal: 1
+    background: [ deterministic_777 ]
+
+  deterministic_888:
+    focal: 1
+    background: [ deterministic_888 ]
+
+  deterministic_999:
+    focal: 1
+    background: [ deterministic_999 ]
+
+  deterministic_1111:
+    focal: 1
+    background: [ deterministic_1111 ]
+
+eval_config:
+  num_episodes: 1000
