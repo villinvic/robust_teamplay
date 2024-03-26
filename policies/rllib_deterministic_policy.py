@@ -28,7 +28,7 @@ def restore_obs(obs, space):
 
 class RLlibDeterministicPolicy(Policy):
 
-    def __init__(self, observation_space, action_space, config):
+    def __init__(self, observation_space, action_space, config, seed=None):
 
         super().__init__(observation_space, action_space, config)
 
@@ -50,13 +50,13 @@ class RLlibDeterministicPolicy(Policy):
 
         self.policy = np.empty(self.state_shape, dtype=np.int8)
 
-        self.initialize(seed=config["seed"])
+        self.initialize(seed=config.get("seed", seed))
 
     def initialize(self, seed=None):
+        assert seed is not None, "Seed was not set for deterministic policy !"
         random = np.random.default_rng(seed=seed)
         self.policy[:] = random.integers(0, self.n_actions, self.policy.shape)
 
-        print(self.policy.shape, seed, self.policy[:3])
 
     def get_action(self, obs):
         if self.dict_obs:
