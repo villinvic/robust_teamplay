@@ -100,8 +100,9 @@ class RandomPOMDP(MultiAgentEnv):
 
     def update_history(self, actions):
         for i in self._agent_ids:
-            self.past_actions[i].pop(0)
-            self.past_actions[i].append(actions[i])
+            if self.history_length > 0:
+                self.past_actions[i].pop(0)
+                self.past_actions[i].append(actions[i])
             self.past_states[i].pop(0)
             self.past_states[i].append(self.player_states[i])
 
