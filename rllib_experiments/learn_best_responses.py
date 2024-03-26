@@ -159,7 +159,7 @@ def main(
             scenarios=scenarios
         ),
     ).experimental(
-        _disable_preprocessor_api=False
+        _disable_preprocessor_api=True
     )
 
     exp = tune.run(
