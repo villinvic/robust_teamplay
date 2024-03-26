@@ -131,7 +131,7 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
         policies = list(episode._agent_to_policy.values())
         scenario_name = Scenario.get_scenario_name(policies)
-        print(self.scenarios)
+        print("WWWWWWWWWWWWWWW", self.scenarios)
         scenario_id = self.scenarios.scenario_to_id[scenario_name]
         setattr(episode, "policies", policies)
         setattr(episode, "scenario", scenario_name)
