@@ -721,8 +721,11 @@ class ScenarioDistribution:
                     self.current_best_response_scenario]
 
         result["hist_stats"]["scenario_distribution"] = distribution_to_hist(self.beta_logits)
-        for scenario, prob in zip(self.scenarios.scenario_list, self.beta_logits):
+        result["hist_stats"]["smoothed_scenario_distribution"] = distribution_to_hist(self.smoothed_beta.get())
+
+        for scenario, prob, smoothed_prob in zip(self.scenarios.scenario_list, self.beta_logits, self.smoothed_beta.get()):
             result["custom_metrics"][f"{scenario}_probability"] = prob
+            result["custom_metrics"][f"{scenario}_smoothed_probability"] = smoothed_prob
 
         # Get rid of duplicates
         result.update(**result["custom_metrics"])
