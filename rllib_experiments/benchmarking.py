@@ -341,4 +341,4 @@ if __name__ == '__main__':
 
     policy = PolicyCkpt("regret", get_env_config("RandomPOMDP")(history_length=0).get_env_id()).make(None)
 
-    print(policy.model.get_weights())
+    print(policy.get_weights())
