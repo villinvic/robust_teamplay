@@ -14,11 +14,12 @@ import yaml
 from ray.rllib import Policy, SampleBatch, BaseEnv
 from ray.rllib.algorithms import Algorithm
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
+from ray.rllib.env import EnvContext
 from ray.rllib.evaluation import Episode
 from ray.rllib.evaluation.episode_v2 import EpisodeV2
 from ray.rllib.utils.deprecation import DEPRECATED_VALUE
 from ray.rllib.utils.from_config import NotProvided
-from ray.rllib.utils.typing import ResultDict, AgentID, PolicyID
+from ray.rllib.utils.typing import ResultDict, AgentID, PolicyID, EnvType
 from ray.rllib.algorithms.ppo.ppo import PPOConfig
 
 from beliefs.prior import project_onto_simplex
@@ -36,6 +37,17 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
         self.beta: ScenarioDistribution = None
         self.scenarios = scenarios
+
+    def on_sub_environment_created(
+        self,
+        *,
+        worker: "RolloutWorker",
+        sub_environment: EnvType,
+        env_context: EnvContext,
+        env_index: Optional[int] = None,
+        **kwargs,
+    ) -> None:
+        self.scenarios = worker.config.scenarios
 
     def on_algorithm_init(
             self,
@@ -131,7 +143,6 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
         policies = list(episode._agent_to_policy.values())
         scenario_name = Scenario.get_scenario_name(policies)
-        print("WWWWWWWWWWWWWWW", self.scenarios)
         scenario_id = self.scenarios.scenario_to_id[scenario_name]
         setattr(episode, "policies", policies)
         setattr(episode, "scenario", scenario_name)
