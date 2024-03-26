@@ -51,12 +51,12 @@ def main(
         background_population=background_population
     )
 
-    register_env(env_id, env_config.get_maker())
+    register_env(env_id, env_config.get_maker(num_scenarios=len(scenarios)))
 
 
 
     rollout_fragment_length = env_config.episode_length // 10
-    dummy_env = env_config.get_maker()()
+    dummy_env = env_config.get_maker(num_scenarios=len(scenarios))()
 
     policies = {
         f"background_deterministic_{bg_policy_seed}":
