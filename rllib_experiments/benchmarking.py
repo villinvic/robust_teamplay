@@ -148,6 +148,9 @@ def eval_policy_on_scenario(
 
     scenario = test_set[scenario_name]
     environment = env_config.get_maker()()
+
+    print(environment)
+
     env_id = env_config.get_env_id()
     focal_policy = PolicyCkpt(policy_name, env_id).make(environment)
     focal_policies = {
@@ -337,8 +340,8 @@ def run(
 
 
 if __name__ == '__main__':
-    #fire.Fire(run)
+    fire.Fire(run)
 
-    policy = PolicyCkpt("regret", get_env_config("RandomPOMDP")(history_length=0).get_env_id()).make(None)
-
-    print(policy.get_weights())
+    # policy = PolicyCkpt("regret", get_env_config("RandomPOMDP")(history_length=0).get_env_id()).make(None)
+    #
+    # print(policy.get_weights())
