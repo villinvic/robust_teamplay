@@ -36,7 +36,7 @@ class BackgroundFocalSGDA(DefaultCallbacks):
         super().__init__()
 
         self.beta: ScenarioDistribution = None
-        self.scenarios = scenarios
+        self.scenarios: ScenarioSet =  None
 
     def on_sub_environment_created(
         self,
