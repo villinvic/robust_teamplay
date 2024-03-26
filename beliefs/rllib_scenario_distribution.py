@@ -365,6 +365,7 @@ def make_bf_sgda_config(cls) -> "BFSGDAConfig":
             self.copy_weights_freq = 5
             self.copy_history_len = 30
             self.best_response_timesteps_max = 1_000_000
+            self.warmup_steps = 15
 
             self.use_utility = False
             self.self_play = False
@@ -391,7 +392,7 @@ def make_bf_sgda_config(cls) -> "BFSGDAConfig":
                 best_response_utilities_path: Optional[str] = NotProvided,
                 learn_best_responses_only: Optional[bool] = NotProvided,
                 copy_history_len: Optional[int] = NotProvided,
-
+                warmup_steps: Optional[int] = NotProvided,
                 beta_eps: Optional[float] = NotProvided,
                 scenarios: ScenarioSet = NotProvided,
                 **kwargs,
@@ -416,6 +417,8 @@ def make_bf_sgda_config(cls) -> "BFSGDAConfig":
                 self.best_response_utilities_path = best_response_utilities_path
             if beta_eps is not NotProvided:
                 self.beta_eps = beta_eps
+            if warmup_steps is not NotProvided:
+                self.warmup_steps = warmup_steps
 
             if best_response_timesteps_max is not NotProvided:
                 self.best_response_timesteps_max = best_response_timesteps_max
@@ -498,6 +501,7 @@ class ScenarioDistribution:
         self.past_betas = deque([], maxlen=self.config.beta_smoothing)
         self.weights_history = None
         self.copy_iter = 0
+        self.iter = 0
         self.prev_timesteps = 0
         self.weights_0 = ray.put(self.algo.get_weights([Scenario.MAIN_POLICY_ID])[Scenario.MAIN_POLICY_ID])
 
@@ -664,6 +668,7 @@ class ScenarioDistribution:
                 self.copy_weights(reset=True)
 
         self.copy_iter += 1
+        self.iter += 1
 
         if self.copy_iter % self.config.copy_weights_freq == 0:
             self.copy_weights()
@@ -700,14 +705,10 @@ class ScenarioDistribution:
             iter_data[f"uniform_utility"] = np.mean(utilities)
             iter_data[f"curr_distrib_utility"] = np.sum(utilities * self.beta_logits)
 
-            # # Todo : is this fine ? We shouldn't make this  happen with large batch sizes
-            # beta_losses[np.isnan(beta_losses)] = np.nanmean(beta_losses)
-            self.beta_gradients(beta_losses)
-
-            # Update the matchmaking scheme
-            self.set_matchmaking()
-
-            # TODO : plot evolution of distribution
+            if self.config.warmup_steps < self.iter:
+                self.beta_gradients(beta_losses)
+                # Update the matchmaking scheme
+                self.set_matchmaking()
 
         self.prev_timesteps = time_steps
 
