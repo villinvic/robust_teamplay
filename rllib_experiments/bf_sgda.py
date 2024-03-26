@@ -93,47 +93,43 @@ def main(
     batch_size = rollout_fragment_length * num_workers * 2
     max_samples = 50_000_000
     num_iters = max_samples // batch_size
-    config = make_bf_sgda_config(ImpalaConfig).training(
+    config = make_bf_sgda_config(PPOConfig).training(
         beta_lr=beta_lr, #2e-1,
         beta_smoothing=int(num_iters * 0.1),
         use_utility=use_utility,
         scenarios=scenarios,
         copy_weights_freq=1,
         copy_history_len=10,
-        warmup_steps=100,
+        warmup_steps=int(num_iters * 0.02),
         beta_eps=2e-2,
         learn_best_responses_only=False,
 
         # IMPALA
         # opt_type="rmsprop",
-        entropy_coeff=1e-4,
-        train_batch_size=batch_size,
-        momentum=0.,
-        epsilon=1e-5,
-        decay=0.99,
-        lr=2e-3,
-        grad_clip=50.,
-        gamma=0.995,
+        # entropy_coeff=1e-4,
+        # train_batch_size=batch_size,
+        # momentum=0.,
+        # epsilon=1e-5,
+        # decay=0.99,
+        # lr=2e-3,
+        # grad_clip=50.,
+        # gamma=0.995,
 
         # PPO
-        # lambda_=0.95,
-        # gamma=0.99,
-        # entropy_coeff=1e-4,
-        # lr=1e-4,
-        # lambda_=1.0,
-        # gamma=1.,
-        # entropy_coeff=0.,
-        # lr=1e-2,
-        # use_critic=False,
-        # use_gae=False,
-        # #kl_coeff=0.,
-        # #kl_target=1e-2, #1e-2
-        # #clip_param=10.,
-        # # #clip_param=0.2,
-        # grad_clip=100.,
-        # train_batch_size=64*num_workers*16,
-        # sgd_minibatch_size=64*num_workers*2,
-        # num_sgd_iter=16,
+        lambda_=0.95,
+        gamma=0.995,
+        entropy_coeff=1e-4,
+        lr=2e-3,
+        use_critic=True,
+        use_gae=True,
+        #kl_coeff=0.,
+        #kl_target=1e-2, #1e-2
+        #clip_param=10.,
+        # #clip_param=0.2,
+        grad_clip=100.,
+        train_batch_size=rollout_fragment_length*num_workers,
+        sgd_minibatch_size=rollout_fragment_length*num_workers,
+        num_sgd_iter=1,
         model={
             # "fcnet_hiddens": [], # We learn a parameter for each state, simple softmax parametrization
             # "vf_share_layers": False,
@@ -150,7 +146,7 @@ def main(
         create_env_on_local_worker=False,
         num_envs_per_worker=1,
         rollout_fragment_length=rollout_fragment_length,
-        batch_mode="complete_episodes",
+        batch_mode="truncate_episodes",
         enable_connectors=True,
     ).environment(
         env=env_id,
@@ -172,7 +168,7 @@ def main(
     )
 
     exp = tune.run(
-        "IMPALA",
+        "PPO",
         name=f"BF_SGDA_v{version}",
         config=config,
         checkpoint_at_end=True,
