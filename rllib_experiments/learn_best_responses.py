@@ -39,7 +39,21 @@ def main(
     env_config_dict = env_config.as_dict()
     env_id = env_config.get_env_id()
 
+    background_population = [
+        f"background_deterministic_{bg_policy_seed}"
+        for bg_policy_seed in background
+    ]
+
+    scenarios = ScenarioSet()
+
+    scenarios.build_from_population(
+        num_players=env_config.num_players,
+        background_population=background_population
+    )
+
     register_env(env_id, env_config.get_maker())
+
+
 
     rollout_fragment_length = env_config.episode_length // 10
     dummy_env = env_config.get_maker()()
@@ -59,14 +73,6 @@ def main(
 
             ) for i, bg_policy_seed in enumerate(background)
     }
-
-    background_population = list(policies.keys())
-    scenarios = ScenarioSet()
-
-    scenarios.build_from_population(
-        num_players=env_config.num_players,
-        background_population=background_population
-    )
 
     num_workers = (os.cpu_count() - 1 - len(scenarios)) // len(scenarios)
 
@@ -95,13 +101,13 @@ def main(
         scenarios=tune.grid_search(scenarios.split()),
 
         copy_weights_freq=1,
-        copy_history_len=30,
+        copy_history_len=10,
         best_response_timesteps_max=10_000_000,
 
         # IMPALA
         # opt_type="rmsprop",
-        entropy_coeff=3e-3,
-        train_batch_size=rollout_fragment_length * num_workers,
+        entropy_coeff=1e-4,
+        train_batch_size=300,
         momentum=0.,
         epsilon=1e-5,
         decay=0.99,
@@ -128,9 +134,10 @@ def main(
         # sgd_minibatch_size=rollout_fragment_length * num_workers * 16,
         # num_sgd_iter=1,
         model={
-            "fcnet_hiddens": [],  # We learn a parameter for each state, simple softmax parametrization
-            "vf_share_layers": False,
-            # "fcnet_activation": "linear",
+            "custom_model"       : "models.softmax.multi_values.MultiValueSoftmax",
+            "custom_model_config": {
+                "n_scenarios": len(scenarios),
+            }
         }
     ).rollouts(
         num_rollout_workers=num_workers,
