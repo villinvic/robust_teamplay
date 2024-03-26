@@ -55,6 +55,8 @@ class RLlibDeterministicPolicy(Policy):
         random = np.random.default_rng(seed=seed)
         self.policy[:] = random.integers(0, self.n_actions, self.policy.shape)
 
+        print(self.policy.shape)
+
     def get_action(self, obs):
         if self.dict_obs:
             obs = obs[SampleBatch.OBS]
