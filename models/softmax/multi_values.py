@@ -38,13 +38,15 @@ class MultiValueSoftmax(TFModelV2):
         action_logits = tf.keras.layers.Dense(
             self.num_outputs,
             name="action_logits",
-            activation="linear"
+            activation="linear",
+            use_bias=False,
         )(obs_input)
 
         values_out = tf.keras.layers.Dense(
             self.n_scenarios if self.multi_values else 1,
             name="values_out",
-            activation="linear"
+            activation="linear",
+            use_bias=False
         )(obs_input)
 
         self.base_model = tf.keras.Model(

@@ -100,7 +100,7 @@ def main(
         scenarios=scenarios,
         copy_weights_freq=1,
         copy_history_len=10,
-        warmup_steps=int(num_iters * 0.02),
+        warmup_steps=int(num_iters * 0.01),
         beta_eps=5e-2,
         learn_best_responses_only=False,
 

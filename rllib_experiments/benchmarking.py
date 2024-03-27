@@ -118,9 +118,17 @@ class PolicyCkpt:
                 return RLlibDeterministicPolicy(
                     environment.observation_space[0],
                     environment.action_space[0],
-                    {"_disable_preprocessor_api": True},
+#                    {"_disable_preprocessor_api": True},
                     seed = int(policy_seed)
                 )
+
+            def get_policy_specs(environment):
+                return (RLlibDeterministicPolicy,
+                        environment.observation_space[0],
+                        environment.action_space[0],
+                        {"seed": int(policy_seed)}
+                        )
+
         elif name == "random":
 
             def make(environment):
@@ -129,12 +137,27 @@ class PolicyCkpt:
                     environment.action_space[0],
                     {},
                 )
+            def get_policy_specs(environment):
+                return (RandomPolicy,
+                        environment.observation_space[0],
+                        environment.action_space[0],
+                        )
 
         else:
             def make(environment):
                 return Policy.from_checkpoint(PolicyCkpt.NAMED_POLICY_PATH.format(name=name, env=env_name))
 
+            def get_policy_specs(environment):
+                def policy_getter(observation_space, action_space, config):
+                    return make(None)
+                return (policy_getter,
+                        environment.observation_space[0],
+                        environment.action_space[0],
+                        {}
+                        )
+
         self.make = make
+        self.get_policy_specs = get_policy_specs
 
 
 def eval_policy_on_scenario(
