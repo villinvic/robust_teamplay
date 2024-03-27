@@ -102,7 +102,7 @@ def main(
     config = ImpalaConfig().training(
 
         # IMPALA
-        opt_type="rmsprop",
+        #opt_type="rmsprop",
         entropy_coeff=1e-4,
         train_batch_size=batch_size,
         momentum=0.,
