@@ -7,7 +7,6 @@ from ray.rllib.algorithms.impala import ImpalaConfig
 
 from ray import tune
 from ray.rllib.examples.policy.random_policy import RandomPolicy
-from ray.rllib.policy.policy import PolicySpec
 from ray.tune import register_env
 
 from beliefs.rllib_scenario_distribution import Scenario, ScenarioMapper, ScenarioSet, \
@@ -68,7 +67,7 @@ def main(
                 dict(
                     config=env_config,
                     seed=bg_policy_seed,
-                    _disable_preprocessor_api=True,
+                    #_disable_preprocessor_api=True,
                 )
 
             ) for i, bg_policy_seed in enumerate(background)
