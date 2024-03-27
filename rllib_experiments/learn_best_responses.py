@@ -77,7 +77,7 @@ def main(
             ) for i, bg_policy_seed in enumerate(background)
     }
 
-    num_workers = (os.cpu_count() - 1 - len(scenarios)) // len(scenarios)
+    num_workers = os.cpu_count() - 2 #(os.cpu_count() - 1 - len(scenarios)) // len(scenarios)
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (
