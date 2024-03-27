@@ -7,7 +7,6 @@ from ray.rllib import SampleBatch, BaseEnv
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.algorithms.impala import ImpalaConfig
 from ray.rllib.algorithms.ppo import PPOConfig
-from ray.rllib.algorithms.a2c import A2CConfig
 
 from ray import tune
 from ray.rllib.evaluation import Episode

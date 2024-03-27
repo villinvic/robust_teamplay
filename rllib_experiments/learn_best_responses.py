@@ -1,12 +1,18 @@
 import os
+from typing import Dict, Tuple, Union, Optional
 
-import fire
 import numpy as np
-from ray.rllib.algorithms.ppo import PPOConfig
+import fire
+from ray.rllib import SampleBatch, BaseEnv
+from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.algorithms.impala import ImpalaConfig
+from ray.rllib.algorithms.ppo import PPOConfig
 
 from ray import tune
-from ray.rllib.examples.policy.random_policy import RandomPolicy
+from ray.rllib.evaluation import Episode
+from ray.rllib.evaluation.episode_v2 import EpisodeV2
+from ray.rllib.policy.policy import PolicySpec, Policy
+from ray.rllib.utils.typing import AgentID, PolicyID
 from ray.tune import register_env
 
 from beliefs.rllib_scenario_distribution import Scenario, ScenarioMapper, ScenarioSet, \
@@ -14,15 +20,13 @@ from beliefs.rllib_scenario_distribution import Scenario, ScenarioMapper, Scenar
 from environments.rllib.random_mdp import RandomPOMDP
 from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
 
-from ray.rllib.env.multi_agent_env import make_multi_agent
-
 from rllib_experiments.configs import get_env_config
 
-ma_cartpole_cls = make_multi_agent("Pendulum-v1")
-
-
-def env_maker_test(env_config):
-    return ma_cartpole_cls({"num_agents": 2})
+# ma_cartpole_cls = make_multi_agent("Pendulum-v1")
+#
+#
+# def env_maker_test(env_config):
+#     return ma_cartpole_cls({"num_agents": 2})
 
 
 def main(
