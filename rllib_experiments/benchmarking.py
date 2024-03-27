@@ -169,7 +169,7 @@ class PolicyCkpt:
                 class TrainedPolicy(policy_spec.policy_class):
                     def __init__(_self, *args, **kwargs):
                         super().__init__(*args, **kwargs)
-                        _self.set_state({"weights": weights})
+                        _self.set_weights(weights)
 
                 TrainedPolicy.__name__ = policy_spec.policy_class.__name__
                 TrainedPolicy.__qualname__ = policy_spec.policy_class.__qualname__
