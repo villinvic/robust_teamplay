@@ -166,6 +166,7 @@ class PolicyCkpt:
                 class TrainedPolicy(policy_spec.policy_class):
                     def __init__(_self, *args, **kwargs):
                         super().__init__(*args, **kwargs)
+                        print(state)
                         _self.set_state(state)
 
                 policy_spec.policy_class = TrainedPolicy
