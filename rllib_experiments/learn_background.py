@@ -45,7 +45,7 @@ class SocialRewards(DefaultCallbacks):
             batch[SampleBatch.REWARDS] for aid, (pid, policy_cls, batch) in original_batches.items()
             if policy_id != pid
         ]
-        mean_other_rewards = sum(other_rewards) / len(other_rewards)
+        mean_other_rewards = sum(other_rewards) / max([len(other_rewards), 1.])
 
         social_weight = policies[policy_id].config["social_weight"]
 
