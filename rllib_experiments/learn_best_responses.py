@@ -47,9 +47,7 @@ def main(
     scenarios = ScenarioSet()
     scenarios.build_from_population(
         num_players=env_config.num_players,
-        background_population=[
-            p.name for p in background
-        ]
+        background_population=background
     )
 
     register_env(env_id, env_config.get_maker(num_scenarios=len(scenarios)))
