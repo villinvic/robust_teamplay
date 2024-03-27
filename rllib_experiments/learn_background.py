@@ -41,21 +41,22 @@ class SocialRewards(DefaultCallbacks):
             **kwargs,
     ) -> None:
 
-        team_rewards = [
-            batch[SampleBatch.REWARDS] for agent_id, (policy_id, policy_cls, batch) in original_batches.items()
+        other_rewards = [
+            batch[SampleBatch.REWARDS] for aid, (pid, policy_cls, batch) in original_batches.items()
+            if policy_id != pid
         ]
-        mean_team_rewards = sum(team_rewards) / len(team_rewards)
+        mean_other_rewards = sum(other_rewards) / len(other_rewards)
 
         social_weight = policies[policy_id].config["social_weight"]
 
-        episode.custom_metrics[policy_id + "_trajectory_team_rewards"] = mean_team_rewards
+        episode.custom_metrics[policy_id + "_trajectory_other_rewards"] = mean_other_rewards
         episode.custom_metrics[policy_id + "_trajectory_own_rewards"] =  postprocessed_batch[SampleBatch.REWARDS].copy()
 
 
         postprocessed_batch[SampleBatch.REWARDS][:] = (
                 postprocessed_batch[SampleBatch.REWARDS] * (1. - social_weight)
                 +
-                mean_team_rewards * social_weight
+                mean_other_rewards * social_weight
         )
 
         episode.custom_metrics[policy_id + "_trajectory_optimized_rewards"] = postprocessed_batch[SampleBatch.REWARDS][:]
