@@ -137,7 +137,7 @@ def main(
     ).experimental(
         _disable_preprocessor_api=True
     ).callbacks(
-
+        callbacks_class=SocialRewards
     )
 
     exp = tune.run(
