@@ -172,7 +172,7 @@ def main(
         name=f"BF_SGDA_v{version}",
         config=config,
         checkpoint_at_end=True,
-        checkpoint_freq=300,
+        checkpoint_freq=3000,
         keep_checkpoints_num=3,
         stop={
             "timesteps_total": max_samples,
