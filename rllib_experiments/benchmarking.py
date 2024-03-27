@@ -169,6 +169,9 @@ class PolicyCkpt:
                         print(state)
                         _self.set_state(state)
 
+                TrainedPolicy.__name__ = policy_spec.policy_class.__name__
+                TrainedPolicy.__qualname__ = policy_spec.policy_class.__qualname__
+
                 policy_spec.policy_class = TrainedPolicy
 
                 return policy_spec
