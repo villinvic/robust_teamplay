@@ -14,6 +14,7 @@ from beliefs.rllib_scenario_distribution import Scenario, ScenarioMapper, Scenar
     make_bf_sgda_config
 from environments.rllib.random_mdp import RandomPOMDP
 from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
+from rllib_experiments.benchmarking import PolicyCkpt
 
 from rllib_experiments.configs import get_env_config
 
@@ -22,7 +23,7 @@ num_workers = os.cpu_count() - 2
 
 def main(
         *,
-        background=(0,),
+        background=["random", "deterministic_0"],
         version="0.7",
         env="RandomPOMDP",
         use_utility=False,
@@ -37,14 +38,14 @@ def main(
     env_id = env_config.get_env_id()
 
     background_population = [
-        f"background_deterministic_{bg_policy_seed}"
-        for bg_policy_seed in background
+        PolicyCkpt(p_name, env_id)
+        for p_name in background
     ]
     scenarios = ScenarioSet()
 
     scenarios.build_from_population(
         num_players=env_config.num_players,
-        background_population=background_population
+        background_population=["background_" + p.name for p in background_population]
     )
 
     register_env(env_id, env_config.get_maker(len(scenarios)))
@@ -53,18 +54,8 @@ def main(
     dummy_env = env_config.get_maker(len(scenarios))()
 
     policies = {
-        f"background_deterministic_{bg_policy_seed}": (
-            RLlibDeterministicPolicy,
-            dummy_env.observation_space[0],
-            dummy_env.action_space[0],
-            dict(
-                config=env_config_dict,
-                seed=bg_policy_seed,
-                #_disable_preprocessor_api=True,
-            )
-
-
-        ) for i, bg_policy_seed in enumerate(background)
+        "background_" + p.name: p.get_policy_specs(dummy_env)
+        for p in background_population
     }
 
     # class InfoPolicy(ImpalaTF1Policy):
