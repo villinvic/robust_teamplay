@@ -162,7 +162,15 @@ class PolicyCkpt:
                         "No `policy_spec` key was found in given `state`! "
                         "Cannot create new Policy."
                     )
-                return PolicySpec.deserialize(serialized_pol_spec)
+                policy_spec = PolicySpec.deserialize(serialized_pol_spec)
+                class TrainedPolicy(policy_spec.policy_class):
+                    def __init__(_self, *args, **kwargs):
+                        super().__init__(*args, **kwargs)
+                        _self.set_state(state)
+
+                policy_spec.policy_class = TrainedPolicy
+
+                return policy_spec
 
         self.make = make
         self.get_policy_specs = get_policy_specs
