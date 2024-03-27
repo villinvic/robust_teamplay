@@ -28,6 +28,7 @@ def main(
         env="RandomPOMDP",
         use_utility=False,
         beta_lr=2e-1,
+        self_play=False,
         **kwargs
 ):
     env_config = get_env_config(
@@ -94,6 +95,7 @@ def main(
         warmup_steps=int(num_iters * 0.01),
         beta_eps=5e-2,
         learn_best_responses_only=False,
+        self_play=self_play,
 
         # IMPALA
         # opt_type="rmsprop",
