@@ -99,7 +99,7 @@ def main(
     batch_size = rollout_fragment_length * num_workers
     max_samples = 50_000_000
     num_iters = max_samples // batch_size
-    config = ImpalaConfig.training(
+    config = ImpalaConfig().training(
 
         # IMPALA
         opt_type="rmsprop",
