@@ -46,6 +46,10 @@ def main(
         for pid in background
     ]
 
+    print([
+            p.name for p in background_population
+        ])
+
     scenarios = ScenarioSet()
     scenarios.build_from_population(
         num_players=env_config.num_players,
