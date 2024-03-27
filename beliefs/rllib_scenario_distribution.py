@@ -83,7 +83,7 @@ class BackgroundFocalSGDA(DefaultCallbacks):
                     self.beta.scenarios.to_YAML(
                         dump_path,
                         eval_config={
-                            "distribution": list(self.beta.smoothed_beta.get()),
+                            "distribution": list(float(self.beta.smoothed_beta.get())),
                             "num_episodes": 1000
                         }
                     )

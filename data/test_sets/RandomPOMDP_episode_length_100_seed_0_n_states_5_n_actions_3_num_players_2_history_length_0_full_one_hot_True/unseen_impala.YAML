@@ -1,0 +1,11 @@
+# We should have the general fact that a test set has 5 scenarios
+scenarios:
+  selfish:
+      focal: 1
+      background: [ IMPALA_policy_-010 ]
+  selfless:
+      focal: 1
+      background : [ IMPALA_policy_110 ]
+
+eval_config:
+  num_episodes: 1000
