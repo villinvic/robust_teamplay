@@ -176,7 +176,11 @@ class PolicyCkpt:
                 #
                 # policy_spec.policy_class = TrainedPolicy
 
-                return policy_spec
+                print(policy_spec.policy_class)
+
+                return (
+                    policy_spec.policy_class, environment.observation_space[0], environment.action_space[0], {}
+                )
 
         self.make = make
         self.get_policy_specs = get_policy_specs
