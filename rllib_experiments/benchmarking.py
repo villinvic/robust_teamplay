@@ -1,10 +1,13 @@
 import pathlib
+import pickle
 from typing import List, Dict
 
 import fire
 from ray.rllib import Policy, SampleBatch
 from ray.rllib.examples.policy.random_policy import RandomPolicy
 from ray.rllib.models.preprocessors import get_preprocessor
+from ray.rllib.policy.policy import PolicySpec
+from ray.rllib.utils.checkpoints import get_checkpoint_info
 from rich.progress import Progress
 import yaml
 
@@ -141,6 +144,7 @@ class PolicyCkpt:
                 return (RandomPolicy,
                         environment.observation_space[0],
                         environment.action_space[0],
+                        {}
                         )
 
         else:
@@ -148,13 +152,17 @@ class PolicyCkpt:
                 return Policy.from_checkpoint(PolicyCkpt.NAMED_POLICY_PATH.format(name=name, env=env_name))
 
             def get_policy_specs(environment):
-                def policy_getter(observation_space, action_space, config):
-                    return make(None)
-                return (policy_getter,
-                        environment.observation_space[0],
-                        environment.action_space[0],
-                        {}
-                        )
+
+                checkpoint_info = get_checkpoint_info(PolicyCkpt.NAMED_POLICY_PATH.format(name=name, env=env_name))
+                with open(checkpoint_info["state_file"], "rb") as f:
+                    state = pickle.load(f)
+                serialized_pol_spec = state.get("policy_spec")
+                if serialized_pol_spec is None:
+                    raise ValueError(
+                        "No `policy_spec` key was found in given `state`! "
+                        "Cannot create new Policy."
+                    )
+                return PolicySpec.deserialize(serialized_pol_spec)
 
         self.make = make
         self.get_policy_specs = get_policy_specs
