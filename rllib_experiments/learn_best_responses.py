@@ -58,6 +58,9 @@ def main(
         background_population=[p.name for p in background_population]
     )
 
+    print(scenarios.scenario_list)
+    exit()
+
     register_env(env_id, env_config.get_maker(num_scenarios=len(scenarios)))
 
     rollout_fragment_length = env_config.episode_length // 10
