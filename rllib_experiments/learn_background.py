@@ -43,7 +43,7 @@ class SocialRewards(DefaultCallbacks):
 
         other_rewards = [
             batch[SampleBatch.REWARDS] for aid, (pid, policy_cls, batch) in original_batches.items()
-            if policy_id != pid
+            if aid != agent_id
         ]
         mean_other_rewards = sum(other_rewards) / max([len(other_rewards), 1.])
 

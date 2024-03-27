@@ -17,6 +17,7 @@ from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
 
 from ray.rllib.env.multi_agent_env import make_multi_agent
 
+from rllib_experiments.benchmarking import PolicyCkpt
 from rllib_experiments.configs import get_env_config
 
 ma_cartpole_cls = make_multi_agent("Pendulum-v1")
@@ -39,39 +40,28 @@ def main(
     env_config_dict = env_config.as_dict()
     env_id = env_config.get_env_id()
 
+
     background_population = [
-        f"background_deterministic_{bg_policy_seed}"
-        for bg_policy_seed in background
+        PolicyCkpt(pid)
+        for pid in background
     ]
 
     scenarios = ScenarioSet()
-
     scenarios.build_from_population(
         num_players=env_config.num_players,
-        background_population=background_population
+        background_population=[
+            p.name for p in background_population
+        ]
     )
 
     register_env(env_id, env_config.get_maker(num_scenarios=len(scenarios)))
-
-
-
     rollout_fragment_length = env_config.episode_length // 10
     dummy_env = env_config.get_maker(num_scenarios=len(scenarios))()
 
     policies = {
-        f"background_deterministic_{bg_policy_seed}":
-            (
-                # RandomPolicy,
-                RLlibDeterministicPolicy,
-                dummy_env.observation_space[0],
-                dummy_env.action_space[0],
-                dict(
-                    config=env_config,
-                    seed=bg_policy_seed,
-                    # _disable_preprocessor_api=True,
-                )
-
-            ) for i, bg_policy_seed in enumerate(background)
+        p.name: p.get_policy_specs(
+            dummy_env
+        ) for p in background_population
     }
 
     num_workers = (os.cpu_count() - 1 - len(scenarios)) // len(scenarios)
