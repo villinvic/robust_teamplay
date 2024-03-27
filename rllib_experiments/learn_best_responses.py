@@ -40,7 +40,7 @@ def main(
     env_config_dict = env_config.as_dict()
     env_id = env_config.get_env_id()
 
-
+    print(background)
     background_population = [
         PolicyCkpt(pid)
         for pid in background
