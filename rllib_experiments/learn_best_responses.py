@@ -29,7 +29,7 @@ def env_maker_test(env_config):
 
 def main(
         *,
-        background=(0,),
+        background=["random"],
         env="RandomPOMDP",
         **kwargs
 ):
