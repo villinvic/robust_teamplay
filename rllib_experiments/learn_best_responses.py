@@ -68,7 +68,7 @@ def main(
                 dict(
                     config=env_config,
                     seed=bg_policy_seed,
-                    # _disable_preprocessor_api=True,
+                    _disable_preprocessor_api=True,
                 )
 
             ) for i, bg_policy_seed in enumerate(background)
@@ -98,7 +98,7 @@ def main(
     # )
     config = make_bf_sgda_config(ImpalaConfig).training(
         learn_best_responses_only=True,
-        scenarios=tune.grid_search(scenarios.split()),
+        scenarios=scenarios,#tune.grid_search(scenarios.split()),
 
         copy_weights_freq=1,
         copy_history_len=10,
@@ -134,7 +134,7 @@ def main(
         # sgd_minibatch_size=rollout_fragment_length * num_workers * 16,
         # num_sgd_iter=1,
         model={
-            "custom_model"       : "models.softmax.multi_values.MultiValueSoftmax",
+            "custom_model": "models.softmax.multi_values.MultiValueSoftmax",
             "custom_model_config": {
                 "n_scenarios": len(scenarios),
             }
