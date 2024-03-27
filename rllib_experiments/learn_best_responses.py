@@ -136,7 +136,7 @@ def main(
 
     policies = {
         p.name: p.get_policy_specs(
-            dummy_env, default_policy_class=ImpalaConfig.
+            dummy_env
         ) for p in background_population
     }
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
