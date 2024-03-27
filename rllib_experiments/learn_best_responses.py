@@ -53,6 +53,7 @@ def main(
 
     scenarios = ScenarioSet()
 
+    #TODO : automate background naming, this was annoying to debug
     scenarios.build_from_population(
         num_players=env_config.num_players,
         background_population=["background_" + p.name for p in background_population]
