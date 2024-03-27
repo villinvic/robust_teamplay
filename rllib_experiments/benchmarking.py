@@ -6,8 +6,6 @@ import fire
 from ray.rllib import Policy, SampleBatch
 from ray.rllib.examples.policy.random_policy import RandomPolicy
 from ray.rllib.models.preprocessors import get_preprocessor
-from ray.rllib.policy.policy import PolicySpec
-from ray.rllib.utils.checkpoints import get_checkpoint_info
 from rich.progress import Progress
 import yaml
 
@@ -151,36 +149,37 @@ class PolicyCkpt:
             def make(environment):
                 return Policy.from_checkpoint(PolicyCkpt.NAMED_POLICY_PATH.format(name=name, env=env_name))
 
-            def get_policy_specs(environment):
-
-                checkpoint_info = get_checkpoint_info(PolicyCkpt.NAMED_POLICY_PATH.format(name=name, env=env_name))
-                with open(checkpoint_info["state_file"], "rb") as f:
-                    state = pickle.load(f)
-                serialized_pol_spec = state.get("policy_spec")
-                if serialized_pol_spec is None:
-                    raise ValueError(
-                        "No `policy_spec` key was found in given `state`! "
-                        "Cannot create new Policy."
-                    )
-                policy_spec = PolicySpec.deserialize(serialized_pol_spec)
-
-                weights = state["weights"]
-
-                # class TrainedPolicy(policy_spec.policy_class):
-                #     def __init__(_self, *args, **kwargs):
-                #         super().__init__(*args, **kwargs)
-                #         #_self.set_weights(weights)
-                #
-                # TrainedPolicy.__name__ = policy_spec.policy_class.__name__
-                # TrainedPolicy.__qualname__ = policy_spec.policy_class.__qualname__
-                #
-                # policy_spec.policy_class = TrainedPolicy
-
-                print(policy_spec.policy_class)
-
-                return (
-                    policy_spec.policy_class, environment.observation_space[0], environment.action_space[0], {}
-                )
+            # def get_policy_specs(environment):
+            #     from ray.rllib.policy.policy import PolicySpec
+            #     from ray.rllib.utils.checkpoints import get_checkpoint_info
+            #     checkpoint_info = get_checkpoint_info(PolicyCkpt.NAMED_POLICY_PATH.format(name=name, env=env_name))
+            #     with open(checkpoint_info["state_file"], "rb") as f:
+            #         state = pickle.load(f)
+            #     serialized_pol_spec = state.get("policy_spec")
+            #     if serialized_pol_spec is None:
+            #         raise ValueError(
+            #             "No `policy_spec` key was found in given `state`! "
+            #             "Cannot create new Policy."
+            #         )
+            #     policy_spec = PolicySpec.deserialize(serialized_pol_spec)
+            #
+            #     weights = state["weights"]
+            #
+            #     # class TrainedPolicy(policy_spec.policy_class):
+            #     #     def __init__(_self, *args, **kwargs):
+            #     #         super().__init__(*args, **kwargs)
+            #     #         #_self.set_weights(weights)
+            #     #
+            #     # TrainedPolicy.__name__ = policy_spec.policy_class.__name__
+            #     # TrainedPolicy.__qualname__ = policy_spec.policy_class.__qualname__
+            #     #
+            #     # policy_spec.policy_class = TrainedPolicy
+            #
+            #     print(policy_spec.policy_class)
+            #
+            #     return (
+            #         policy_spec.policy_class, environment.observation_space[0], environment.action_space[0], {}
+            #     )
 
         self.make = make
         self.get_policy_specs = get_policy_specs

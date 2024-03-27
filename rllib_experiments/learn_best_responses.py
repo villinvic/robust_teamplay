@@ -40,15 +40,10 @@ def main(
     env_config_dict = env_config.as_dict()
     env_id = env_config.get_env_id()
 
-    print(background, [p for p in background])
     background_population = [
         PolicyCkpt(pid, env_id)
         for pid in background
     ]
-
-    print([
-            p.name for p in background_population
-        ])
 
     scenarios = ScenarioSet()
     scenarios.build_from_population(
@@ -62,21 +57,8 @@ def main(
     rollout_fragment_length = env_config.episode_length // 10
     dummy_env = env_config.get_maker(num_scenarios=len(scenarios))()
 
-    policies = {
-        p.name: p.get_policy_specs(
-            dummy_env
-        ) for p in background_population
-    }
-
     num_workers = (os.cpu_count() - 1 - len(scenarios)) // len(scenarios)
 
-    for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
-        policies[policy_id] = (
-            None,
-            dummy_env.observation_space[0],
-            dummy_env.action_space[0],
-            {}
-        )
 
     # config = PPOConfig().training(
 
@@ -146,15 +128,32 @@ def main(
         env_config=env_config_dict
     ).resources(num_gpus=0
                 ).framework(framework="tf"
-                            ).multi_agent(
+
+    ).experimental(
+        _disable_preprocessor_api=True
+    )
+
+
+    policies = {
+        p.name: p.get_policy_specs(
+            dummy_env, default_policy_class=ImpalaConfig.
+        ) for p in background_population
+    }
+    for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
+        policies[policy_id] = (
+            None,
+            dummy_env.observation_space[0],
+            dummy_env.action_space[0],
+            {}
+        )
+
+
+    config = config.multi_agent(
         policies=policies,
         policies_to_train={Scenario.MAIN_POLICY_ID},
         policy_mapping_fn=ScenarioMapper(
             scenarios=scenarios
         ),
-    ).experimental(
-        _disable_preprocessor_api=True
-    )
 
     exp = tune.run(
         "IMPALA",
