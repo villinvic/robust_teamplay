@@ -562,10 +562,13 @@ class ScenarioDistribution:
             self.weights_history = [self.weights_0 for _ in range(3)]
             self.copy_iter = 0
         else:
-            last_weights = self.algo.get_weights([Scenario.MAIN_POLICY_ID])[Scenario.MAIN_POLICY_ID]
-            self.weights_history.append(last_weights)
-            if len(self.weights_history) > 30:
-                self.weights_history.pop(0)
+            try:
+                last_weights = self.algo.get_weights([Scenario.MAIN_POLICY_ID])[Scenario.MAIN_POLICY_ID]
+                self.weights_history.append(last_weights)
+                if len(self.weights_history) > 30:
+                    self.weights_history.pop(0)
+            except Exception:
+                print("???????????????????????????????????????")
 
         weights = np.random.choice(self.weights_history[:-2])
 
