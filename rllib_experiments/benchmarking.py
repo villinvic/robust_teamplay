@@ -163,11 +163,13 @@ class PolicyCkpt:
                         "Cannot create new Policy."
                     )
                 policy_spec = PolicySpec.deserialize(serialized_pol_spec)
+
+                weights = state["weights"]
+
                 class TrainedPolicy(policy_spec.policy_class):
                     def __init__(_self, *args, **kwargs):
                         super().__init__(*args, **kwargs)
-                        print(state)
-                        _self.set_state(state)
+                        _self.set_state({"weights": weights})
 
                 TrainedPolicy.__name__ = policy_spec.policy_class.__name__
                 TrainedPolicy.__qualname__ = policy_spec.policy_class.__qualname__
