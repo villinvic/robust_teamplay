@@ -169,7 +169,6 @@ def main(
         checkpoint_at_end=True,
         checkpoint_freq=30,
         keep_checkpoints_num=3,
-        num_samples=len(config.scenarios),
     )
 
 
