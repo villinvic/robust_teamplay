@@ -134,7 +134,7 @@ def main(
 
 
     policies = {
-        p_name: (RandomPolicy,
+        "background_" + p_name: (RandomPolicy,
                         dummy_env.observation_space[0],
                         dummy_env.action_space[0],
                         {}
