@@ -99,18 +99,22 @@ def main(
     #
     #     gamma=0.99,
     # )
+    batch_size = rollout_fragment_length * num_workers
+    max_samples = 5_000_000
+    num_iters = max_samples // batch_size
+
     config = make_bf_sgda_config(ImpalaConfig).training(
         learn_best_responses_only=True,
         scenarios=scenarios,#tune.grid_search(scenarios.split()),
 
         copy_weights_freq=1,
         copy_history_len=10,
-        best_response_timesteps_max=5_000_000,
+        best_response_timesteps_max=max_samples,
 
         # IMPALA
         # opt_type="rmsprop",
         entropy_coeff=1e-4,
-        train_batch_size=300,
+        train_batch_size=batch_size,
         momentum=0.,
         epsilon=1e-5,
         decay=0.99,
