@@ -82,7 +82,7 @@ def main(
     dummy_env = env_config.get_maker(num_scenarios=1)()
 
     policies = {
-        f"IMPALA_policy_({social_weight}.2f)": (
+        f"IMPALA_policy_{social_weight:.2f})": (
             None,
             dummy_env.observation_space[0],
             dummy_env.action_space[0],
