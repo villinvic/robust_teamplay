@@ -16,7 +16,7 @@ from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
 
 from ray.rllib.env.multi_agent_env import make_multi_agent
 
-from rllib_experiments.benchmarking import PolicyCkpt
+#from rllib_experiments.benchmarking import PolicyCkpt
 from rllib_experiments.configs import get_env_config
 
 ma_cartpole_cls = make_multi_agent("Pendulum-v1")
