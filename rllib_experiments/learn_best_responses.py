@@ -19,6 +19,7 @@ from beliefs.rllib_scenario_distribution import Scenario, ScenarioMapper, Scenar
     make_bf_sgda_config
 from environments.rllib.random_mdp import RandomPOMDP
 from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
+from rllib_experiments.benchmarking import PolicyCkpt
 
 from rllib_experiments.configs import get_env_config
 
@@ -31,10 +32,13 @@ from rllib_experiments.configs import get_env_config
 
 def main(
         *,
-        background=(0,),
+        background=["random", "deterministic_0"],
         env="RandomPOMDP",
         **kwargs
 ):
+    """
+    TODO: raises tf graph error when an entry is already in the best response data.
+    """
     env_config = get_env_config(
         environment_name=env
     )(**kwargs)
@@ -43,41 +47,28 @@ def main(
     env_id = env_config.get_env_id()
 
     background_population = [
-        f"background_deterministic_{bg_policy_seed}"
-        for bg_policy_seed in background
+        PolicyCkpt(p_name, env_id)
+        for p_name in background
     ]
 
     scenarios = ScenarioSet()
 
     scenarios.build_from_population(
         num_players=env_config.num_players,
-        background_population=background_population
+        background_population=[p.name for p in background_population]
     )
 
     register_env(env_id, env_config.get_maker(num_scenarios=len(scenarios)))
-
-
 
     rollout_fragment_length = env_config.episode_length // 10
     dummy_env = env_config.get_maker(num_scenarios=len(scenarios))()
 
     policies = {
-        f"background_deterministic_{bg_policy_seed}":
-            (
-                # RandomPolicy,
-                RLlibDeterministicPolicy,
-                dummy_env.observation_space[0],
-                dummy_env.action_space[0],
-                dict(
-                    config=env_config,
-                    seed=bg_policy_seed,
-                    #_disable_preprocessor_api=True,
-                )
-
-            ) for i, bg_policy_seed in enumerate(background)
+        "background_" + p.name : p.get_policy_specs()
+        for p in background_population
     }
 
-    num_workers = os.cpu_count() - 2 #(os.cpu_count() - 1 - len(scenarios)) // len(scenarios)
+    num_workers = (os.cpu_count() - 1 - len(scenarios)) // len(scenarios)
 
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (
@@ -105,7 +96,7 @@ def main(
 
     config = make_bf_sgda_config(ImpalaConfig).training(
         learn_best_responses_only=True,
-        scenarios=scenarios,#tune.grid_search(scenarios.split()),
+        scenarios=tune.grid_search(scenarios.split()),
 
         copy_weights_freq=1,
         copy_history_len=10,
