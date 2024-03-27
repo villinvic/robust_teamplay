@@ -55,7 +55,7 @@ def main(
 
     scenarios.build_from_population(
         num_players=env_config.num_players,
-        background_population=[p.name for p in background_population]
+        background_population=["background_" + p.name for p in background_population]
     )
 
     print(scenarios.scenario_list)
