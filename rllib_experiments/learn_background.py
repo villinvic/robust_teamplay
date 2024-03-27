@@ -146,7 +146,7 @@ def main(
         name=f"learn_background_v{version}",
         config=config,
         checkpoint_at_end=True,
-        checkpoint_freq=1000,
+        checkpoint_freq=100,
         keep_checkpoints_num=3,
         stop={
             "timesteps_total": max_samples,
