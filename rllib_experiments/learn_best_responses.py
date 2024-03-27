@@ -64,7 +64,7 @@ def main(
     dummy_env = env_config.get_maker(num_scenarios=len(scenarios))()
 
     policies = {
-        "background_" + p.name : p.get_policy_specs()
+        "background_" + p.name : p.get_policy_specs(dummy_env)
         for p in background_population
     }
 
