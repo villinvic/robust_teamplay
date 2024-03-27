@@ -7,7 +7,6 @@ from ray.rllib.algorithms.impala import ImpalaConfig
 
 from ray import tune
 from ray.rllib.examples.policy.random_policy import RandomPolicy
-from ray.rllib.policy.policy import PolicySpec
 from ray.tune import register_env
 
 from beliefs.rllib_scenario_distribution import Scenario, ScenarioMapper, ScenarioSet, \
@@ -40,16 +39,16 @@ def main(
     env_config_dict = env_config.as_dict()
     env_id = env_config.get_env_id()
 
-    background_population = [
-        PolicyCkpt(pid, env_id)
-        for pid in background
-    ]
+    # background_population = [
+    #     PolicyCkpt(pid, env_id)
+    #     for pid in background
+    # ]
 
     scenarios = ScenarioSet()
     scenarios.build_from_population(
         num_players=env_config.num_players,
         background_population=[
-            p.name for p in background_population
+            p.name for p in background
         ]
     )
 
@@ -135,9 +134,11 @@ def main(
 
 
     policies = {
-        p.name: p.get_policy_specs(
-            dummy_env
-        ) for p in background_population
+        p_name: (RandomPolicy,
+                        dummy_env.observation_space[0],
+                        dummy_env.action_space[0],
+                        {}
+                        ) for p_name in background
     }
     for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (
