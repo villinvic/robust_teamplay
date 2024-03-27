@@ -29,7 +29,7 @@ def env_maker_test(env_config):
 
 def main(
         *,
-        background: list[str]=["random"],
+        background=["random", "deterministic_0"],
         env="RandomPOMDP",
         **kwargs
 ):
@@ -40,7 +40,7 @@ def main(
     env_config_dict = env_config.as_dict()
     env_id = env_config.get_env_id()
 
-    print(background)
+    print(background, [p for p in background])
     background_population = [
         PolicyCkpt(pid)
         for pid in background
