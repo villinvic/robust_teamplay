@@ -153,7 +153,8 @@ def main(
         policies_to_train={Scenario.MAIN_POLICY_ID},
         policy_mapping_fn=ScenarioMapper(
             scenarios=scenarios
-        ),
+        )
+    )
 
     exp = tune.run(
         "IMPALA",
