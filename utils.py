@@ -9,7 +9,7 @@ class SmoothMetric:
 
     def update(self, value, weight=1.):
 
-        if not np.isnan(value):
+        if not np.any(np.isnan(value)):
             lr = np.maximum(1. - (1. - self.lr) * weight, 0.)
             self._v = lr * self._v + (1. - lr) * value
 
