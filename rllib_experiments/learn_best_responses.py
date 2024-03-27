@@ -42,7 +42,7 @@ def main(
 
     print(background, [p for p in background])
     background_population = [
-        PolicyCkpt(pid)
+        PolicyCkpt(pid, env_id)
         for pid in background
     ]
 

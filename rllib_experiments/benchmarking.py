@@ -153,7 +153,6 @@ class PolicyCkpt:
 
             def get_policy_specs(environment):
 
-                print(PolicyCkpt.NAMED_POLICY_PATH, name, env_name, PolicyCkpt.NAMED_POLICY_PATH.format(name=name, env=env_name))
                 checkpoint_info = get_checkpoint_info(PolicyCkpt.NAMED_POLICY_PATH.format(name=name, env=env_name))
                 with open(checkpoint_info["state_file"], "rb") as f:
                     state = pickle.load(f)
