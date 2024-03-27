@@ -166,15 +166,15 @@ class PolicyCkpt:
 
                 weights = state["weights"]
 
-                class TrainedPolicy(policy_spec.policy_class):
-                    def __init__(_self, *args, **kwargs):
-                        super().__init__(*args, **kwargs)
-                        #_self.set_weights(weights)
-
-                TrainedPolicy.__name__ = policy_spec.policy_class.__name__
-                TrainedPolicy.__qualname__ = policy_spec.policy_class.__qualname__
-
-                policy_spec.policy_class = TrainedPolicy
+                # class TrainedPolicy(policy_spec.policy_class):
+                #     def __init__(_self, *args, **kwargs):
+                #         super().__init__(*args, **kwargs)
+                #         #_self.set_weights(weights)
+                #
+                # TrainedPolicy.__name__ = policy_spec.policy_class.__name__
+                # TrainedPolicy.__qualname__ = policy_spec.policy_class.__qualname__
+                #
+                # policy_spec.policy_class = TrainedPolicy
 
                 return policy_spec
 
