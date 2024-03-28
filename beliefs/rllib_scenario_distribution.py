@@ -24,6 +24,7 @@ from ray.rllib.utils.typing import ResultDict, AgentID, PolicyID, EnvType
 from ray.rllib.algorithms.ppo.ppo import PPOConfig
 
 from beliefs.prior import project_onto_simplex
+from constants import PolicyIDs, Paths
 from rllib_experiments.benchmarking import PolicyCkpt
 from utils import SmoothMetric
 
@@ -96,11 +97,11 @@ class BackgroundFocalSGDA(DefaultCallbacks):
                     run_name = "self_play"
 
                 state = algo.__getstate__()
-                policy_state = state["worker"]["policy_states"][Scenario.MAIN_POLICY_ID]
+                policy_state = state["worker"]["policy_states"][PolicyIDs.MAIN_POLICY_ID]
 
                 policy_name = run_name
                 validate_policy_id(policy_name, error=True)
-                policy_path = PolicyCkpt.NAMED_POLICY_PATH.format(env=self.beta.config.env, name=policy_name)
+                policy_path = Paths.NAMED_POLICY.format(env=self.beta.config.env, name=policy_name)
 
                 if os.path.exists(policy_path):
                     new_path = "{path}_{i}"
@@ -109,7 +110,7 @@ class BackgroundFocalSGDA(DefaultCallbacks):
                         i += 1
                     policy_path = new_path
                 os.makedirs(policy_path, exist_ok=True)
-                policy = algo.get_policy(Scenario.MAIN_POLICY_ID)
+                policy = algo.get_policy(PolicyIDs.MAIN_POLICY_ID)
                 policy.export_checkpoint(policy_path, policy_state=policy_state)
 
                 algo.base_cleanup()
@@ -200,7 +201,6 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
 
 class ScenarioSet:
-    TEST_SET_PATH = str(pathlib.Path(__file__).parent.resolve()) + "/../data/test_sets/{env}/{set_name}.YAML"
 
     def __init__(self, scenarios: Dict[str, "Scenario"] = None, eval_config=None):
         self.scenarios = {}
@@ -226,7 +226,7 @@ class ScenarioSet:
 
             for background_policies in itertools.combinations_with_replacement(background_population,
                                                                                num_players - num_copies):
-                policies = (Scenario.MAIN_POLICY_ID,) + (Scenario.MAIN_POLICY_COPY_ID,) * (
+                policies = (PolicyIDs.MAIN_POLICY_ID,) + (PolicyIDs.MAIN_POLICY_COPY_ID,) * (
                         num_copies - 1) + background_policies
 
                 scenario_name = Scenario.get_scenario_name(policies)
@@ -456,15 +456,13 @@ def make_bf_sgda_config(cls) -> "BFSGDAConfig":
 
 
 class Scenario:
-    MAIN_POLICY_ID = "MAIN_POLICY"
-    MAIN_POLICY_COPY_ID = "MAIN_POLICY_COPY"  # An older version of the main policy
 
     def __init__(self, num_copies, background_policies):
         self.num_copies = num_copies
         self.background_policies = background_policies
 
     def get_policies(self):
-        policies = [Scenario.MAIN_POLICY_ID] + [Scenario.MAIN_POLICY_COPY_ID] * (
+        policies = [PolicyIDs.MAIN_POLICY_ID] + [PolicyIDs.MAIN_POLICY_COPY_ID] * (
                     self.num_copies - 1) + self.background_policies
 
         # We suppose the order of players does not matter, but we shuffle it in cases s0 is different for each player.
@@ -526,7 +524,7 @@ class ScenarioDistribution:
         self.copy_iter = 0
         self.iter = 0
         self.prev_timesteps = 0
-        self.weights_0 = ray.put(self.algo.get_weights([Scenario.MAIN_POLICY_ID])[Scenario.MAIN_POLICY_ID])
+        self.weights_0 = ray.put(self.algo.get_weights([PolicyIDs.MAIN_POLICY_ID])[PolicyIDs.MAIN_POLICY_ID])
 
         # Init copy weights and best response utilities if needed:
         self.copy_weights(reset=True)
@@ -588,16 +586,16 @@ class ScenarioDistribution:
             self.copy_iter = 0
         else:
 
-            last_weights = self.algo.get_weights([Scenario.MAIN_POLICY_ID])[Scenario.MAIN_POLICY_ID]
+            last_weights = self.algo.get_weights([PolicyIDs.MAIN_POLICY_ID])[PolicyIDs.MAIN_POLICY_ID]
             self.weights_history.append(last_weights)
             if len(self.weights_history) > 30:
                 self.weights_history.pop(0)
 
         weights = np.random.choice(self.weights_history[:-2])
 
-        d = {Scenario.MAIN_POLICY_COPY_ID: weights}
+        d = {PolicyIDs.MAIN_POLICY_COPY_ID: weights}
         if reset:
-            d[Scenario.MAIN_POLICY_ID] = weights
+            d[PolicyIDs.MAIN_POLICY_ID] = weights
 
         self.algo.workers.foreach_worker(
             lambda w: w.set_weights(d)

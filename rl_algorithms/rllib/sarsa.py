@@ -3,6 +3,7 @@ from collections import defaultdict
 import numpy as np
 
 from beliefs.rllib_scenario_distribution import Scenario
+from constants import PolicyIDs
 from environments.rllib.random_mdp import RandomPOMDP
 from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
 
@@ -75,13 +76,13 @@ class SARSA:
         done = False
         obss, _ = self.env.reset()
 
-        num_focal = sum([int(p  in (Scenario.MAIN_POLICY_COPY_ID, Scenario.MAIN_POLICY_ID)) for p in players])
+        num_focal = sum([int(p  in (PolicyIDs.MAIN_POLICY_COPY_ID, PolicyIDs.MAIN_POLICY_ID)) for p in players])
         r = 0
         while not done:
 
             actions = {
                 i: self.get_action(Q, force_tuple(obs))
-                if player in (Scenario.MAIN_POLICY_COPY_ID, Scenario.MAIN_POLICY_ID)
+                if player in (PolicyIDs.MAIN_POLICY_COPY_ID, PolicyIDs.MAIN_POLICY_ID)
                 else
                 player.get_action(force_tuple(obs))
 
@@ -93,7 +94,7 @@ class SARSA:
             done = truncs["__all__"]
 
             for i, player in zip(self.env._agent_ids, players):
-                if player in (Scenario.MAIN_POLICY_COPY_ID, Scenario.MAIN_POLICY_ID):
+                if player in (PolicyIDs.MAIN_POLICY_COPY_ID, PolicyIDs.MAIN_POLICY_ID):
                     self.update(Q, actions[i], obss[i], rewards[i], obss_[i], done)
                     r += rewards[i]
             obss = obss_

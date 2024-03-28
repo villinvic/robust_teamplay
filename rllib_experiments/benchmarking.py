@@ -10,6 +10,7 @@ from rich.progress import Progress
 import yaml
 
 from beliefs.rllib_scenario_distribution import Scenario, ScenarioSet
+from constants import Paths
 from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
 
 import multiprocessing as mp
@@ -102,7 +103,6 @@ class PolicyCkpt:
     Can either be a deterministic policy,
     or a named policy
     """
-    NAMED_POLICY_PATH = str(pathlib.Path(__file__).parent.resolve()) + "/../data/policies/{env}/{name}"
 
     def __init__(self, name, env_name=""):
 
@@ -148,11 +148,11 @@ class PolicyCkpt:
 
         else:
             def make(environment):
-                return Policy.from_checkpoint(PolicyCkpt.NAMED_POLICY_PATH.format(name=name, env=env_name))
+                return Policy.from_checkpoint(Paths.NAMED_POLICY.format(name=name, env=env_name))
 
             def get_policy_specs(environment):
                 from ray.rllib.utils.checkpoints import get_checkpoint_info
-                checkpoint_info = get_checkpoint_info(PolicyCkpt.NAMED_POLICY_PATH.format(name=name, env=env_name))
+                checkpoint_info = get_checkpoint_info(Paths.NAMED_POLICY.format(name=name, env=env_name))
                 with open(checkpoint_info["state_file"], "rb") as f:
                     state = pickle.load(f)
                 serialized_pol_spec = state.get("policy_spec")
@@ -243,7 +243,6 @@ class Evaluation:
     feed env and name of the test set
     loads required policies
     """
-    EVAL_PATH = str(pathlib.Path(__file__).parent.resolve()) + "/../data/evaluation/{env}/{set_name}.YAML"
 
     def __init__(self, test_set: str, env: str, env_config: Dict):
 
@@ -253,7 +252,7 @@ class Evaluation:
         self.env_config = get_env_config(env)(**env_config)
         self.environment = self.env_config.get_maker()()
         self.test_set = ScenarioSet.from_YAML(
-            ScenarioSet.TEST_SET_PATH.format(env=self.env_config.get_env_id(), set_name=test_set)
+            Paths.TEST_SET.format(env=self.env_config.get_env_id(), set_name=test_set)
         )
 
     def eval_policy_on_scenario(self, policy_name, scenario_name):
@@ -325,7 +324,7 @@ class Evaluation:
 
 
     def load(self):
-        path = Evaluation.EVAL_PATH.format(env=self.env_config.get_env_id(),
+        path = Paths.EVAL.format(env=self.env_config.get_env_id(),
                           set_name=self.test_set_name)
         if os.path.exists(path):
             with open(path, 'r') as f:
@@ -343,7 +342,7 @@ class Evaluation:
         return evaluation
 
     def save(self, evaluation):
-        path = Evaluation.EVAL_PATH.format(env=self.env_config.get_env_id(),
+        path = Paths.EVAL.format(env=self.env_config.get_env_id(),
                           set_name=self.test_set_name)
 
         with open(path, 'w') as f:

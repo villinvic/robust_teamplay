@@ -12,6 +12,7 @@ from ray.tune import register_env
 
 from beliefs.rllib_scenario_distribution import Scenario, ScenarioMapper, ScenarioSet, \
     make_bf_sgda_config
+from constants import PolicyIDs
 from environments.rllib.random_mdp import RandomPOMDP
 from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
 from rllib_experiments.benchmarking import PolicyCkpt
@@ -79,7 +80,7 @@ def main(
     #         return view_reqs
 
 
-    for policy_id in (Scenario.MAIN_POLICY_ID, Scenario.MAIN_POLICY_COPY_ID):
+    for policy_id in (PolicyIDs.MAIN_POLICY_ID, PolicyIDs.MAIN_POLICY_COPY_ID):
         policies[policy_id] = (None, dummy_env.observation_space[0], dummy_env.action_space[0], {})
 
     batch_size = rollout_fragment_length * num_workers
@@ -148,7 +149,7 @@ def main(
     ).framework(framework="tf"
     ).multi_agent(
         policies=policies,
-        policies_to_train={Scenario.MAIN_POLICY_ID},
+        policies_to_train={PolicyIDs.MAIN_POLICY_ID},
         policy_mapping_fn=ScenarioMapper(
             scenarios=scenarios
         ),
