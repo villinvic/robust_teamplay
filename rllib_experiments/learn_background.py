@@ -11,6 +11,7 @@ from ray.rllib.algorithms.ppo import PPOConfig
 from ray import tune
 from ray.rllib.evaluation import Episode
 from ray.rllib.evaluation.episode_v2 import EpisodeV2
+from ray.rllib.examples.policy.random_policy import RandomPolicy
 from ray.rllib.policy.policy import PolicySpec, Policy
 from ray.rllib.utils.typing import AgentID, PolicyID
 from ray.tune import register_env
@@ -94,6 +95,8 @@ def main(
             )
         ) for social_weight in np.linspace(-0.5, 2., num_background, endpoint=True)
     }
+    policies["random_policy"] = (RandomPolicy, dummy_env.observation_space[0],
+            dummy_env.action_space[0], {})
     pids = list(policies)
 
     def policy_mapping(*args, **kwargs):
@@ -136,6 +139,9 @@ def main(
     ).framework(framework="tf"
     ).multi_agent(
         policies=policies,
+        policies_to_train={
+            pid for pid in policies if pid != "random_policy"
+        },
         policy_mapping_fn=policy_mapping,
     ).experimental(
         _disable_preprocessor_api=True
