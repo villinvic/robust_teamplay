@@ -90,7 +90,7 @@ def main(
         beta_smoothing=0.99,
         use_utility=use_utility,
         scenarios=scenarios,
-        copy_weights_freq=1,
+        copy_weights_freq=10,
         copy_history_len=10,
         warmup_steps=int(num_iters * 0.01),
         beta_eps=5e-2,
