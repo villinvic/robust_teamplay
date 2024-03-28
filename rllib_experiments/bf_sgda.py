@@ -86,7 +86,7 @@ def main(
     max_samples = 50_000_000
     num_iters = max_samples // batch_size
     config = make_bf_sgda_config(PPOConfig).training(
-        beta_lr=beta_lr, #2e-1,
+        beta_lr=beta_lr,
         beta_smoothing=0.99,
         use_utility=use_utility,
         scenarios=scenarios,

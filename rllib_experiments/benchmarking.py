@@ -120,7 +120,7 @@ class PolicyCkpt:
                 return RLlibDeterministicPolicy(
                     environment.observation_space[0],
                     environment.action_space[0],
-#                    {"_disable_preprocessor_api": True},
+                   {},
                     seed = int(policy_seed)
                 )
 

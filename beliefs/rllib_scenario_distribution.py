@@ -19,10 +19,12 @@ from ray.rllib.evaluation import Episode
 from ray.rllib.evaluation.episode_v2 import EpisodeV2
 from ray.rllib.utils.deprecation import DEPRECATED_VALUE
 from ray.rllib.utils.from_config import NotProvided
+from ray.rllib.utils.policy import validate_policy_id
 from ray.rllib.utils.typing import ResultDict, AgentID, PolicyID, EnvType
 from ray.rllib.algorithms.ppo.ppo import PPOConfig
 
 from beliefs.prior import project_onto_simplex
+from rllib_experiments.benchmarking import PolicyCkpt
 from utils import SmoothMetric
 
 
@@ -67,13 +69,16 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
                 # Dump learned distribution as test_set
                 test_set_name = ""
+                run_name = ""
                 if not self.beta.config.self_play:
                     if self.beta.config.beta_lr == 0.:
-                        test_set_name = "train_set_uniform"
+                        run_name = "uniform"
                     elif self.beta.config.use_utility:
-                        test_set_name = "train_set_maximin_utility_distribution"
+                        run_name = "maximin_utility"
                     else:
-                        test_set_name = "train_set_minimax_regret_distribution"
+                        run_name = "minimax_regret"
+
+                    test_set_name = f"train_set_{run_name}"
 
                     dump_path = ScenarioSet.TEST_SET_PATH.format(
                         env=self.beta.config.env,
@@ -87,6 +92,26 @@ class BackgroundFocalSGDA(DefaultCallbacks):
                             "num_episodes": 1000
                         }
                     )
+                else:
+                    run_name = "self_play"
+
+                state = algo.__getstate__()
+                policy_state = state["worker"]["policy_states"][Scenario.MAIN_POLICY_ID]
+
+                policy_name = run_name
+                validate_policy_id(policy_name, error=True)
+                policy_path = PolicyCkpt.NAMED_POLICY_PATH.format(env=self.beta.config.env, name=policy_name)
+
+                if os.path.exists(policy_path):
+                    new_path = "{path}_{i}"
+                    i = 2
+                    while os.path.exists(new_path.format(path=policy_path, i=i)):
+                        i += 1
+                    policy_path = new_path
+                os.makedirs(policy_path, exist_ok=True)
+                policy = algo.get_policy(Scenario.MAIN_POLICY_ID)
+                policy.export_checkpoint(policy_path, policy_state=policy_state)
+
                 algo.base_cleanup()
 
             algorithm.cleanup = on_algorithm_save.__get__(algorithm, type(algorithm))
