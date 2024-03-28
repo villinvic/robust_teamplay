@@ -49,14 +49,14 @@ class SocialRewards(DefaultCallbacks):
         social_weight = policies[policy_id].config["social_weight"]
 
         episode.custom_metrics[policy_id + "_trajectory_other_rewards"] = np.sum(mean_other_rewards)
-        episode.custom_metrics[policy_id + "_trajectory_own_rewards"] =  np.sum(postprocessed_batch[SampleBatch.REWARDS].copy())
+        episode.custom_metrics[policy_id + "_trajectory_own_rewards"] = np.sum(postprocessed_batch[SampleBatch.REWARDS].copy())
 
 
         postprocessed_batch[SampleBatch.REWARDS][:] = (
                 postprocessed_batch[SampleBatch.REWARDS] * (1. - social_weight)
                 +
                 mean_other_rewards * social_weight
-        )
+        ) * 0.
 
         episode.custom_metrics[policy_id + "_trajectory_optimized_rewards"] = np.sum(postprocessed_batch[SampleBatch.REWARDS][:])
 
@@ -89,7 +89,7 @@ def main(
             dict(
                 social_weight=social_weight,
             )
-        )  for social_weight in np.linspace(-0.1, 1.1, num_background, endpoint=True)
+        ) for social_weight in np.linspace(-1., 2., num_background, endpoint=True)
     }
     pids = list(policies)
 

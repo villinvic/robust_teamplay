@@ -9,6 +9,8 @@ class Paths:
     NAMED_POLICY = base_path.format(dir="policies") + identifier_path
     EVAL = base_path.format(dir="evaluation") + identifier_path + ".YAML"
 
+    BEST_RESPONSES = base_path.format("best_response_utilities") + "/{env}.YAML"
+
 
 class PolicyIDs:
     MAIN_POLICY_ID = "MAIN_POLICY"

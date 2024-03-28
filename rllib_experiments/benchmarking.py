@@ -212,6 +212,8 @@ def eval_policy_on_scenario(
 
 
 
+
+
 class Benchmarking:
     """
     We want to benchmark policies in various test sets
@@ -302,7 +304,10 @@ class Evaluation:
             expected_utility = float(np.mean(scores))
             overall_ste = float(np.mean(score_stes))
 
+        worst_case_utility = np.min(scores)
+
         out_dict = {
+            "worst_case_utility": worst_case_utility,
             "overall_score": expected_utility,
             "overall_standard_error": overall_ste,
             "per_scenario": res

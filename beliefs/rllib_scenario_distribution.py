@@ -20,6 +20,7 @@ from ray.rllib.utils.typing import ResultDict, AgentID, PolicyID, EnvType
 from ray.rllib.algorithms.ppo.ppo import PPOConfig
 
 from beliefs.prior import project_onto_simplex
+from best_responses.serialize import load_best_response_utilities, save_best_response_utilities
 from constants import PolicyIDs, Paths
 from utils import SmoothMetric
 
@@ -303,73 +304,6 @@ class ScenarioSet:
                            )
 
 
-#
-# class PPOBFSGDAConfig(PPOConfig):
-#     def __init__(self, algo_class=None):
-#         super().__init__(algo_class=algo_class)
-#
-#         self.beta_lr = 5e-2
-#         self.beta_eps = 1e-2
-#
-#         self.beta_smoothing = 1000
-#         self.copy_weights_freq = 5
-#         self.best_response_timesteps_max = 1_000_000
-#
-#         self.use_utility = False
-#         self.self_play = False
-#         self.learn_best_responses_only = True
-#
-#         self.best_response_utilities_path = os.getcwd() +  "/data/best_response_utilities/{env_name}.pkl"
-#
-#         # TODO if we have deep learning bg policies:
-#         # Use our PolicyCkpt class
-#         self.background_population_path = None
-#
-#         self.callbacks_class = BackgroundFocalSGDA
-#         self.scenarios = None
-#
-#     def training(
-#             self,
-#             *,
-#             beta_lr: Optional[float] = NotProvided,
-#             beta_smoothing: Optional[float] = NotProvided,
-#             use_utility: Optional[bool] = NotProvided,
-#             self_play: Optional[bool] = NotProvided,
-#             copy_weights_freq: Optional[int] = NotProvided,
-#             best_response_timesteps_max: Optional[int] = NotProvided,
-#             best_response_utilities_path: Optional[str] = NotProvided,
-#             learn_best_responses_only: Optional[bool] = NotProvided,
-#             beta_eps: Optional[float] = NotProvided,
-#             scenarios: ScenarioSet = NotProvided,
-#             **kwargs,
-#     ) -> "PPOConfig":
-#
-#         super().training(**kwargs)
-#         if beta_lr is not NotProvided:
-#             self.beta_lr = beta_lr
-#         if beta_smoothing is not NotProvided:
-#             self.beta_smoothing = beta_smoothing
-#         if use_utility is not NotProvided:
-#             self.use_utility = use_utility
-#         if self_play is not NotProvided:
-#             self.self_play = self_play
-#         if copy_weights_freq is not NotProvided:
-#             self.copy_weights_freq = copy_weights_freq
-#         if learn_best_responses_only is not NotProvided:
-#             self.learn_best_responses_only = learn_best_responses_only
-#         if best_response_utilities_path is not NotProvided:
-#             self.best_response_utilities_path = best_response_utilities_path
-#         if beta_eps is not NotProvided:
-#             self.beta_eps = beta_eps
-#
-#         if best_response_timesteps_max is not NotProvided:
-#             self.best_response_timesteps_max = best_response_timesteps_max
-#
-#         assert scenarios is not NotProvided, "You must provide an initial scenario set."
-#         self.scenarios = scenarios
-#
-#         return self
-
 
 def make_bf_sgda_config(cls) -> "BFSGDAConfig":
     class BFSGDAConfig(cls):
@@ -389,8 +323,6 @@ def make_bf_sgda_config(cls) -> "BFSGDAConfig":
             self.self_play = False
             self.learn_best_responses_only = True
 
-            self.best_response_utilities_path = os.getcwd() + "/data/best_response_utilities/{env_name}.YAML"
-
             # TODO if we have deep learning bg policies:
             self.background_population_path = None
 
@@ -407,7 +339,6 @@ def make_bf_sgda_config(cls) -> "BFSGDAConfig":
                 self_play: Optional[bool] = NotProvided,
                 copy_weights_freq: Optional[int] = NotProvided,
                 best_response_timesteps_max: Optional[int] = NotProvided,
-                best_response_utilities_path: Optional[str] = NotProvided,
                 learn_best_responses_only: Optional[bool] = NotProvided,
                 copy_history_len: Optional[int] = NotProvided,
                 warmup_steps: Optional[int] = NotProvided,
@@ -431,8 +362,6 @@ def make_bf_sgda_config(cls) -> "BFSGDAConfig":
                 self.copy_history_len = copy_history_len
             if learn_best_responses_only is not NotProvided:
                 self.learn_best_responses_only = learn_best_responses_only
-            if best_response_utilities_path is not NotProvided:
-                self.best_response_utilities_path = best_response_utilities_path
             if beta_eps is not NotProvided:
                 self.beta_eps = beta_eps
             if warmup_steps is not NotProvided:
@@ -532,7 +461,6 @@ class ScenarioDistribution:
 
             self.best_response_timesteps = defaultdict(int)
             self.missing_best_responses: deque = deque(list(self.scenarios.scenario_list))
-            self.load_best_response_utilities()
             if len(self.missing_best_responses) > 0:
                 self.current_best_response_scenario = self.missing_best_responses.popleft()
 
@@ -598,36 +526,13 @@ class ScenarioDistribution:
 
     def load_best_response_utilities(self):
 
-        path = self.config.best_response_utilities_path.format(env_name=self.config.env)
+        best_response_utilities = load_best_response_utilities(self.config.env)
 
-        if os.path.exists(path):
-            with open(path, "r") as f:
-                best_response_utilities = yaml.safe_load(f)
-
-            for scenario_name in self.scenarios.scenario_list:
-                if scenario_name in best_response_utilities:
-                    self.best_response_utilities[scenario_name] = best_response_utilities[scenario_name]
-                    self.missing_best_responses.remove(scenario_name)
-
-    def save_best_response_utilities(self):
-
-        path = self.config.best_response_utilities_path.format(env_name=self.config.env)
-
-        to_save = {}
-        if os.path.exists(path):
-            with open(path, "r") as f:
-                best_response_utilities = yaml.safe_load(f)
-                if best_response_utilities is None:
-                    best_response_utilities = {}
-                to_save.update(best_response_utilities)
-
-        # Update the best responses with the better ones found here.
-        for scenario, new_value in self.best_response_utilities.items():
-            if to_save.get(scenario, -np.inf) < new_value:
-                to_save[scenario] = new_value
-
-        with open(path, "w") as f:
-            yaml.safe_dump(to_save, f)
+        # TODO: this is actually not a good design
+        for scenario_name in self.scenarios.scenario_list:
+            if scenario_name in best_response_utilities:
+                self.best_response_utilities[scenario_name] = best_response_utilities[scenario_name]
+                self.missing_best_responses.remove(scenario_name)
 
     def beta_gradients(self, loss):
         if self.config.self_play or self.config.beta_lr == 0.:
@@ -674,7 +579,11 @@ class ScenarioDistribution:
                 # expected_utility = iter_data[f"{self.current_best_response_scenario}_utility_mean"]
                 # self.best_response_utilities[self.current_best_response_scenario] = expected_utility
 
-                self.save_best_response_utilities()
+                save_best_response_utilities(
+                    env_name=self.config.env,
+                    best_response_utilities=self.best_response_utilities
+                )
+
                 if len(self.missing_best_responses) > 0:
                     self.current_best_response_scenario = self.missing_best_responses.popleft()
                     self.set_matchmaking()
