@@ -9,7 +9,7 @@ from ray.rllib.models.preprocessors import get_preprocessor
 from rich.progress import Progress
 import yaml
 
-from beliefs.rllib_scenario_distribution import Scenario, ScenarioSet
+from beliefs.rllib_scenario_distribution import ScenarioSet
 from constants import Paths
 from policies.rllib_deterministic_policy import RLlibDeterministicPolicy
 
