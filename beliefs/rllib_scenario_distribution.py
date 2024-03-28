@@ -1,12 +1,9 @@
 import itertools
 import os.path
-import pathlib
-import pickle
-import queue
-from collections import deque, defaultdict, ChainMap
-from copy import copy, deepcopy
+from collections import deque, defaultdict
+from copy import copy
 from functools import partial
-from typing import Dict, Tuple, Union, Optional, List
+from typing import Dict, Tuple, Union, Optional
 
 import numpy as np
 import ray
@@ -17,7 +14,6 @@ from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.env import EnvContext
 from ray.rllib.evaluation import Episode
 from ray.rllib.evaluation.episode_v2 import EpisodeV2
-from ray.rllib.utils.deprecation import DEPRECATED_VALUE
 from ray.rllib.utils.from_config import NotProvided
 from ray.rllib.utils.policy import validate_policy_id
 from ray.rllib.utils.typing import ResultDict, AgentID, PolicyID, EnvType
@@ -25,7 +21,6 @@ from ray.rllib.algorithms.ppo.ppo import PPOConfig
 
 from beliefs.prior import project_onto_simplex
 from constants import PolicyIDs, Paths
-from rllib_experiments.benchmarking import PolicyCkpt
 from utils import SmoothMetric
 
 
