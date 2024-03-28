@@ -96,7 +96,9 @@ def main(
         ) for social_weight in np.linspace(-0.5, 2., num_background, endpoint=True)
     }
     policies["random_policy"] = (RandomPolicy, dummy_env.observation_space[0],
-            dummy_env.action_space[0], {})
+            dummy_env.action_space[0], dict(
+                social_weight=0.5,
+            ))
     pids = list(policies)
 
     def policy_mapping(*args, **kwargs):
