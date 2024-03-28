@@ -252,7 +252,7 @@ class Evaluation:
         self.env_config = get_env_config(env)(**env_config)
         self.environment = self.env_config.get_maker()()
         self.test_set = ScenarioSet.from_YAML(
-            Paths.TEST_SET.format(env=self.env_config.get_env_id(), set_name=test_set)
+            Paths.TEST_SET.format(env=self.env_config.get_env_id(), name=test_set)
         )
 
     def eval_policy_on_scenario(self, policy_name, scenario_name):
@@ -325,7 +325,7 @@ class Evaluation:
 
     def load(self):
         path = Paths.EVAL.format(env=self.env_config.get_env_id(),
-                          set_name=self.test_set_name)
+                          name=self.test_set_name)
         if os.path.exists(path):
             with open(path, 'r') as f:
                 evaluation = yaml.safe_load(f)
@@ -343,7 +343,7 @@ class Evaluation:
 
     def save(self, evaluation):
         path = Paths.EVAL.format(env=self.env_config.get_env_id(),
-                          set_name=self.test_set_name)
+                          name=self.test_set_name)
 
         with open(path, 'w') as f:
             yaml.safe_dump(

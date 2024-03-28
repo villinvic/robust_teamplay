@@ -78,7 +78,7 @@ class BackgroundFocalSGDA(DefaultCallbacks):
 
                     dump_path = ScenarioSet.TEST_SET_PATH.format(
                         env=self.beta.config.env,
-                        set_name=test_set_name,
+                        name=test_set_name,
                     )
 
                     self.beta.scenarios.to_YAML(

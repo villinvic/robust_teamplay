@@ -3,7 +3,7 @@ import pathlib
 
 class Paths:
     base_path = str(pathlib.Path(__file__).parent.resolve()) + "/data/{dir}"
-    identifier_path = "/{env}/{set_name}"
+    identifier_path = "/{env}/{name}"
 
     TEST_SET = base_path.format(dir="test_sets") + identifier_path + ".YAML"
     NAMED_POLICY = base_path.format(dir="policies") + identifier_path
